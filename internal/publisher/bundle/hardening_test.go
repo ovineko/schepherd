@@ -74,7 +74,11 @@ func TestLocalMetaschemaNeverReachesTheCLI(t *testing.T) {
 	t.Run("dependency", func(t *testing.T) {
 		tool := pinnedTool(t)
 		tool.runTimeout = 20 * time.Second
-		tool.addressSpace = 1 << 30
+		// The CLI inspects the root, an ordinary schema, before the dependency
+		// is fetched. Below the production floor the kernel sometimes kills
+		// that run on CI runners; the dependency itself must never reach the
+		// CLI, and if it did, the rejection reason below would change.
+		tool.addressSpace = addressSpaceFloor
 
 		web := &fakeWeb{docs: map[string]string{
 			"https://example.com/lm/dep.json": `{"$schema":"` + draft7 + `","definitions":{"x":{"$schema":"file:///dev/zero"}}}`,
