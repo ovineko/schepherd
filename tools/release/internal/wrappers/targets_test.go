@@ -95,6 +95,31 @@ func TestTargetsAreTheGoReleaserBuild(t *testing.T) {
 	}
 }
 
+// TestArchiveModesAreOctal keeps every file mode of .goreleaser.yaml in
+// explicit octal: YAML reads "644" as the decimal number, which GoReleaser
+// then writes as mode 1204 and leaves the files unreadable (Homebrew fails
+// to quarantine them).
+func TestArchiveModesAreOctal(t *testing.T) {
+	modes := 0
+
+	for line := range strings.Lines(readRepo(t, ".goreleaser.yaml")) {
+		field, value, ok := strings.Cut(strings.TrimSpace(line), ":")
+		if !ok || field != "mode" {
+			continue
+		}
+
+		modes++
+
+		if value = strings.TrimSpace(value); value != "0o644" && value != "0o755" {
+			t.Errorf(".goreleaser.yaml: mode %s; write 0o644 or 0o755", value)
+		}
+	}
+
+	if modes == 0 {
+		t.Error(".goreleaser.yaml sets no file modes")
+	}
+}
+
 func TestWheelTags(t *testing.T) {
 	suffix := map[string]map[string]string{
 		"linux":   {"amd64": "_x86_64", "arm64": "_aarch64"},
