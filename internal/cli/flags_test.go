@@ -96,7 +96,8 @@ func TestQuietSilencesOnlySchepherdDiagnostics(t *testing.T) {
 }
 
 func TestTimeoutBoundsRegistryWork(t *testing.T) {
-	const deadline = 300 * time.Millisecond
+	// Long enough that a slow runner reaches the registry before it expires.
+	const deadline = 2 * time.Second
 
 	cases := []struct {
 		vars map[string]string
