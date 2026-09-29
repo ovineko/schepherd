@@ -240,7 +240,7 @@ func (c *Cache) quarantine(name, label, prefix string, expect fs.FileInfo) error
 	}
 
 	dest := filepath.Join(quarantineDir, quarantineName(prefix, time.Now()))
-	if err := c.root.Rename(name, dest); err != nil {
+	if err := retryTransient(func() error { return c.root.Rename(name, dest) }); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil
 		}
@@ -255,7 +255,7 @@ func (c *Cache) quarantine(name, label, prefix string, expect fs.FileInfo) error
 	// A concurrent writer can install a new entry between the check above
 	// and the rename; such an entry is not the corrupt one and goes back.
 	if moved, err := c.root.Lstat(dest); err == nil && !os.SameFile(expect, moved) {
-		_ = c.root.Rename(dest, name)
+		_ = retryTransient(func() error { return c.root.Rename(dest, name) })
 
 		return fault.Wrap(fault.Internal, errEntryChanged, "quarantine %s (%s)", label, c.path(name))
 	}

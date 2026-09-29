@@ -466,3 +466,15 @@ func wantKind(t *testing.T, err error, kind fault.Kind) {
 		t.Fatalf("error %q has kind %s, want %s", err, got, kind)
 	}
 }
+
+// samePath reports whether two paths name the same directory after
+// resolving symlinks: on macOS the working directory a child reports is
+// under /private/var while t.TempDir returns the /var symlink.
+func samePath(t *testing.T, a, b string) bool {
+	t.Helper()
+
+	ra, errA := filepath.EvalSymlinks(a)
+	rb, errB := filepath.EvalSymlinks(b)
+
+	return errA == nil && errB == nil && ra == rb
+}

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -223,7 +224,7 @@ func TestSignedRedirectFailuresDoNotShowTheSignature(t *testing.T) {
 		name      string
 		fragments []string
 	}{
-		{name: "connection refused", base: refusedURL, fragments: []string{"network error", "connection refused"}},
+		{name: "connection refused", base: refusedURL, fragments: []string{"network error", refusedText()}},
 		{name: "403", base: deniedURL, fragments: []string{"token service or storage backend", "access denied (403)"}},
 	}
 
@@ -304,4 +305,13 @@ func FuzzStripQueries(f *testing.F) {
 			t.Fatalf("stripQueries is not idempotent: %q -> %q -> %q", text, once, twice)
 		}
 	})
+}
+
+// refusedText is how the operating system words a refused TCP connection.
+func refusedText() string {
+	if runtime.GOOS == "windows" {
+		return "actively refused"
+	}
+
+	return "connection refused"
 }

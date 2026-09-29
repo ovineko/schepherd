@@ -48,7 +48,7 @@ func TestExecuteBatchRunsOneProcessPerSchema(t *testing.T) {
 			t.Errorf("process %d argv = %q, want %q", i, recs[i].Args, want)
 		}
 
-		if recs[i].Cwd != h.workspace || recs[i].Key != w.id || len(recs[i].Stdin) != 0 {
+		if !samePath(t, recs[i].Cwd, h.workspace) || recs[i].Key != w.id || len(recs[i].Stdin) != 0 {
 			t.Errorf("process %d cwd=%q key=%q stdin=%q", i, recs[i].Cwd, recs[i].Key, recs[i].Stdin)
 		}
 
