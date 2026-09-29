@@ -1,0 +1,9 @@
+# License policy of the end-to-end fixture sets.
+[[rules]]
+id = "e2e-fixtures"
+decision = "allow"
+hosts = ["schemas.example.com"]
+path_prefix = "/e2e/"
+license = "MIT"
+notice = "Schepherd end-to-end test fixture. MIT License."
+reason = "test fixture"

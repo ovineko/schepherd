@@ -1,0 +1,4 @@
+config_version = 1
+
+[catalog]
+digest = "sha256:0123"

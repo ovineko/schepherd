@@ -1,0 +1,5 @@
+# catalog/state.json repeats upstream schema names and descriptions verbatim,
+# and the generated THIRD_PARTY_NOTICES.md upstream repository, package and
+# schema names, none of which can be corrected here.
+[files]
+extend-exclude = ["catalog/state.json", "THIRD_PARTY_NOTICES.md"]

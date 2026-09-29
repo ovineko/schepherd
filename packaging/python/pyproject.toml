@@ -1,0 +1,45 @@
+[project]
+name = "schepherd"
+description = "Delivers pinned JSON Schemas from an OCI catalog to verified local files."
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_LICENSES.txt"]
+keywords = ["cli", "json-schema", "oci", "schema", "validation"]
+classifiers = ["Environment :: Console", "Intended Audience :: Developers", "Operating System :: MacOS", "Operating System :: Microsoft :: Windows", "Operating System :: POSIX :: Linux", "Programming Language :: Go", "Programming Language :: Python :: 3 :: Only", "Topic :: Software Development :: Quality Assurance", "Topic :: Utilities"]
+dynamic = ["version"]
+
+[project.urls]
+Documentation = "https://schepherd.ovineko.com"
+Homepage = "https://schepherd.ovineko.com"
+Issues = "https://github.com/ovineko/schepherd/issues"
+Repository = "https://github.com/ovineko/schepherd"
+
+[project.scripts]
+schepherd = "schepherd.main:main"
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool]
+[tool.deptry]
+extend_exclude = ["tests"]
+
+[tool.hatch]
+[tool.hatch.build]
+[tool.hatch.build.targets]
+[tool.hatch.build.targets.wheel]
+core-metadata-version = "2.4"
+packages = ["schepherd"]
+
+[tool.hatch.build.targets.wheel.hooks]
+[tool.hatch.build.targets.wheel.hooks.custom]
+
+[tool.hatch.version]
+source = "env"
+variable = "SCHEPHERD_VERSION"
+
+[tool.ruff]
+indent-width = 2
+line-length = 100

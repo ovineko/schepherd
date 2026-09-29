@@ -1,0 +1,81 @@
+[project]
+site_name = "schepherd"
+site_url = "https://schepherd.ovineko.com/"
+site_description = "Deliver pinned JSON Schemas from OCI registries to verified local files"
+site_author = "ovineko"
+copyright = "Copyright &copy; 2026 ovineko"
+repo_url = "https://github.com/ovineko/schepherd"
+repo_name = "ovineko/schepherd"
+
+docs_dir = "docs"
+site_dir = "dist/website"
+extra_css = ["assets/stylesheets/extra.css"]
+
+[project.theme]
+language = "en"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+primary = "cyan"
+accent = "cyan"
+
+# Palette toggle for light mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+primary = "cyan"
+accent = "cyan"
+
+# Palette toggle for dark mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+primary = "cyan"
+accent = "cyan"
+
+[project.theme.features]
+"announce.dismiss" = true
+"content.code.annotate" = true
+"content.code.copy" = true
+"navigation.expand" = true
+"navigation.instant" = true
+"navigation.sections" = true
+"navigation.top" = true
+"search.highlight" = true
+"search.suggest" = true
+
+[[project.nav]]
+Home = "index.md"
+
+[[project.nav]]
+Guides = [
+  { Installation = "installation.md" },
+  { Configuration = "configuration.md" },
+  { "File matching" = "matching.md" },
+  { Runner = "runner.md" },
+  { "Mirroring and retention" = "mirroring.md" },
+  { "Integrating with other tools" = "integration.md" },
+]
+
+[[project.nav]]
+Reference = [
+  { "Command reference" = "cli.md" },
+  { "OCI wire format" = "oci-format.md" },
+  { Versioning = "versioning.md" },
+]
+
+[[project.nav]]
+Design = [{ Architecture = "architecture.md" }, { "Security and trust model" = "security.md" }]
+
+[[project.nav]]
+Maintainers = [
+  { "Publishing schema snapshots" = "publishing.md" },
+  { "Catalog automation" = "automation.md" },
+  { Testing = "testing.md" },
+]

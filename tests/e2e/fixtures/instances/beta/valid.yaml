@@ -1,0 +1,4 @@
+replicas: 2
+service:
+  enabled: true
+  image: registry.example.com/app:1.0

@@ -1,0 +1,7 @@
+# sigstore-cli signs the gem for its RubyGems attestation in the release
+# workflow (gem push --attestation), the signer RubyGems itself uses. The lock
+# pins every gem with its SHA-256, which Bundler verifies on install; update
+# it with Ruby of packaging/ruby/.ruby-version: bundle lock --update.
+source "https://rubygems.org"
+
+gem "sigstore-cli", "0.2.3"

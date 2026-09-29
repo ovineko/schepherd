@@ -1,0 +1,45 @@
+{
+  "$defs": {
+    "service": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "pattern": "^[a-z0-9./:-]+$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A deployment configuration, second revision with a region.",
+  "properties": {
+    "region": {
+      "enum": [
+        "eu",
+        "us"
+      ],
+      "type": "string"
+    },
+    "replicas": {
+      "maximum": 100,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "service": {
+      "$ref": "#/$defs/service"
+    }
+  },
+  "required": [
+    "service"
+  ],
+  "title": "Beta",
+  "type": "object"
+}

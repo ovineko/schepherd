@@ -1,0 +1,8 @@
+config_version = 1
+
+[limits]
+max_catalog_entries = 1000
+
+[runner.env]
+FROM_COMMON = "common"
+SHARED = "common"

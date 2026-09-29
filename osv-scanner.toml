@@ -1,0 +1,9 @@
+# GO-2026-5932 marks the whole golang.org/x/crypto module because of its
+# unmaintained openpgp packages and has no fixed version. Schepherd imports
+# only golang.org/x/crypto/bcrypt, in the end-to-end tests (htpasswd files of
+# the test registries); nothing imports openpgp, and govulncheck finds no
+# reachable vulnerability. Review again when the advisory changes.
+[[IgnoredVulns]]
+id = "GO-2026-5932"
+ignoreUntil = 2027-03-25
+reason = "only golang.org/x/crypto/bcrypt is imported, by the e2e tests; the advisory covers openpgp and has no fixed version"

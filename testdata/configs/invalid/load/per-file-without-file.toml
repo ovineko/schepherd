@@ -1,0 +1,6 @@
+config_version = 1
+
+[runner]
+mode = "per-file"
+command = "validator"
+args = ["{schema}"]

@@ -1,0 +1,17 @@
+# License policy of the dependency fixture set; {{DEP_HOST}} is filled in at
+# test time.
+[[rules]]
+id = "e2e-fixtures"
+decision = "allow"
+hosts = ["schemas.example.com"]
+path_prefix = "/e2e/"
+license = "MIT"
+notice = "Schepherd end-to-end test fixture. MIT License."
+reason = "test fixture"
+
+[[rules]]
+id = "e2e-dependency-server"
+decision = "allow"
+urls = ["http://{{DEP_HOST}}/dep.json"]
+license = "MIT"
+reason = "test fixture"

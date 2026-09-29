@@ -1,0 +1,17 @@
+{
+  "$id": "https://schemas.example.com/e2e/deps-root.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "port": {
+      "$ref": "http://{{DEP_HOST}}/dep.json"
+    }
+  },
+  "required": [
+    "port"
+  ],
+  "title": "Deps root",
+  "type": "object"
+}

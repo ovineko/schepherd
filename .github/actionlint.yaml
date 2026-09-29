@@ -1,0 +1,7 @@
+# actionlint 1.7.12, the version datamitsu pins and the latest upstream release,
+# does not know the GitHub-hosted Ubuntu 26.04 images yet, although
+# actions/runner-images lists them as generally available.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+    - ubuntu-26.04-arm

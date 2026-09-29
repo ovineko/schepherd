@@ -1,0 +1,29 @@
+config_version = 1
+extends = ["common.toml"]
+workspace = ".."
+cache_dir = "cache"
+
+[catalog]
+repository = "registry.example/org/schemas"
+digest = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+[limits]
+max_manifest_bytes = 1048576
+
+[registries."registry.example"]
+ca_file = "certs/ca.pem"
+
+[runner]
+mode = "batch"
+command = "validator"
+args = ["--base", "{files...}"]
+cwd = "tools"
+timeout = "30s"
+
+[runner.env]
+SHARED = "base"
+BASE_ONLY = "1"
+
+[[mappings]]
+file_match = ["base.json"]
+schema = "base-schema"

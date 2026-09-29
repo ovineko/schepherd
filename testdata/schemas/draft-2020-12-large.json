@@ -1,0 +1,160 @@
+{
+  "$id": "https://schemas.example.com/large-config.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A schema larger than the 4096-byte gzip threshold of the schepherd-pack/1 recipe.",
+  "properties": {
+    "cache-option-01": {
+      "default": false,
+      "description": "Enables cache option 01. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-02": {
+      "default": false,
+      "description": "Enables cache option 02. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-03": {
+      "default": false,
+      "description": "Enables cache option 03. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-04": {
+      "default": false,
+      "description": "Enables cache option 04. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-05": {
+      "default": false,
+      "description": "Enables cache option 05. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-06": {
+      "default": false,
+      "description": "Enables cache option 06. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-07": {
+      "default": false,
+      "description": "Enables cache option 07. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-08": {
+      "default": false,
+      "description": "Enables cache option 08. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-09": {
+      "default": false,
+      "description": "Enables cache option 09. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "cache-option-10": {
+      "default": false,
+      "description": "Enables cache option 10. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-01": {
+      "default": false,
+      "description": "Enables http option 01. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-02": {
+      "default": false,
+      "description": "Enables http option 02. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-03": {
+      "default": false,
+      "description": "Enables http option 03. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-04": {
+      "default": false,
+      "description": "Enables http option 04. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-05": {
+      "default": false,
+      "description": "Enables http option 05. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-06": {
+      "default": false,
+      "description": "Enables http option 06. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-07": {
+      "default": false,
+      "description": "Enables http option 07. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-08": {
+      "default": false,
+      "description": "Enables http option 08. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-09": {
+      "default": false,
+      "description": "Enables http option 09. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "http-option-10": {
+      "default": false,
+      "description": "Enables http option 10. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-01": {
+      "default": false,
+      "description": "Enables logging option 01. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-02": {
+      "default": false,
+      "description": "Enables logging option 02. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-03": {
+      "default": false,
+      "description": "Enables logging option 03. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-04": {
+      "default": false,
+      "description": "Enables logging option 04. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-05": {
+      "default": false,
+      "description": "Enables logging option 05. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-06": {
+      "default": false,
+      "description": "Enables logging option 06. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-07": {
+      "default": false,
+      "description": "Enables logging option 07. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-08": {
+      "default": false,
+      "description": "Enables logging option 08. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-09": {
+      "default": false,
+      "description": "Enables logging option 09. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    },
+    "logging-option-10": {
+      "default": false,
+      "description": "Enables logging option 10. Every option of the example configuration shares this wording, which keeps the fixture highly compressible.",
+      "type": "boolean"
+    }
+  },
+  "title": "Example large configuration",
+  "type": "object"
+}

@@ -1,0 +1,40 @@
+allowBuilds:
+  esbuild: false
+audit:
+  level: high
+autoInstallPeers: true
+blockExoticSubdeps: true
+catalog:
+  "@shibanet0/datamitsu-config": 0.4.1
+dangerouslyAllowAllBuilds: false
+dedupeDirectDeps: true
+dedupePeerDependents: true
+enableGlobalVirtualStore: true
+enablePrePostScripts: false
+engineStrict: true
+hoistPattern: []
+lockfile: true
+minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - "@datamitsu/datamitsu-darwin-arm64@0.4.0"
+  - "@datamitsu/datamitsu-darwin-x64@0.4.0"
+  - "@datamitsu/datamitsu-freebsd-arm64@0.4.0"
+  - "@datamitsu/datamitsu-freebsd-x64@0.4.0"
+  - "@datamitsu/datamitsu-linux-arm64@0.4.0"
+  - "@datamitsu/datamitsu-linux-x64@0.4.0"
+  - "@datamitsu/datamitsu-win32-arm64@0.4.0"
+  - "@datamitsu/datamitsu-win32-x64@0.4.0"
+  - "@datamitsu/datamitsu@0.4.0"
+  - "@shibanet0/datamitsu-config@0.4.1"
+optimisticRepeatInstall: true
+preferFrozenLockfile: true
+resolutionMode: lowest-direct
+savePrefix: ""
+strictDepBuilds: true
+strictSsl: true
+trustLockfile: true
+trustPolicy: no-downgrade
+unsafePerm: false
+updateNotifier: false
+verifyDepsBeforeRun: install
+verifyStoreIntegrity: true

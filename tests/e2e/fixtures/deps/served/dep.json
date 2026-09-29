@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "maximum": 65535,
+  "minimum": 1,
+  "title": "Port number",
+  "type": "integer"
+}

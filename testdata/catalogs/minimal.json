@@ -1,0 +1,15 @@
+{
+  "formatVersion": 2,
+  "revision": "20260923.1200",
+  "schemas": [
+    {
+      "artifact": {
+        "digest": "sha256:1add9a09b86d37c2832b2d8addaf789bdbbaf53d8a173914eb0fc414cbdddf28",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 662
+      },
+      "id": "any",
+      "name": "Any JSON value"
+    }
+  ]
+}

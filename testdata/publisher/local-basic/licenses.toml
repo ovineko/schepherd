@@ -1,0 +1,7 @@
+[[rules]]
+id = "fixtures"
+decision = "allow"
+hosts = ["schemas.example"]
+license = "MIT"
+notice = "Schepherd test fixtures (MIT)."
+reason = "test fixture"

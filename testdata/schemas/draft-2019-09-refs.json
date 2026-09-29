@@ -1,0 +1,24 @@
+{
+  "$defs": {
+    "port": {
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "$id": "https://schemas.example.com/service.json",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "properties": {
+    "listen": {
+      "$ref": "#/$defs/port"
+    },
+    "metrics": {
+      "$ref": "#/$defs/port"
+    }
+  },
+  "required": [
+    "listen"
+  ],
+  "title": "Example service definition",
+  "type": "object"
+}

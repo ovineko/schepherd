@@ -1,0 +1,349 @@
+{
+  "$defs": {
+    "detection": {
+      "additionalProperties": false,
+      "dependentRequired": {
+        "noticeDigest": [
+          "noticeFile"
+        ],
+        "noticeFile": [
+          "noticeDigest"
+        ]
+      },
+      "description": "What automatic license detection found for one URL of the schema: where the license was read (a repository commit or an exact package version), the files read and their digests.",
+      "properties": {
+        "license": {
+          "description": "The detected SPDX license expression.",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9.+:()-]+(?: [A-Za-z0-9.+:()-]+)*$",
+          "type": "string"
+        },
+        "licenseDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "licenseFile": {
+          "$ref": "#/$defs/detectionText"
+        },
+        "noticeDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "noticeFile": {
+          "$ref": "#/$defs/detectionText"
+        },
+        "source": {
+          "$ref": "#/$defs/detectionText",
+          "description": "github:<owner>/<repo>@<commit> or npm:<package>@<version>."
+        },
+        "url": {
+          "description": "An http(s) URL of printable ASCII without credentials.",
+          "maxLength": 4096,
+          "not": {
+            "pattern": "^[A-Za-z]+://[^/?#]*@"
+          },
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[\\x21-\\x7e]+$",
+          "type": "string"
+        },
+        "verdict": {
+          "const": "allow"
+        }
+      },
+      "required": [
+        "url",
+        "source",
+        "license",
+        "licenseFile",
+        "licenseDigest",
+        "verdict"
+      ],
+      "type": "object"
+    },
+    "detectionText": {
+      "maxLength": 512,
+      "minLength": 1,
+      "pattern": "^[\\x21-\\x7e](?:[\\x20-\\x7e]*[\\x21-\\x7e])?$",
+      "type": "string"
+    },
+    "digest": {
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "licenseDecision": {
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "detections": {
+          "description": "Findings of automatic license detection for the URLs no rule decides, sorted by url.",
+          "items": {
+            "$ref": "#/$defs/detection"
+          },
+          "maxItems": 1025,
+          "minItems": 1,
+          "type": "array"
+        },
+        "redirects": {
+          "description": "The documents of the schema that were served through an HTTP redirect, sorted by url without duplicates. The rules and detections cover each target as well; preparation reuses the decision only while every such URL still redirects to the recorded target with the recorded digest.",
+          "items": {
+            "$ref": "#/$defs/redirect"
+          },
+          "maxItems": 1025,
+          "minItems": 1,
+          "type": "array"
+        },
+        "rules": {
+          "description": "IDs of the license rules that allowed the source and its dependencies, sorted.",
+          "items": {
+            "$ref": "#/$defs/ruleId"
+          },
+          "maxItems": 1025,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "type": "object"
+    },
+    "redirect": {
+      "additionalProperties": false,
+      "description": "A document of the schema that another URL served through an HTTP redirect.",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the bytes the target served."
+        },
+        "target": {
+          "$ref": "#/$defs/redirectURL",
+          "description": "The URL that served the document after the redirect; it differs from url."
+        },
+        "url": {
+          "$ref": "#/$defs/redirectURL",
+          "description": "The requested URL: the root document's retrieval URL or a dependency's source."
+        }
+      },
+      "required": [
+        "url",
+        "target",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "redirectURL": {
+      "description": "An http(s) URL of printable ASCII without credentials or fragment.",
+      "maxLength": 4096,
+      "not": {
+        "pattern": "^[A-Za-z]+://[^/?#]*@"
+      },
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[\\x21\\x22\\x24-\\x7e]+$",
+      "type": "string"
+    },
+    "revision": {
+      "description": "Catalog revision YYYYMMDD.HHMM: the UTC minute of a publication, with a date from 2000 to 9999 and a time from 00:00 to 23:59.",
+      "pattern": "^[2-9][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])\\.(?:[01][0-9]|2[0-3])[0-5][0-9]$",
+      "type": "string"
+    },
+    "ruleId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$",
+      "type": "string"
+    },
+    "schema": {
+      "additionalProperties": false,
+      "dependentRequired": {
+        "heldReason": [
+          "heldSinceRevision"
+        ],
+        "heldSinceRevision": [
+          "heldReason"
+        ]
+      },
+      "not": {
+        "required": [
+          "heldSinceRevision",
+          "excludedRevision"
+        ]
+      },
+      "properties": {
+        "artifactRevision": {
+          "$ref": "#/$defs/revision",
+          "description": "Present only when the last change touched metadata only: the older revision that gave the entry its current artifact (added it or changed its content). Absent, it equals lastChangedRevision."
+        },
+        "contentDigest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the prepared schema bytes. While it and noticeDigest stay the same, publication reuses the artifact in entry."
+        },
+        "entry": {
+          "$ref": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/catalog.schema.json#/$defs/entry",
+          "description": "The catalog entry exactly as the current catalog lists it, provenance included; for an excluded schema the entry it last had.",
+          "required": [
+            "provenance"
+          ]
+        },
+        "excludedRevision": {
+          "$ref": "#/$defs/revision",
+          "description": "Present when an explicit exclude rule removed the schema from the catalog: the revision that dropped it. The record keeps its last entry so its ID stays reserved; it is not part of the current catalog."
+        },
+        "firstRevision": {
+          "$ref": "#/$defs/revision",
+          "description": "The revision that added the schema to the catalog: its first publication, or its return after an exclusion."
+        },
+        "heldReason": {
+          "description": "Why the schema is held; present exactly when heldSinceRevision is.",
+          "enum": [
+            "removed-upstream",
+            "fetch-failed",
+            "license-detection-failed",
+            "license-refused",
+            "license-review",
+            "prepare-failed"
+          ]
+        },
+        "heldSinceRevision": {
+          "$ref": "#/$defs/revision",
+          "description": "Present while the catalog keeps the entry and artifact unchanged because the schema could not be refreshed: the first published revision that kept it so. A later refresh ends the hold."
+        },
+        "id": {
+          "description": "The schema ID; equal to entry.id.",
+          "type": "string"
+        },
+        "lastChangedRevision": {
+          "$ref": "#/$defs/revision",
+          "description": "The revision that last changed the entry in any way: added it, gave it new content (schema bytes or notice) or new metadata."
+        },
+        "licenseDecision": {
+          "$ref": "#/$defs/licenseDecision",
+          "description": "The license decision the entry was published with; absent when it names no rules, detections or redirects (a license a local source file declares for documents served without a redirect). Preparation reuses it, without asking automatic license detection again, while the source and dependency digests stay the ones in entry.provenance and every recorded redirect still leads to its recorded target."
+        },
+        "noticeDigest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the notice text the artifact carries in its notice layer; absent when it has none. A change republishes the schema, so the published notice always matches the entry."
+        }
+      },
+      "required": [
+        "id",
+        "contentDigest",
+        "firstRevision",
+        "lastChangedRevision",
+        "entry"
+      ],
+      "type": "object"
+    },
+    "text": {
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[\\x21-\\x7e](?:[\\x20-\\x7e]*[\\x21-\\x7e])?$",
+      "type": "string"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/state.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "catalog/state.json, the record in Git of what the publisher has published. Constraints that JSON Schema cannot express are enforced by the publisher: the canonical encoding (member order, two-space indentation, a final newline), schemas sorted by id in strictly ascending byte order with id equal to entry.id, the entry rules of api/catalog.schema.json that it cannot express either, real calendar dates in revisions, firstRevision <= artifactRevision < lastChangedRevision <= catalog.revision, lastChangedRevision < heldSinceRevision <= catalog.revision, lastChangedRevision < excludedRevision <= catalog.revision, sorted license decision rules, detections and redirects, a redirect target that differs from its url, and SPDX license expression grammar.",
+  "properties": {
+    "catalog": {
+      "additionalProperties": false,
+      "description": "The current catalog: its revision and the digest and size of its OCI image index, which clients pin.",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "size": {
+          "maximum": 4194304,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "revision",
+        "digest",
+        "size"
+      ],
+      "type": "object"
+    },
+    "formatVersion": {
+      "const": 1
+    },
+    "recipe": {
+      "$ref": "#/$defs/text",
+      "description": "The prepare recipe of the current catalog."
+    },
+    "schemas": {
+      "items": {
+        "$ref": "#/$defs/schema"
+      },
+      "maxItems": 20000,
+      "type": "array"
+    },
+    "source": {
+      "description": "The upstream input of the current catalog.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "commit": {
+              "pattern": "^[0-9a-f]{40}$",
+              "type": "string"
+            },
+            "kind": {
+              "const": "schemastore"
+            },
+            "repository": {
+              "description": "An https URL of printable ASCII without credentials, query or fragment.",
+              "maxLength": 1024,
+              "not": {
+                "anyOf": [
+                  {
+                    "pattern": "[?#]"
+                  },
+                  {
+                    "pattern": "^https://[^/]*@"
+                  }
+                ]
+              },
+              "pattern": "^https://[\\x21-\\x2e\\x30-\\x7e][\\x21-\\x7e]*$",
+              "type": "string"
+            },
+            "tarballDigest": {
+              "$ref": "#/$defs/digest"
+            }
+          },
+          "required": [
+            "kind",
+            "repository",
+            "commit",
+            "tarballDigest"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "local"
+            },
+            "name": {
+              "$ref": "#/$defs/text"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object"
+        }
+      ]
+    }
+  },
+  "required": [
+    "formatVersion",
+    "source",
+    "recipe",
+    "catalog",
+    "schemas"
+  ],
+  "title": "Schepherd publisher state, formatVersion 1",
+  "type": "object"
+}

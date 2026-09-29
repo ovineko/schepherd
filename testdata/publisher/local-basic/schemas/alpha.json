@@ -1,0 +1,17 @@
+{
+  "$id": "https://schemas.example/alpha.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "size": {
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "type": "object"
+}

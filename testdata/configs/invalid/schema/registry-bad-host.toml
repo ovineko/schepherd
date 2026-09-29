@@ -1,0 +1,4 @@
+config_version = 1
+
+[registries."https://registry.example"]
+plain_http = true

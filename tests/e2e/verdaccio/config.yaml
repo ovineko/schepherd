@@ -1,0 +1,20 @@
+# Verdaccio for the npm packaging scenario of the end-to-end suite. There are
+# no uplinks: nothing is proxied from the public npm registry, so an install
+# can only succeed with packages the test published here.
+auth:
+  htpasswd:
+    file: /verdaccio/storage/htpasswd
+    max_users: -1
+log:
+  format: pretty
+  level: warn
+  type: stdout
+max_body_size: 256mb
+packages:
+  "**":
+    access: $all
+    publish: $all
+    unpublish: $all
+storage: /verdaccio/storage/data
+web:
+  enable: false

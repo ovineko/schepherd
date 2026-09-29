@@ -1,0 +1,16 @@
+# Shared settings. Relative paths in this file resolve against this directory.
+config_version = 1
+
+[catalog]
+repository = "${SCHEPHERD_REPOSITORY}"
+digest = "${SCHEPHERD_CATALOG}"
+
+[runner]
+cwd = "{workspace}"
+timeout = "60s"
+jobs = 1
+fail_fast = false
+inherit_env = true
+
+[runner.env]
+NO_COLOR = "1"

@@ -1,0 +1,47 @@
+config_version = 1
+workspace = "workspace"
+offline = true
+cache_dir = ".cache/schepherd"
+
+[catalog]
+repository = "registry.example:5000/org/schemas"
+digest = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+[limits]
+max_manifest_bytes = 1048576
+max_catalog_bytes = 2097152
+max_catalog_entries = 500
+max_payload_bytes = 4194304
+max_schema_bytes = 8388608
+
+[registries."registry.example:5000"]
+plain_http = false
+ca_file = "certs/ca.pem"
+credentials_file = "docker/config.json"
+
+[registries.localhost]
+plain_http = true
+
+[runner]
+mode = "per-file"
+command = "{workspace}/bin/validate"
+args = ["--schema", "{schema}", "--id={schema-id}", "{file}"]
+cwd = "{workspace}"
+timeout = "90s"
+jobs = 4
+fail_fast = true
+inherit_env = false
+max_args_bytes = 65536
+
+[runner.env]
+NO_COLOR = "1"
+SCHEMA_REF = "{schema-ref}"
+CACHE = "{cache}"
+
+[[mappings]]
+file_match = ["config/company.json", "!config/legacy/**"]
+schema = "company-config"
+
+[[mappings]]
+file_match = ["**/.github/workflows/*.yml"]
+schema = "github-workflow"

@@ -1,0 +1,4 @@
+**/*: cspell, harper-cli, vale, typos
+**/*: osv-scanner
+catalog/state.json: *
+THIRD_PARTY_NOTICES.md: *

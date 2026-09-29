@@ -1,0 +1,4 @@
+config_version = 1
+
+[limits]
+max_payload_bytes = 0

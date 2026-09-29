@@ -1,0 +1,98 @@
+{
+  "formatVersion": 2,
+  "revision": "20260923.1200",
+  "schemas": [
+    {
+      "artifact": {
+        "digest": "sha256:1add9a09b86d37c2832b2d8addaf789bdbbaf53d8a173914eb0fc414cbdddf28",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 662
+      },
+      "description": "Accepts every JSON document. Reachable by ID only.",
+      "id": "any",
+      "name": "Any JSON value"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:7a22c31a5bf95d1c7a1da8f9fbbb551a76e2b0c0f3089e647975a3f3be3f98e0",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 883
+      },
+      "dialect": "https://json-schema.org/draft/2019-09/schema",
+      "fileMatch": [
+        "service.json",
+        "/deploy/*.service.json"
+      ],
+      "id": "example-service",
+      "name": "Example service definition",
+      "provenance": {
+        "license": "CC0-1.0",
+        "source": "https://schemas.example.com/service.json",
+        "sourceDigest": "sha256:0239dac5e1df910b3a46ee6c98b77f7c514b2b9b41260236a5ca52cc5f350655"
+      }
+    },
+    {
+      "artifact": {
+        "digest": "sha256:0a1eae352ac24c856d03b6620717cd4c0ddab63863fa5d81e9812429dc42a31c",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 666
+      },
+      "description": "Configuration file of a fictional command-line tool.",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "fileMatch": [
+        "example-tool.json",
+        ".example-toolrc.json"
+      ],
+      "id": "example-tool",
+      "name": "Example tool configuration",
+      "provenance": {
+        "license": "MIT",
+        "source": "https://schemas.example.com/tool.json",
+        "sourceDigest": "sha256:df51218a4f0cc54e8d1b5ab2684c3020807ceda2608ab8bfce7a2c5b27a6402a"
+      }
+    },
+    {
+      "artifact": {
+        "digest": "sha256:0a1eae352ac24c856d03b6620717cd4c0ddab63863fa5d81e9812429dc42a31c",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 666
+      },
+      "fileMatch": [
+        "example-tool.legacy.json"
+      ],
+      "id": "example-tool-legacy",
+      "name": "Example tool configuration (legacy file name)"
+    },
+    {
+      "artifact": {
+        "digest": "sha256:98d03335ee5f6c46d255e40f6798bcaaddb05e5a99dda6808c1dc0feb5270dbc",
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "size": 695
+      },
+      "description": "A schema above the gzip threshold.\nIts payload is stored compressed.",
+      "dialect": "https://json-schema.org/draft/2020-12/schema",
+      "fileMatch": [
+        "large-config.json",
+        "config/large-*.json",
+        "!**/node_modules/**"
+      ],
+      "id": "large-config",
+      "name": "Example large configuration",
+      "provenance": {
+        "dependencies": [
+          {
+            "digest": "sha256:0239dac5e1df910b3a46ee6c98b77f7c514b2b9b41260236a5ca52cc5f350655",
+            "source": "https://schemas.example.com/service.json"
+          },
+          {
+            "digest": "sha256:df51218a4f0cc54e8d1b5ab2684c3020807ceda2608ab8bfce7a2c5b27a6402a",
+            "source": "https://schemas.example.com/tool.json"
+          }
+        ],
+        "license": "Apache-2.0",
+        "source": "https://schemas.example.com/large-config.json",
+        "sourceDigest": "sha256:5f00a1cb2cd534fae15e733e96eda0ff0c7c8f744435ab7992217b998adc284b"
+      }
+    }
+  ]
+}

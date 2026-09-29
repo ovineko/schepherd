@@ -1,0 +1,4 @@
+config_version = 1
+
+[catalog]
+digest = "registry.example/org/schemas:catalog-latest"

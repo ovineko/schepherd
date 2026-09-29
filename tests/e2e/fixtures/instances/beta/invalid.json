@@ -1,0 +1,6 @@
+{
+  "replicas": -1,
+  "service": {
+    "enabled": "yes"
+  }
+}

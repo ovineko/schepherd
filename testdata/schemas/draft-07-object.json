@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "description": "Configuration file of a fictional command-line tool.",
+  "properties": {
+    "name": {
+      "description": "Display name of the project.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "strict": {
+      "default": false,
+      "description": "Treat warnings as errors.",
+      "type": "boolean"
+    },
+    "version": {
+      "description": "Semantic version of the project.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "title": "Example tool configuration",
+  "type": "object"
+}

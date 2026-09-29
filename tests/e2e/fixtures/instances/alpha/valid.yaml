@@ -1,0 +1,6 @@
+# Alpha instance in YAML.
+name: api
+port: 8080
+tags:
+  - edge
+  - public

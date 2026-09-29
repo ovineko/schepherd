@@ -1,0 +1,209 @@
+{
+  "$defs": {
+    "dependency": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "source": {
+          "$ref": "#/$defs/httpURI"
+        }
+      },
+      "required": [
+        "source",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "descriptor": {
+      "additionalProperties": false,
+      "description": "OCI descriptor of the schema artifact manifest. Entries that list the same digest must agree on its size, and the distinct descriptors must be exactly the schema children of the catalog index.",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "mediaType": {
+          "const": "application/vnd.oci.image.manifest.v1+json"
+        },
+        "size": {
+          "description": "Manifest size in bytes, also bounded by the client limit limits.max_manifest_bytes.",
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mediaType",
+        "digest",
+        "size"
+      ],
+      "type": "object"
+    },
+    "digest": {
+      "description": "A sha256 digest; no other algorithm is supported in formatVersion 2.",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "entry": {
+      "additionalProperties": false,
+      "description": "One schema. The artifact descriptor is resolved against the repository the catalog was fetched from.",
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/descriptor"
+        },
+        "description": {
+          "$ref": "#/$defs/multiLineText",
+          "description": "At most 8192 UTF-8 bytes; line feeds and tabs are allowed.",
+          "maxLength": 8192,
+          "minLength": 1
+        },
+        "dialect": {
+          "$ref": "#/$defs/uri",
+          "description": "The JSON Schema dialect ($schema) of the schema."
+        },
+        "fileMatch": {
+          "description": "Path patterns in the Schepherd matching dialect. Schemas without fileMatch are reachable by ID only.",
+          "items": {
+            "$ref": "#/$defs/pattern"
+          },
+          "maxItems": 256,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "description": "Unique schema ID.",
+          "maxLength": 128,
+          "not": {
+            "pattern": "\\.\\."
+          },
+          "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$",
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/$defs/singleLineText",
+          "description": "Display name: at most 512 UTF-8 bytes, a single line with at least one visible character.",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "artifact"
+      ],
+      "type": "object"
+    },
+    "httpURI": {
+      "description": "An absolute http or https URL with a host and without user information.",
+      "format": "uri",
+      "maxLength": 4096,
+      "minLength": 1,
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[A-Za-z0-9._~!$&'()*+,;=%:\\[\\]-]+(?:[/?#][A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]*)?$",
+      "type": "string"
+    },
+    "multiLineText": {
+      "description": "Text without control characters other than line feed and tab; U+2028 and U+2029 are allowed as line breaks.",
+      "pattern": "^[^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f]*$",
+      "type": "string"
+    },
+    "pattern": {
+      "$ref": "#/$defs/singleLineText",
+      "description": "One fileMatch pattern of at most 1024 UTF-8 bytes. A leading ! negates it; a leading / or ./ anchors it at the workspace root; directory patterns (a trailing /) are not supported.",
+      "maxLength": 1024,
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "^!?(?:\\./|/)?$"
+          },
+          {
+            "pattern": "/$"
+          }
+        ]
+      }
+    },
+    "provenance": {
+      "additionalProperties": false,
+      "description": "Informational origin of the schema. Its URLs are never contacted by the client. It never contains credentials, local paths or timestamps.",
+      "properties": {
+        "dependencies": {
+          "description": "External resources bundled into the schema, sorted by source without duplicates.",
+          "items": {
+            "$ref": "#/$defs/dependency"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "license": {
+          "$ref": "#/$defs/singleLineText",
+          "description": "License of the schema, preferably an SPDX expression; at most 256 UTF-8 bytes.",
+          "maxLength": 256,
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/httpURI"
+        },
+        "sourceDigest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the upstream bytes before preparation."
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "type": "object"
+    },
+    "singleLineText": {
+      "description": "A single line: no control characters and no U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR.",
+      "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f\u2028\u2029]*$",
+      "type": "string"
+    },
+    "uri": {
+      "description": "An absolute URI of at most 4096 characters without user information.",
+      "format": "uri",
+      "maxLength": 4096,
+      "minLength": 1,
+      "not": {
+        "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#]*@"
+      },
+      "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]*$",
+      "type": "string"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/catalog.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The catalog.json payload of the metadata manifest of a Schepherd catalog index. Constraints that JSON Schema cannot express are enforced by the client and listed in docs/oci-format.md: entries sorted by id in strictly ascending byte order, equal artifact digests with equal sizes, distinct artifact descriptors equal to the schema children of the catalog index, dependencies sorted by source, valid fileMatch glob syntax, a real calendar date in the revision, text limits counted in UTF-8 bytes, no Unicode bidirectional controls in text, the configurable entry and manifest size limits, and formatVersion written as the literal 2.",
+  "properties": {
+    "formatVersion": {
+      "const": 2,
+      "description": "Catalog format version. Clients refuse every other value before reading anything else."
+    },
+    "revision": {
+      "description": "Catalog revision YYYYMMDD.HHMM: the UTC minute of the publication, with a date from 2000 to 9999 and a time from 00:00 to 23:59.",
+      "pattern": "^[2-9][0-9]{3}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01])\\.(?:[01][0-9]|2[0-3])[0-5][0-9]$",
+      "type": "string"
+    },
+    "schemas": {
+      "description": "Schema entries sorted by id in strictly ascending byte order.",
+      "items": {
+        "$ref": "#/$defs/entry"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "formatVersion",
+    "revision",
+    "schemas"
+  ],
+  "title": "Schepherd catalog, formatVersion 2",
+  "type": "object"
+}

@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../lib/schepherd"
+
+begin
+  binary = Schepherd.executable
+  # The [command, argv0] form never goes through a shell, which a single
+  # string would when schepherd runs without arguments.
+  exec([binary, binary], *ARGV)
+rescue Schepherd::Error => e
+  warn e.message
+  exit 1
+rescue SystemCallError => e
+  warn "schepherd: cannot start #{binary}: #{e.message}"
+  exit 1
+end

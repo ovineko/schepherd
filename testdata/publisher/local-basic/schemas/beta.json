@@ -1,0 +1,18 @@
+{
+  "$id": "https://schemas.example/beta.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "owner": {
+      "$ref": "common.json#/$defs/name"
+    },
+    "port": {
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "owner"
+  ],
+  "type": "object"
+}

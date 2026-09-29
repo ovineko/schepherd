@@ -1,0 +1,29 @@
+config_version = 1
+workspace = "${PROJECT_ROOT}"
+offline = false
+
+[catalog]
+repository = "${SCHEPHERD_REPOSITORY}"
+digest = "${SCHEPHERD_CATALOG}"
+
+[registries."registry.example"]
+credentials_file = "${HOME}/.docker/config.json"
+
+[runner]
+mode = "batch"
+command = "${JSONSCHEMA_BIN}"
+args = ["validate", "{schema}", "{files...}"]
+cwd = "{workspace}"
+timeout = "60s"
+jobs = 1
+fail_fast = false
+inherit_env = true
+
+[runner.env]
+NO_COLOR = "1"
+SCHEMA_ID = "{schema-id}"
+TOKEN = "${API_TOKEN}"
+
+[[mappings]]
+file_match = ["config/company.json"]
+schema = "company-config"

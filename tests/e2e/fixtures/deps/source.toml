@@ -1,0 +1,28 @@
+# Template of the dependency fixture set (tests/e2e/README.md). newDepsSet
+# replaces {{DEP_HOST}} in every file of its copy with the host:port of the
+# test's HTTP server, which serves served/dep.json (or a changed version) as
+# /dep.json. Only deps-root references it.
+kind = "local"
+name = "e2e-deps"
+policy = "licenses.toml"
+
+[fetch]
+allow_http = true
+allow_private_hosts = ["{{DEP_HOST}}"]
+
+[[entries]]
+id = "deps-root"
+name = "deps-root.json"
+description = "Root schema whose port property references the served dependency"
+url = "https://schemas.example.com/e2e/deps-root.json"
+file = "schemas/deps-root.json"
+file_match = ["deps-root.json"]
+instances = ["instances/valid.json", "instances/invalid.json"]
+
+[[entries]]
+id = "deps-plain"
+name = "deps-plain.json"
+description = "Unrelated schema that must keep its digest when only the dependency changes"
+url = "https://schemas.example.com/e2e/deps-plain.json"
+file = "schemas/deps-plain.json"
+file_match = ["deps-plain.json"]

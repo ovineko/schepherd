@@ -1,0 +1,19 @@
+/* Increase max-width for better table display on wide screens */
+.md-grid {
+  max-width: 80rem;
+}
+
+/* Ensure tables can use the full width */
+.md-typeset table:not([class]) {
+  display: table;
+  width: 100%;
+}
+
+/* Softer dark theme colors - less eye strain */
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1e1e1e;
+  --md-default-fg-color: #e0e0e0;
+  --md-code-bg-color: #2a2a2a;
+  --md-code-fg-color: #e0e0e0;
+  --md-typeset-table-color: #2a2a2a;
+}

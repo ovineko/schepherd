@@ -1,0 +1,13 @@
+# Schemas of this repository next to the pinned catalog; paths are relative to this file:
+#   SCHEPHERD_REPOSITORY=<host/path> SCHEPHERD_CATALOG=sha256:<catalog digest> CHECK_JSONSCHEMA_BIN=/abs/path/to/check-jsonschema schepherd --config examples/local.schepherd.toml run -- <files>
+config_version = 1
+extends = ["./base.schepherd.toml"]
+
+[schemas."company-config"]
+path = "schemas/company-config.schema.json"
+file_match = ["config/company.json"]
+
+[runner]
+mode = "batch"
+command = "${CHECK_JSONSCHEMA_BIN}"
+args = ["--schemafile", "{schema}", "{files...}"]

@@ -1,0 +1,53 @@
+# Local source of an end-to-end fixture set (tests/e2e/README.md). set-basic and
+# set-basic-v2 differ only in schemas/beta.json. The URLs are provenance only:
+# every entry has a local file, nothing is fetched.
+kind = "local"
+name = "e2e-set-basic"
+policy = "licenses.toml"
+
+[[entries]]
+id = "alpha"
+name = "e2e-set-basic"
+description = "Alpha fixture: a small service definition (draft-07)"
+url = "https://schemas.example.com/e2e/alpha.json"
+file = "schemas/alpha.json"
+file_match = ["alpha.json", "**/.github/workflows/*.yml"]
+
+[[entries]]
+id = "beta"
+name = "e2e-set-basic"
+description = "Beta fixture: a deployment configuration (2020-12)"
+url = "https://schemas.example.com/e2e/beta.json"
+file = "schemas/beta.json"
+file_match = ["config/**/*.toml", "beta.yaml"]
+
+[[entries]]
+id = "gamma"
+name = "e2e-set-basic"
+description = "Gamma fixture: large and compressible, stored gzip-packed"
+url = "https://schemas.example.com/e2e/gamma.json"
+file = "schemas/gamma.json"
+file_match = ["gamma.json"]
+
+[[entries]]
+id = "delta"
+name = "e2e-set-basic"
+description = "Delta fixture: reachable by ID only (2019-09)"
+url = "https://schemas.example.com/e2e/delta.json"
+file = "schemas/delta.json"
+
+[[entries]]
+id = "dup1"
+name = "e2e-set-basic"
+description = "First of two schemas claiming compose.yml"
+url = "https://schemas.example.com/e2e/dup1.json"
+file = "schemas/dup1.json"
+file_match = ["compose.yml"]
+
+[[entries]]
+id = "dup2"
+name = "e2e-set-basic"
+description = "Second of two schemas claiming compose.yml"
+url = "https://schemas.example.com/e2e/dup2.json"
+file = "schemas/dup2.json"
+file_match = ["compose.yml"]

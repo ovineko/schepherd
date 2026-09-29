@@ -1,0 +1,11 @@
+{
+  "entries": [],
+  "excluded": [],
+  "formatVersion": 1,
+  "held": [],
+  "recipe": "schepherd-prepare/2+sourcemeta-jsonschema-16.12.0",
+  "source": {
+    "kind": "local",
+    "name": "empty"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "entries": [
+    {
+      "contentDigest": "sha256:bc4a71180870f7945155fbb02f4b0a2e3faa2a62d6d31b7039013055ed19869a",
+      "description": "NPM configuration file",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "fileMatch": [
+        "package.json"
+      ],
+      "id": "package",
+      "name": "package.json",
+      "notice": "notices/dbe1e16284a818621ee6a38a5fcd285723d0392cd3b7b875aebcde47afe2b436.txt",
+      "provenance": {
+        "license": "Apache-2.0",
+        "source": "https://www.schemastore.org/package.json",
+        "sourceDigest": "sha256:42e6e542f166935920655c41f4fd3770190526e687cad495c98851f841899de0"
+      },
+      "schema": "schemas/package.json"
+    }
+  ],
+  "excluded": [],
+  "formatVersion": 1,
+  "held": [],
+  "recipe": "schepherd-prepare/2+sourcemeta-jsonschema-16.12.0",
+  "source": {
+    "commit": "05b037b7a2b68ead6893c857db2594bcad9951d4",
+    "kind": "schemastore",
+    "tarballDigest": "sha256:db4b4d0d1cb480bf9aeea253771c00febe627f236765fa37d6a5614f079a3aa0"
+  }
+}

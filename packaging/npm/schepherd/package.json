@@ -1,0 +1,17 @@
+{
+  "name": "@ovineko/schepherd-launcher-source",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Source of the @ovineko/schepherd launcher; tools/release packages build generates the published package.json",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "@shibanet0/datamitsu-config": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

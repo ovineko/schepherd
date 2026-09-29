@@ -1,0 +1,11 @@
+{
+  "$defs": {
+    "port": {
+      "maximum": 49151,
+      "minimum": 1024,
+      "type": "integer"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Definitions shared by the local schemas of the E40 workspace"
+}

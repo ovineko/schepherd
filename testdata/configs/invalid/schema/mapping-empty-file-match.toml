@@ -1,0 +1,5 @@
+config_version = 1
+
+[[mappings]]
+file_match = []
+schema = "company-config"

@@ -1,0 +1,32 @@
+{
+  "recommendations": [
+    "bierner.comment-tagged-templates",
+    "dbaeumer.vscode-eslint",
+    "drblury.protobuf-vsc",
+    "EditorConfig.EditorConfig",
+    "esbenp.prettier-vscode",
+    "exiasr.hadolint",
+    "foxundermoon.shell-format",
+    "github.vscode-github-actions",
+    "GitHub.vscode-pull-request-github",
+    "golang.Go",
+    "hashicorp.terraform",
+    "hediet.vscode-drawio",
+    "jock.svg",
+    "johnsoncodehk.vscode-tsconfig-helper",
+    "kisstkondoros.typelens",
+    "kvoon.vscode-eslint-codemod",
+    "MermaidChart.vscode-mermaid-chart",
+    "mikestead.dotenv",
+    "myriad-dreamin.tinymist",
+    "oxc.oxc-vscode",
+    "pomdtr.excalidraw-editor",
+    "streetsidesoftware.code-spell-checker",
+    "tekumara.typos-vscode",
+    "timonwong.shellcheck",
+    "tombi-toml.tombi",
+    "tomoki1207.pdf",
+    "usernamehw.errorlens",
+    "Vercel.turbo-vsc"
+  ]
+}

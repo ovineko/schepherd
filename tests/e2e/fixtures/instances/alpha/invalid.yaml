@@ -1,0 +1,6 @@
+# Invalid: port out of range and a duplicated tag.
+name: api
+port: 0
+tags:
+  - edge
+  - edge

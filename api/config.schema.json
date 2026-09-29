@@ -1,0 +1,273 @@
+{
+  "$defs": {
+    "byteLimit": {
+      "maximum": 1073741824,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "envTemplate": {
+      "description": "A value containing at least one ${NAME} reference, validated after expansion. $${NAME} is an escaped literal, not a reference.",
+      "pattern": "(?:^|[^$])\\$\\{[A-Za-z_][A-Za-z0-9_]*\\}",
+      "type": "string"
+    },
+    "fileMatch": {
+      "description": "Path patterns in the matching dialect of docs/matching.md.",
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "localFile": {
+      "description": "A local file path; URLs and other schemes are rejected.",
+      "minLength": 1,
+      "not": {
+        "pattern": "^[A-Za-z][A-Za-z0-9+.-]+:"
+      },
+      "type": "string"
+    },
+    "localSchema": {
+      "additionalProperties": false,
+      "description": "A JSON Schema file of the project, used in place instead of a catalog artifact.",
+      "properties": {
+        "file_match": {
+          "$ref": "#/$defs/fileMatch",
+          "description": "Paths this schema applies to automatically; they take precedence over catalog fileMatch, [[mappings]] over them."
+        },
+        "path": {
+          "$ref": "#/$defs/localFile",
+          "description": "The schema file; relative to this file. Only ${NAME} is expanded. Required once the extends chain is merged."
+        }
+      },
+      "type": "object"
+    },
+    "mapping": {
+      "additionalProperties": false,
+      "properties": {
+        "file_match": {
+          "$ref": "#/$defs/fileMatch"
+        },
+        "schema": {
+          "$ref": "#/$defs/schemaId",
+          "description": "Schema ID from [schemas] or the catalog."
+        }
+      },
+      "required": [
+        "file_match",
+        "schema"
+      ],
+      "type": "object"
+    },
+    "path": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "registry": {
+      "additionalProperties": false,
+      "properties": {
+        "ca_file": {
+          "$ref": "#/$defs/path",
+          "description": "Extra PEM CA bundle trusted for the repositories this entry applies to; relative to this file."
+        },
+        "credentials_file": {
+          "$ref": "#/$defs/path",
+          "description": "Docker-format config.json used only for the repositories this entry applies to; its auths are looked up by host. Relative to this file."
+        },
+        "plain_http": {
+          "description": "Allow plain HTTP for exactly the repositories this entry applies to; meant for local registries.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "runner": {
+      "additionalProperties": false,
+      "description": "The consumer started by \"schepherd run\". Templates are expanded per task at run time.",
+      "properties": {
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "command": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "cwd": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "env": {
+          "additionalProperties": false,
+          "description": "Extra variables for the consumer; values are templates.",
+          "patternProperties": {
+            "^[^=\\x00]+$": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "fail_fast": {
+          "type": "boolean"
+        },
+        "inherit_env": {
+          "type": "boolean"
+        },
+        "jobs": {
+          "maximum": 64,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_args_bytes": {
+          "$ref": "#/$defs/byteLimit"
+        },
+        "mode": {
+          "enum": [
+            "batch",
+            "per-file",
+            "stdin"
+          ]
+        },
+        "timeout": {
+          "description": "Go duration string such as \"90s\" or \"5m\"; must be positive.",
+          "pattern": "^\\+?(?:(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:ns|us|µs|μs|ms|s|m|h))+$",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schemaId": {
+      "not": {
+        "pattern": "\\.\\."
+      },
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One Schepherd TOML configuration file (config_version 1), described as the equivalent JSON document. Every file of an extends chain must be valid on its own. Rules this schema does not express (template syntax and placeholders per field, runner mode requirements, glob syntax, zero durations, NUL characters, extends cycles, port ranges and IPv6 literals of registry hosts) are enforced by the loader; see docs/configuration.md.",
+  "properties": {
+    "cache_dir": {
+      "$ref": "#/$defs/path",
+      "description": "Cache root; relative to this file. Only ${NAME} is expanded."
+    },
+    "catalog": {
+      "additionalProperties": false,
+      "description": "The pinned schema set.",
+      "properties": {
+        "digest": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            {
+              "$ref": "#/$defs/envTemplate"
+            }
+          ],
+          "description": "sha256 digest of the catalog index, or a ${NAME} template that expands to one. Tags are rejected; resolve one with \"schepherd pin\".",
+          "type": "string"
+        },
+        "repository": {
+          "anyOf": [
+            {
+              "pattern": "^(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?|\\[[0-9a-f:.]+\\])(?::[0-9]{1,5})?(?:/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)+$"
+            },
+            {
+              "$ref": "#/$defs/envTemplate"
+            }
+          ],
+          "description": "host[:port]/path in lower case without scheme, tag or digest, or a ${NAME} template that expands to one.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "config_version": {
+      "const": 1,
+      "description": "Configuration format version; must be 1 in every file, including bases.",
+      "type": "integer"
+    },
+    "extends": {
+      "description": "Local TOML files applied before this one, left to right; relative entries resolve against the directory of this file.",
+      "items": {
+        "$ref": "#/$defs/localFile"
+      },
+      "type": "array"
+    },
+    "limits": {
+      "additionalProperties": false,
+      "description": "Bounds for every read of registry content. Limits can be changed but never disabled.",
+      "properties": {
+        "max_catalog_bytes": {
+          "$ref": "#/$defs/byteLimit"
+        },
+        "max_catalog_entries": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_manifest_bytes": {
+          "$ref": "#/$defs/byteLimit"
+        },
+        "max_payload_bytes": {
+          "$ref": "#/$defs/byteLimit"
+        },
+        "max_schema_bytes": {
+          "$ref": "#/$defs/byteLimit"
+        }
+      },
+      "type": "object"
+    },
+    "mappings": {
+      "description": "Local fileMatch rules; they take precedence over the catalog.",
+      "items": {
+        "$ref": "#/$defs/mapping"
+      },
+      "type": "array"
+    },
+    "offline": {
+      "description": "Forbid all network access by Schepherd itself.",
+      "type": "boolean"
+    },
+    "registries": {
+      "additionalProperties": false,
+      "description": "Transport settings keyed by the exact host[:port] of a repository, or by host[:port]/path for the repositories at or below that path, in lower case. The entry with the longest matching key applies on its own; nothing is inherited from a shorter key.",
+      "patternProperties": {
+        "^(?:[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?|\\[[0-9a-f:.]+\\])(?::[0-9]{1,5})?(?:/[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*)*$": {
+          "$ref": "#/$defs/registry"
+        }
+      },
+      "type": "object"
+    },
+    "runner": {
+      "$ref": "#/$defs/runner"
+    },
+    "schemas": {
+      "additionalProperties": false,
+      "description": "Local JSON Schema files keyed by schema ID. An ID declared here is usable wherever a catalog ID is and wins over a catalog entry with the same ID. Entries merge key by key across extends like other tables: path may come from a base and file_match from the file that extends it.",
+      "patternProperties": {
+        "^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$": {
+          "$ref": "#/$defs/localSchema"
+        }
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\\.\\."
+        }
+      },
+      "type": "object"
+    },
+    "workspace": {
+      "$ref": "#/$defs/path",
+      "description": "Root for fileMatch matching and {workspace}; relative to this file. Only ${NAME} is expanded."
+    }
+  },
+  "required": [
+    "config_version"
+  ],
+  "title": "Schepherd configuration",
+  "type": "object"
+}

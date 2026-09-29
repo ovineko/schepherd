@@ -1,0 +1,15 @@
+# Links into github.com/ovineko/schepherd answer 404 while the repository is
+# private. Remove this line once it is public.
+^https://github\.com/ovineko/schepherd([/?#].*)?$
+# The organization's package-manager repositories answer 404 until they are
+# created. Remove this line once they exist.
+^https://github\.com/ovineko/(homebrew-tap|scoop-bucket|winget-pkgs)([/?#].*)?$
+# www.npmjs.com answers 403 to every non-browser client, whether or not the
+# package page exists.
+^https://www\.npmjs\.com/
+# The documentation website is not deployed yet. Remove this line once
+# https://schepherd.ovineko.com serves the site.
+^https://schepherd\.ovineko\.com([/?#].*)?$
+# rubygems.org answers 404 for a gem that was never pushed. Remove this line
+# once the first release is published to RubyGems.
+^https://rubygems\.org/gems/schepherd([/?#].*)?$

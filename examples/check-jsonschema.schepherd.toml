@@ -1,0 +1,9 @@
+# check-jsonschema as the consumer, without changing Schepherd:
+#   SCHEPHERD_REPOSITORY=<host/path> SCHEPHERD_CATALOG=sha256:<catalog digest> CHECK_JSONSCHEMA_BIN=/abs/path/to/check-jsonschema schepherd --config examples/check-jsonschema.schepherd.toml run -- <files>
+config_version = 1
+extends = ["./base.schepherd.toml"]
+
+[runner]
+mode = "batch"
+command = "${CHECK_JSONSCHEMA_BIN}"
+args = ["--schemafile", "{schema}", "{files...}"]

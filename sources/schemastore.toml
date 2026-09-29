@@ -1,0 +1,19 @@
+# SchemaStore upstream for the publisher. `commit` is the last imported
+# commit: the publisher reads the repository at exactly this commit, never the
+# live website, which can lag behind or run ahead of it. The weekly catalog
+# update (.github/workflows/update-schemas.yml) prepares the current master
+# and, only when that changes the published catalog, records the new commit
+# here in the same bot commit as catalog/state.json.
+kind = "upstream"
+commit = "05b037b7a2b68ead6893c857db2594bcad9951d4"
+tarball_base_url = "https://codeload.github.com/SchemaStore/schemastore/tar.gz"
+# 64 MiB; the tarball is about 8 MiB at the imported commit.
+max_tarball_bytes = 67108864
+
+# Per-schema bounds for fetching the external $ref targets of one schema.
+[dependencies]
+max_depth = 8
+max_per_schema = 64
+# 16 MiB per document and 256 MiB in total.
+max_document_bytes = 16777216
+max_total_bytes = 268435456

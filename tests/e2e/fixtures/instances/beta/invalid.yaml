@@ -1,0 +1,4 @@
+# Invalid: replicas above the maximum and an image with upper-case letters.
+replicas: 101
+service:
+  image: Registry.Example.com/App

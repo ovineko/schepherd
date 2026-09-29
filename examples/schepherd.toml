@@ -1,0 +1,16 @@
+# Sourcemeta jsonschema CLI as the consumer:
+#   SCHEPHERD_REPOSITORY=<host/path> SCHEPHERD_CATALOG=sha256:<catalog digest> JSONSCHEMA_BIN=/abs/path/to/jsonschema schepherd --config examples/schepherd.toml run -- <files>
+config_version = 1
+extends = ["./base.schepherd.toml"]
+
+[runner]
+mode = "batch"
+command = "${JSONSCHEMA_BIN}"
+args = ["validate", "{schema}", "{files...}"]
+
+[runner.env]
+SCHEMA_ID = "{schema-id}"
+
+[[mappings]]
+file_match = ["config/company.json"]
+schema = "company-config"

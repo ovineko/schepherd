@@ -1,0 +1,5 @@
+config_version = 1
+
+[[mappings]]
+fileMatch = ["a.json"]
+schema = "company-config"

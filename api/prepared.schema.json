@@ -1,0 +1,527 @@
+{
+  "$defs": {
+    "dependency": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "source": {
+          "$ref": "#/$defs/httpURI"
+        }
+      },
+      "required": [
+        "source",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "descriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "mediaType": {
+          "const": "application/vnd.oci.image.manifest.v1+json"
+        },
+        "size": {
+          "maximum": 4194304,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mediaType",
+        "digest",
+        "size"
+      ],
+      "type": "object"
+    },
+    "detection": {
+      "additionalProperties": false,
+      "dependentRequired": {
+        "noticeDigest": [
+          "noticeFile"
+        ],
+        "noticeFile": [
+          "noticeDigest"
+        ]
+      },
+      "description": "What automatic license detection found for one URL of the schema: where the license was read (a repository commit or an exact package version), the files read and their digests.",
+      "properties": {
+        "license": {
+          "description": "The detected SPDX license expression.",
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9.+:()-]+(?: [A-Za-z0-9.+:()-]+)*$",
+          "type": "string"
+        },
+        "licenseDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "licenseFile": {
+          "$ref": "#/$defs/detectionText"
+        },
+        "noticeDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "noticeFile": {
+          "$ref": "#/$defs/detectionText"
+        },
+        "source": {
+          "$ref": "#/$defs/detectionText",
+          "description": "github:<owner>/<repo>@<commit> or npm:<package>@<version>."
+        },
+        "url": {
+          "description": "An http(s) URL of printable ASCII without credentials.",
+          "maxLength": 4096,
+          "not": {
+            "pattern": "^[A-Za-z]+://[^/?#]*@"
+          },
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[\\x21-\\x7e]+$",
+          "type": "string"
+        },
+        "verdict": {
+          "const": "allow"
+        }
+      },
+      "required": [
+        "url",
+        "source",
+        "license",
+        "licenseFile",
+        "licenseDigest",
+        "verdict"
+      ],
+      "type": "object"
+    },
+    "detectionText": {
+      "maxLength": 512,
+      "minLength": 1,
+      "pattern": "^[\\x21-\\x7e](?:[\\x20-\\x7e]*[\\x21-\\x7e])?$",
+      "type": "string"
+    },
+    "digest": {
+      "description": "A sha256 digest; no other algorithm is supported in formatVersion 1.",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "entry": {
+      "additionalProperties": false,
+      "description": "One schema of the next catalog without its artifact descriptor: a prepared entry with new content (schema, optional notice) or a reused entry (reusedArtifact) that keeps the artifact the publisher state records for its ID because its source and dependencies did not change; its metadata comes from upstream all the same.",
+      "oneOf": [
+        {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "reusedArtifact"
+                ]
+              },
+              {
+                "required": [
+                  "noticeDigest"
+                ]
+              }
+            ]
+          },
+          "required": [
+            "schema"
+          ]
+        },
+        {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "schema"
+                ]
+              },
+              {
+                "required": [
+                  "notice"
+                ]
+              }
+            ]
+          },
+          "required": [
+            "reusedArtifact"
+          ]
+        }
+      ],
+      "properties": {
+        "contentDigest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the schema file; equals the content digest of the packed artifact. For a reused entry the recorded digest."
+        },
+        "description": {
+          "$ref": "#/$defs/multiLineText",
+          "description": "At most 8192 UTF-8 bytes; line feeds and tabs are allowed.",
+          "maxLength": 8192,
+          "minLength": 1
+        },
+        "dialect": {
+          "$ref": "#/$defs/uri",
+          "description": "The $schema of the root document."
+        },
+        "fileMatch": {
+          "description": "Patterns in the Schepherd matching dialect; empty when the schema is reachable by ID only.",
+          "items": {
+            "$ref": "#/$defs/pattern"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "licenseDecision": {
+          "$ref": "#/$defs/licenseDecision",
+          "description": "What the license in provenance rests on: the allowing rules, the findings of automatic license detection and the redirects that served documents of the schema. Absent when it names none of them (a license a local source file declares for documents served without a redirect)."
+        },
+        "name": {
+          "$ref": "#/$defs/singleLineText",
+          "description": "Display name: at most 512 UTF-8 bytes, a single line with at least one visible character.",
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "notice": {
+          "description": "Notice file carried in the artifact's notice layer, named after the sha256 of its bytes. Never in a reused entry.",
+          "pattern": "^notices/[0-9a-f]{64}\\.txt$",
+          "type": "string"
+        },
+        "noticeDigest": {
+          "$ref": "#/$defs/digest",
+          "description": "Reused entries only: the recorded digest of the notice text the reused artifact carries; absent when it has none."
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "reusedArtifact": {
+          "$ref": "#/$defs/descriptor",
+          "description": "The artifact the publisher state records for this ID, which the entry keeps."
+        },
+        "schema": {
+          "description": "Prepared schema file: schemas/<id>.json, compact JSON. Absent in a reused entry.",
+          "pattern": "^schemas/[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?\\.json$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "fileMatch",
+        "contentDigest",
+        "provenance"
+      ],
+      "type": "object"
+    },
+    "exclusion": {
+      "additionalProperties": false,
+      "description": "A published schema an explicit exclude rule removes from the next catalog; the publisher state keeps its ID reserved.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "rule": {
+          "$ref": "#/$defs/ruleId",
+          "description": "The exclude rule."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "hold": {
+      "additionalProperties": false,
+      "description": "A published schema the next catalog keeps with its last entry and artifact because it could not be refreshed, and why.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "reason": {
+          "enum": [
+            "removed-upstream",
+            "fetch-failed",
+            "license-detection-failed",
+            "license-refused",
+            "license-review",
+            "prepare-failed"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "httpURI": {
+      "description": "An absolute http or https URL with a host and without user information.",
+      "format": "uri",
+      "maxLength": 4096,
+      "minLength": 1,
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[A-Za-z0-9._~!$&'()*+,;=%:\\[\\]-]+(?:[/?#][A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]*)?$",
+      "type": "string"
+    },
+    "id": {
+      "description": "Catalog schema ID.",
+      "maxLength": 128,
+      "not": {
+        "pattern": "\\.\\."
+      },
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$",
+      "type": "string"
+    },
+    "licenseDecision": {
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "detections": {
+          "description": "Findings of automatic license detection for the URLs no rule decides, sorted by url.",
+          "items": {
+            "$ref": "#/$defs/detection"
+          },
+          "maxItems": 1025,
+          "minItems": 1,
+          "type": "array"
+        },
+        "redirects": {
+          "description": "The documents of the schema that were served through an HTTP redirect, sorted by url without duplicates. The rules and detections cover each target as well; preparation reuses the decision only while every such URL still redirects to the recorded target with the recorded digest.",
+          "items": {
+            "$ref": "#/$defs/redirect"
+          },
+          "maxItems": 1025,
+          "minItems": 1,
+          "type": "array"
+        },
+        "rules": {
+          "description": "IDs of the license rules that allowed the source and its dependencies, sorted.",
+          "items": {
+            "$ref": "#/$defs/ruleId"
+          },
+          "maxItems": 1025,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "type": "object"
+    },
+    "multiLineText": {
+      "description": "Text without control characters other than line feed and tab; U+2028 and U+2029 are allowed as line breaks.",
+      "pattern": "^[^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f]*$",
+      "type": "string"
+    },
+    "pattern": {
+      "$ref": "#/$defs/singleLineText",
+      "description": "One fileMatch pattern of at most 1024 UTF-8 bytes. A leading ! negates it; a leading / or ./ anchors it at the workspace root; directory patterns (a trailing /) are not supported.",
+      "maxLength": 1024,
+      "minLength": 1,
+      "not": {
+        "anyOf": [
+          {
+            "pattern": "^!?(?:\\./|/)?$"
+          },
+          {
+            "pattern": "/$"
+          }
+        ]
+      }
+    },
+    "provenance": {
+      "additionalProperties": false,
+      "description": "Origin of the prepared schema, copied verbatim into the catalog entry. It never contains credentials, local paths or timestamps.",
+      "properties": {
+        "dependencies": {
+          "description": "Documents embedded into the bundle, sorted by source without duplicates. Absent when the schema was only compacted.",
+          "items": {
+            "$ref": "#/$defs/dependency"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "license": {
+          "$ref": "#/$defs/singleLineText",
+          "description": "SPDX license expression decided by the license policy, declared by a local source or found by automatic license detection; at most 256 UTF-8 bytes. Values that assert no license (NOASSERTION, NONE, OTHER, UNKNOWN, UNLICENSED, in any case) never allow publication.",
+          "maxLength": 256,
+          "minLength": 1,
+          "not": {
+            "pattern": "(?:^|[ (])(?:[Nn][Oo][Aa][Ss][Ss][Ee][Rr][Tt][Ii][Oo][Nn]|[Nn][Oo][Nn][Ee]|[Oo][Tt][Hh][Ee][Rr]|[Uu][Nn][Kk][Nn][Oo][Ww][Nn]|[Uu][Nn][Ll][Ii][Cc][Ee][Nn][Ss][Ee][Dd])(?:$|[ )])"
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/httpURI",
+          "description": "Canonical source URL; also the key for stable IDs."
+        },
+        "sourceDigest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the upstream root document before preparation."
+        }
+      },
+      "required": [
+        "source",
+        "sourceDigest",
+        "license"
+      ],
+      "type": "object"
+    },
+    "redirect": {
+      "additionalProperties": false,
+      "description": "A document of the schema that another URL served through an HTTP redirect.",
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest",
+          "description": "Digest of the bytes the target served."
+        },
+        "target": {
+          "$ref": "#/$defs/redirectURL",
+          "description": "The URL that served the document after the redirect; it differs from url."
+        },
+        "url": {
+          "$ref": "#/$defs/redirectURL",
+          "description": "The requested URL: the root document's retrieval URL or a dependency's source."
+        }
+      },
+      "required": [
+        "url",
+        "target",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "redirectURL": {
+      "description": "An http(s) URL of printable ASCII without credentials or fragment.",
+      "maxLength": 4096,
+      "not": {
+        "pattern": "^[A-Za-z]+://[^/?#]*@"
+      },
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[\\x21\\x22\\x24-\\x7e]+$",
+      "type": "string"
+    },
+    "ruleId": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$",
+      "type": "string"
+    },
+    "singleLineText": {
+      "description": "A single line: no control characters and no U+2028 LINE SEPARATOR or U+2029 PARAGRAPH SEPARATOR.",
+      "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f\u2028\u2029]*$",
+      "type": "string"
+    },
+    "source": {
+      "description": "The upstream the set was prepared from. A SchemaStore set names its pinned commit and tarball digest, a local set its name.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "commit": {
+              "pattern": "^[0-9a-f]{40}$",
+              "type": "string"
+            },
+            "kind": {
+              "const": "schemastore"
+            },
+            "tarballDigest": {
+              "$ref": "#/$defs/digest"
+            }
+          },
+          "required": [
+            "kind",
+            "commit",
+            "tarballDigest"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "local"
+            },
+            "name": {
+              "$ref": "#/$defs/singleLineText",
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "uri": {
+      "description": "An absolute URI of at most 4096 characters without user information.",
+      "format": "uri",
+      "maxLength": 4096,
+      "minLength": 1,
+      "not": {
+        "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#]*@"
+      },
+      "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]*$",
+      "type": "string"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/prepared.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "prepared.json of a prepared schema set written by 'schepherd-publisher prepare' and read by 'schepherd-publisher publish'. The file is canonical: members in the order prepare writes them, two-space indentation, a final newline. Entries, held and excluded together account for every schema the publisher state lists in its catalog, each id in one of them only. Constraints JSON Schema cannot express are enforced by the publisher: entries, held and excluded sorted by id in strictly ascending byte order and disjoint, schema equal to schemas/<id>.json, the digests of the schema and notice files, valid fileMatch glob syntax, SPDX license expression grammar, sorted license decision rules and detections, text limits counted in UTF-8 bytes and no Unicode bidirectional controls in text.",
+  "properties": {
+    "entries": {
+      "description": "Schemas of the next catalog sorted by id in strictly ascending byte order.",
+      "items": {
+        "$ref": "#/$defs/entry"
+      },
+      "maxItems": 20000,
+      "type": "array"
+    },
+    "excluded": {
+      "description": "Published schemas excluded, sorted by id in strictly ascending byte order.",
+      "items": {
+        "$ref": "#/$defs/exclusion"
+      },
+      "maxItems": 20000,
+      "type": "array"
+    },
+    "formatVersion": {
+      "const": 1,
+      "description": "prepared.json format version."
+    },
+    "held": {
+      "description": "Published schemas held, sorted by id in strictly ascending byte order.",
+      "items": {
+        "$ref": "#/$defs/hold"
+      },
+      "maxItems": 20000,
+      "type": "array"
+    },
+    "recipe": {
+      "const": "schepherd-prepare/2+sourcemeta-jsonschema-16.12.0",
+      "description": "The preparation rules the set was produced with, including the pinned bundler whose output is part of every bundled schema; it changes whenever the same input would produce different prepared bytes."
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    }
+  },
+  "required": [
+    "formatVersion",
+    "recipe",
+    "source",
+    "entries",
+    "held",
+    "excluded"
+  ],
+  "title": "Schepherd prepared schema set, formatVersion 1",
+  "type": "object"
+}

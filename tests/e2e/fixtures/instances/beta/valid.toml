@@ -1,0 +1,5 @@
+replicas = 2
+
+[service]
+image = "registry.example.com/app:1.0"
+enabled = true

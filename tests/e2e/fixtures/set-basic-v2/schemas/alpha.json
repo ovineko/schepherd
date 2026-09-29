@@ -1,0 +1,29 @@
+{
+  "$id": "https://schemas.example.com/e2e/alpha.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "description": "A small service definition.",
+  "properties": {
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "port": {
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "title": "Alpha",
+  "type": "object"
+}

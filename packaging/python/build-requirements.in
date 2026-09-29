@@ -1,0 +1,4 @@
+# The build backend of the wheels, compiled with hashes into
+# build-constraints.txt:
+#   uv pip compile build-requirements.in --universal --generate-hashes -o build-constraints.txt
+hatchling==1.32.4

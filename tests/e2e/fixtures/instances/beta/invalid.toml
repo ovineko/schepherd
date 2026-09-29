@@ -1,0 +1,5 @@
+# Invalid: service.image is missing and enabled is not a boolean.
+replicas = 3
+
+[service]
+enabled = "yes"

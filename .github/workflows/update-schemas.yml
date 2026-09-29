@@ -1,0 +1,509 @@
+concurrency:
+  cancel-in-progress: false
+  group: update-schemas
+defaults:
+  run:
+    shell: bash
+env:
+  SCHEMAS_REPOSITORY: ghcr.io/ovineko/schepherd-schemas
+  STATE_FILE: catalog/state.json
+jobs:
+  prepare:
+    name: Scan upstream and prepare
+    outputs:
+      base-state: ${{ steps.plan.outputs.base-state }}
+      mode: ${{ steps.plan.outputs.mode }}
+      publish: ${{ steps.decide.outputs.publish }}
+      upstream: ${{ steps.plan.outputs.upstream }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          cache: false
+          go-version-file: go.mod
+      - name: Install the pinned bundler and build the tools
+        run: |
+          go run ./tools/install-jsonschema
+          go build -o "${RUNNER_TEMP}/bin/" ./cmd/schepherd ./cmd/schepherd-publisher ./tools/catalogbot
+      # A revision whose Git tag, release or catalog-latest is missing was
+      # interrupted after its state was committed. Only the read-only token
+      # of this job is used, for the tag and the release; catalog-latest is
+      # resolved anonymously and counts as unknown when that fails.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        id: status
+        name: Check that the recorded revision was finished
+        run: |
+          latest=""
+          if pinned="$("${RUNNER_TEMP}/bin/schepherd" --quiet pin "${SCHEMAS_REPOSITORY}:catalog-latest" --json)"; then
+            latest="$(jq -r .digest <<<"$pinned")"
+          else
+            echo "::warning::catalog-latest of ${SCHEMAS_REPOSITORY} cannot be resolved anonymously; only the tag and the release are checked"
+          fi
+          "${RUNNER_TEMP}/bin/catalogbot" status --repo "$GITHUB_REPOSITORY" --state "$STATE_FILE" \
+            --latest-digest "$latest" --json > "${RUNNER_TEMP}/status.json"
+          echo "pending=$(jq -r .pending "${RUNNER_TEMP}/status.json")" >> "$GITHUB_OUTPUT"
+      # update: prepare the current upstream master against the recorded
+      # state. finish: the recorded revision lacks its tag, release or
+      # catalog-latest; the publish job completes it from the recorded state
+      # alone, without preparing anything, so it cannot fail because upstream
+      # or an external source changed since. Newer upstream changes wait for
+      # the next run.
+      - env:
+          PENDING: ${{ steps.status.outputs.pending }}
+          REFRESH: ${{ inputs.refresh }}
+        id: plan
+        name: Choose what this run does
+        run: |
+          work="${RUNNER_TEMP}/update"
+          mkdir -p "$work" "${RUNNER_TEMP}/report"
+          base_state=false
+          if [ "$PENDING" = true ]; then
+            if [ -n "$REFRESH" ]; then
+              echo "::warning::this run finishes the recorded revision and prepares nothing; run it again for the refresh"
+            fi
+            mode=finish
+            upstream="$(jq -r .source.commit "$STATE_FILE")"
+            cp "${RUNNER_TEMP}/status.json" "${RUNNER_TEMP}/report/status.json"
+          else
+            mode=update
+            upstream="$(git ls-remote https://github.com/SchemaStore/schemastore refs/heads/master | cut -f1)"
+            "${RUNNER_TEMP}/bin/catalogbot" set-commit --source sources/schemastore.toml --commit "$upstream" \
+              --out "$work/schemastore.toml"
+            if [ -f "$STATE_FILE" ]; then
+              cp "$STATE_FILE" "$work/base-state.json"
+              base_state=true
+            fi
+          fi
+          {
+            echo "mode=${mode}"
+            echo "upstream=${upstream}"
+            echo "base-state=${base_state}"
+          } >> "$GITHUB_OUTPUT"
+      # A missing --state file means that nothing was published before. A
+      # published schema whose source and dependency digests equal the
+      # recorded ones reuses its recorded license decision and artifact, so
+      # it costs no GitHub API call. Other GitHub-hosted sources, including
+      # never-published ones that detection refused before, have their
+      # license detected through the REST API with the read-only token of
+      # this job, and with it the detector waits out GitHub's hourly rate
+      # limit. A published schema that cannot be refreshed for a reason of
+      # its own (removed upstream, a failed fetch or license detection, a
+      # license now refused or held for review, a failed bundling) is held at
+      # its last published version and never fails the run; only systemic
+      # errors do: the upstream snapshot, the registry, the GitHub API or the
+      # configuration. The refresh input of a manual run prepares the named
+      # schemas (or all) anew all the same.
+      - env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REFRESH: ${{ inputs.refresh }}
+        if: steps.plan.outputs.mode == 'update'
+        name: Prepare
+        run: |
+          refresh=()
+          if [ "$REFRESH" = all ]; then
+            refresh=(--refresh-all)
+          else
+            read -r -a ids <<<"$REFRESH"
+            for id in "${ids[@]}"; do
+              refresh+=("--refresh=${id}")
+            done
+          fi
+          "${RUNNER_TEMP}/bin/schepherd-publisher" prepare --source "${RUNNER_TEMP}/update/schemastore.toml" \
+            --policy sources/licenses.toml --ids sources/ids.json --state "${RUNNER_TEMP}/update/base-state.json" \
+            --out "${RUNNER_TEMP}/update/prepared" "${refresh[@]}" --json > "${RUNNER_TEMP}/report/prepare.json"
+          cp "${RUNNER_TEMP}/update/prepared/report.json" "${RUNNER_TEMP}/report/records.json"
+      # hasChanges is true when the new catalog differs from the recorded
+      # one. A record that is newly held while its entry stays the same does
+      # not make a revision by itself; the summary of every run lists the
+      # held records anyway, and from the report of the preparation how many
+      # upstream records are included, pending review (by reason) and failed
+      # (each with its reason). PUBLISHING mirrors the branch condition of
+      # the publish job, so a run from another branch reports what would
+      # change instead.
+      - env:
+          PUBLISHING: ${{ github.ref == 'refs/heads/main' }}
+          UPSTREAM: ${{ steps.plan.outputs.upstream }}
+        id: diff
+        if: steps.plan.outputs.mode == 'update'
+        name: Compare with the recorded state
+        run: |
+          work="${RUNNER_TEMP}/update"
+          checked="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          "${RUNNER_TEMP}/bin/schepherd-publisher" diff --prepared "$work/prepared" --state "$work/base-state.json" \
+            --json > "$work/diff.json"
+          cp "$work/diff.json" "${RUNNER_TEMP}/report/diff.json"
+          "${RUNNER_TEMP}/bin/catalogbot" summary --diff "$work/diff.json" --report "$work/prepared/report.json" \
+            --upstream "$UPSTREAM" --publish="$PUBLISHING" --checked-at "$checked" --out "${RUNNER_TEMP}/report/summary.md"
+          cat "${RUNNER_TEMP}/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          echo "changed=$(jq -r .hasChanges "$work/diff.json")" >> "$GITHUB_OUTPUT"
+      - env:
+          CHANGED: ${{ steps.diff.outputs.changed }}
+          MODE: ${{ steps.plan.outputs.mode }}
+        id: decide
+        name: Decide whether the publish job runs
+        run: |
+          if [ "$MODE" = finish ]; then
+            "${RUNNER_TEMP}/bin/catalogbot" summary --state "$STATE_FILE" --status "${RUNNER_TEMP}/status.json" \
+              --checked-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --out "${RUNNER_TEMP}/report/summary.md"
+            cat "${RUNNER_TEMP}/report/summary.md" >> "$GITHUB_STEP_SUMMARY"
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=${CHANGED}" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.decide.outputs.publish == 'true' && steps.plan.outputs.mode == 'update'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: catalog-update
+          path: ${{ runner.temp }}/update
+          retention-days: 7
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: update-report-prepare
+          path: ${{ runner.temp }}/report
+          retention-days: 90
+  # Order matters and every step is idempotent, so re-running this job after
+  # any failure completes the work: schemas and catalog first (catalog-latest
+  # stays), then the state commit on main, then the Git tag and the release,
+  # and catalog-latest last. A run that stops after the commit is finished by
+  # the next run in finish mode, from the recorded state alone (see the
+  # prepare job); the test job is skipped then, because nothing is prepared.
+  publish:
+    environment: schemas-publish
+    if: >-
+      !cancelled() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && (needs.test.result == 'success' || (needs.test.result == 'skipped' && needs.prepare.outputs.mode == 'finish')) && github.ref == 'refs/heads/main'
+    name: Publish, record, tag and release
+    needs:
+      - prepare
+      - test
+    permissions:
+      attestations: write # build provenance of the published catalog
+      contents: read
+      id-token: write # keyless Sigstore certificate of that attestation
+      packages: write # push the schema artifacts, the catalog and its attestation to GHCR
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          cache: false
+          go-version-file: go.mod
+      - if: needs.prepare.outputs.mode == 'update'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: catalog-update
+          path: ${{ runner.temp }}/update
+      # The prepare job ran the bundler on untrusted upstream data, so of its
+      # artifact only the prepared set is used, and only after this check:
+      # it must have been compared with exactly the state file of this
+      # checkout (reused and held entries refer to the artifacts that state
+      # records). Everything else this job reads, publishes against or
+      # commits comes from the checkout.
+      - env:
+          BASE_STATE: ${{ needs.prepare.outputs.base-state }}
+          MODE: ${{ needs.prepare.outputs.mode }}
+        name: Build the tools and check the prepared update
+        run: |
+          go build -o "${RUNNER_TEMP}/bin/" ./cmd/schepherd-publisher ./tools/catalogbot ./tools/release
+          mkdir -p "${RUNNER_TEMP}/report" "${RUNNER_TEMP}/update"
+          if [ "$MODE" = update ]; then
+            base="${RUNNER_TEMP}/update/base-state.json"
+            if [ -f "$STATE_FILE" ]; then
+              if [ "$BASE_STATE" != true ] || ! cmp -s -- "$STATE_FILE" "$base"; then
+                echo "::error::the prepared update was not compared with ${STATE_FILE} of ${GITHUB_SHA}"
+                exit 1
+              fi
+            elif [ "$BASE_STATE" != false ] || [ -e "$base" ]; then
+              echo "::error::the prepared update carries a state, but ${GITHUB_SHA} records none"
+              exit 1
+            fi
+          fi
+      - env:
+          REGISTRY_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+        name: Registry credentials
+        run: |
+          umask 077
+          mkdir -p "${RUNNER_TEMP}/auth"
+          auth="$(printf '%s:%s' "$REGISTRY_USER" "$REGISTRY_TOKEN" | base64 -w0)"
+          printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$auth" > "${RUNNER_TEMP}/auth/config.json"
+          printf '[registries."ghcr.io"]\ncredentials_file = "%s"\n' "${RUNNER_TEMP}/auth/config.json" > "${RUNNER_TEMP}/registries.toml"
+      # update: unchanged, reused and held schemas keep the artifacts recorded
+      # in the state, and an excluded one leaves the catalog while the state
+      # keeps its ID reserved. finish: main already records the revision;
+      # nothing is published, but
+      # before anything is tagged the registry must hold exactly the recorded
+      # catalog (latest --check).
+      - env:
+          MODE: ${{ needs.prepare.outputs.mode }}
+        id: publish
+        name: Publish the changed schemas and the catalog (catalog-latest stays)
+        run: |
+          work="${RUNNER_TEMP}/update"
+          if [ "$MODE" = finish ]; then
+            "${RUNNER_TEMP}/bin/schepherd-publisher" latest --check --repository "$SCHEMAS_REPOSITORY" \
+              --registry-config "${RUNNER_TEMP}/registries.toml" --state "$STATE_FILE" --json > "${RUNNER_TEMP}/report/check.json"
+            cp "$STATE_FILE" "$work/state.json"
+          else
+            "${RUNNER_TEMP}/bin/schepherd-publisher" publish --prepared "$work/prepared" \
+              --repository "$SCHEMAS_REPOSITORY" --registry-config "${RUNNER_TEMP}/registries.toml" \
+              --state "$STATE_FILE" --state-out "$work/state.json" \
+              --json > "${RUNNER_TEMP}/report/publish.json"
+            status="$(jq -r .status "${RUNNER_TEMP}/report/publish.json")"
+            if [ "$status" != published ] && [ "$status" != resumed ]; then
+              echo "::error::publish ended with status ${status}, although the preparation found changes"
+              exit 1
+            fi
+          fi
+          cp "$work/state.json" "${RUNNER_TEMP}/report/state.json"
+          echo "revision=$(jq -r .catalog.revision "$work/state.json")" >> "$GITHUB_OUTPUT"
+      # The catalog index, whose digest users pin, references every schema
+      # artifact by digest, so its build provenance covers them all. It is
+      # attested before the state is recorded, so a run that fails here
+      # publishes again (a resumed revision) and attests again; finish mode
+      # finds it attested. The attestation is stored by GitHub and pushed to
+      # the registry next to the catalog, which actions/attest reads
+      # credentials for only from ~/.docker/config.json.
+      - id: catalog
+        if: needs.prepare.outputs.mode == 'update'
+        name: Catalog digest and registry credentials for its attestation
+        run: |
+          digest="$(jq -r .catalog.digest "${RUNNER_TEMP}/update/state.json")"
+          if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::the published state records the catalog digest '${digest}'"
+            exit 1
+          fi
+          install -D -m 600 "${RUNNER_TEMP}/auth/config.json" "${HOME}/.docker/config.json"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+      - if: needs.prepare.outputs.mode == 'update'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          create-storage-record: false
+          push-to-registry: true
+          subject-digest: ${{ steps.catalog.outputs.digest }}
+          subject-name: ${{ env.SCHEMAS_REPOSITORY }}
+      # A short-lived installation token of the bot's GitHub App, limited to
+      # contents; commits made with it through the API are signed by GitHub.
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.SCHEPHERD_BOT_CLIENT_ID }}
+          permission-contents: write
+          private-key: ${{ secrets.SCHEPHERD_BOT_PRIVATE_KEY }}
+      # The notes come from the state; in update mode the publish result is
+      # cross-checked against it. The source description committed with the
+      # state is this checkout's, with only its commit line set to the
+      # upstream commit the new state records, which must be the one the
+      # prepare job reported; the prepare job's copy is never committed.
+      # THIRD_PARTY_NOTICES.md is generated here from this checkout and the
+      # new state, so its catalog section always describes the committed
+      # state. In finish mode main already holds the state, so commit returns
+      # the commit that recorded it; only the state file is named then, so a
+      # later change of the other files cannot move the tag to another
+      # commit.
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          MODE: ${{ needs.prepare.outputs.mode }}
+          REVISION: ${{ steps.publish.outputs.revision }}
+          UPSTREAM: ${{ needs.prepare.outputs.upstream }}
+        id: record
+        name: Record the state on main
+        run: |
+          work="${RUNNER_TEMP}/update"
+          notes=(--state "$work/state.json" --repository "$SCHEMAS_REPOSITORY" --out "${RUNNER_TEMP}/report/notes.md")
+          if [ "$MODE" = update ]; then
+            notes+=(--result "${RUNNER_TEMP}/report/publish.json")
+          fi
+          "${RUNNER_TEMP}/bin/catalogbot" notes "${notes[@]}"
+          upstream="$(jq -r .source.commit "$work/state.json")"
+          digest="$(jq -r .catalog.digest "$work/state.json")"
+          printf 'chore(schemas): record catalog %s\n\nUpstream commit: %s\nCatalog: %s@%s\n' \
+            "$REVISION" "$upstream" "$SCHEMAS_REPOSITORY" "$digest" > "${RUNNER_TEMP}/message.txt"
+          files=(--file "${STATE_FILE}=$work/state.json")
+          if [ "$MODE" = update ]; then
+            "${RUNNER_TEMP}/bin/catalogbot" set-commit --source sources/schemastore.toml --state "$work/state.json" \
+              --commit "$UPSTREAM" --out "${RUNNER_TEMP}/schemastore.toml"
+            files+=(--file "sources/schemastore.toml=${RUNNER_TEMP}/schemastore.toml")
+            "${RUNNER_TEMP}/bin/release" notices generate --state "$work/state.json" \
+              --out "${RUNNER_TEMP}/THIRD_PARTY_NOTICES.md"
+            files+=(--file "THIRD_PARTY_NOTICES.md=${RUNNER_TEMP}/THIRD_PARTY_NOTICES.md")
+          fi
+          commit="$("${RUNNER_TEMP}/bin/catalogbot" commit --repo "$GITHUB_REPOSITORY" --branch main \
+            --expected-head "$GITHUB_SHA" --message-file "${RUNNER_TEMP}/message.txt" "${files[@]}")"
+          echo "commit=${commit}" >> "$GITHUB_OUTPUT"
+      - env:
+          COMMIT: ${{ steps.record.outputs.commit }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REVISION: ${{ steps.publish.outputs.revision }}
+        id: release
+        name: Tag and release the revision (not marked latest)
+        run: |
+          url="$("${RUNNER_TEMP}/bin/catalogbot" release --repo "$GITHUB_REPOSITORY" --revision "$REVISION" \
+            --commit "$COMMIT" --notes "${RUNNER_TEMP}/report/notes.md")"
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+      # update: resuming the revision must write the same state. finish:
+      # latest points catalog-latest at the recorded catalog after the same
+      # check as before.
+      - env:
+          COMMIT: ${{ steps.record.outputs.commit }}
+          MODE: ${{ needs.prepare.outputs.mode }}
+          RELEASE_URL: ${{ steps.release.outputs.url }}
+          REVISION: ${{ steps.publish.outputs.revision }}
+        name: Move catalog-latest
+        run: |
+          work="${RUNNER_TEMP}/update"
+          if [ "$MODE" = finish ]; then
+            "${RUNNER_TEMP}/bin/schepherd-publisher" latest --repository "$SCHEMAS_REPOSITORY" \
+              --registry-config "${RUNNER_TEMP}/registries.toml" --state "$work/state.json" --json > "${RUNNER_TEMP}/report/latest.json"
+          else
+            "${RUNNER_TEMP}/bin/schepherd-publisher" publish --prepared "$work/prepared" \
+              --repository "$SCHEMAS_REPOSITORY" --registry-config "${RUNNER_TEMP}/registries.toml" \
+              --state "$STATE_FILE" --state-out "$work/state-latest.json" \
+              --update-latest --json > "${RUNNER_TEMP}/report/latest.json"
+            test "$(jq -r .status "${RUNNER_TEMP}/report/latest.json")" = resumed
+            cmp "$work/state.json" "$work/state-latest.json"
+          fi
+          test "$(jq -r .revision "${RUNNER_TEMP}/report/latest.json")" = "$REVISION"
+          {
+            echo "## Published catalog ${REVISION}"
+            echo
+            echo "- Catalog: \`${SCHEMAS_REPOSITORY}@$(jq -r .catalogDigest "${RUNNER_TEMP}/report/latest.json")\` (now catalog-latest)"
+            echo "- State recorded in ${COMMIT}"
+            echo "- Release: ${RELEASE_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        name: Remove the registry credentials
+        run: rm -rf "${RUNNER_TEMP}/auth" "${RUNNER_TEMP}/registries.toml" "${HOME}/.docker/config.json"
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: update-report-publish
+          path: ${{ runner.temp }}/report
+          retention-days: 90
+  # The same prepared set, published into a throwaway registry exactly as the
+  # publish job will publish it: against the recorded state, into a mirror
+  # of the recorded catalog, because reused and held entries keep artifacts
+  # that only the real registry holds. Before the first publication there is
+  # no state and nothing to mirror. A first publication, a republication
+  # that must be a noop, a resumed publication that must write the same
+  # state, latest on the written state, and every schema fetched with the
+  # client. Finish mode prepares nothing, so there is nothing to test.
+  test:
+    if: needs.prepare.outputs.publish == 'true' && needs.prepare.outputs.mode == 'update'
+    name: Publish to a local registry and consume
+    needs: prepare
+    permissions:
+      contents: read
+      packages: read # mirror the recorded catalog from GHCR
+    runs-on: ubuntu-26.04
+    services:
+      registry:
+        image: distribution/distribution:3.1.2@sha256:d106962e6fe3fa69c178cec77eeeee5edb626b8df6535b7bd6b95e658a0a5ca9
+        ports:
+          - 5000:5000
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          cache: false
+          go-version-file: go.mod
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: catalog-update
+          path: ${{ runner.temp }}/update
+      - env:
+          REGISTRY_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+        name: Registry settings
+        run: |
+          umask 077
+          mkdir -p "${RUNNER_TEMP}/auth"
+          auth="$(printf '%s:%s' "$REGISTRY_USER" "$REGISTRY_TOKEN" | base64 -w0)"
+          printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$auth" > "${RUNNER_TEMP}/auth/config.json"
+          printf '[registries."localhost:5000"]\nplain_http = true\n' > "${RUNNER_TEMP}/registries.toml"
+          printf 'config_version = 1\n[registries."localhost:5000"]\nplain_http = true\n[registries."ghcr.io"]\ncredentials_file = "%s"\n' \
+            "${RUNNER_TEMP}/auth/config.json" > "${RUNNER_TEMP}/client.toml"
+      - name: Publish, republish (noop), resume and fetch every schema
+        run: |
+          work="${RUNNER_TEMP}/local"
+          local_repo=localhost:5000/test/schemas
+          mkdir -p "$work"
+          go build -o "${RUNNER_TEMP}/bin/" ./cmd/schepherd ./cmd/schepherd-publisher
+          pub="${RUNNER_TEMP}/bin/schepherd-publisher"
+          base="${RUNNER_TEMP}/update/base-state.json"
+          if [ -f "$base" ]; then
+            "${RUNNER_TEMP}/bin/schepherd" --config "${RUNNER_TEMP}/client.toml" --quiet mirror \
+              "${SCHEMAS_REPOSITORY}@$(jq -r .catalog.digest "$base")" "$local_repo" --json > "$work/mirror.json"
+          else
+            base="$work/none.json"
+          fi
+          local_publish=("$pub" publish --prepared "${RUNNER_TEMP}/update/prepared" --repository "$local_repo"
+            --registry-config "${RUNNER_TEMP}/registries.toml" --json)
+          "${local_publish[@]}" --state "$base" --state-out "$work/state-1.json" --update-latest > "$work/first.json"
+          test "$(jq -r .status "$work/first.json")" = published
+          digest="$(jq -r .catalogDigest "$work/first.json")"
+          revision="$(jq -r .revision "$work/first.json")"
+          test "$(jq -r .catalog.digest "$work/state-1.json")" = "$digest"
+          test "$(jq -r .catalog.revision "$work/state-1.json")" = "$revision"
+          "${local_publish[@]}" --state "$work/state-1.json" --state-out "$work/state-2.json" > "$work/second.json"
+          test "$(jq -r .status "$work/second.json")" = noop
+          cmp "$work/state-1.json" "$work/state-2.json"
+          "$pub" diff --prepared "${RUNNER_TEMP}/update/prepared" --state "$work/state-1.json" --json | jq -e '.hasChanges == false'
+          "${local_publish[@]}" --state "$base" --state-out "$work/state-3.json" --update-latest > "$work/third.json"
+          test "$(jq -r .status "$work/third.json")" = resumed
+          test "$(jq -r .revision "$work/third.json")" = "$revision"
+          cmp "$work/state-1.json" "$work/state-3.json"
+          "$pub" latest --repository "$local_repo" --registry-config "${RUNNER_TEMP}/registries.toml" \
+            --state "$work/state-3.json" --json | jq -e --arg digest "$digest" '.latest == "current" and .catalogDigest == $digest'
+          client=("${RUNNER_TEMP}/bin/schepherd" --config "${RUNNER_TEMP}/client.toml" --repository "$local_repo"
+            --catalog "$digest" --cache-dir "${RUNNER_TEMP}/cache" --quiet)
+          "${client[@]}" list --json | jq -r '.[].id' | while read -r id; do
+            "${client[@]}" path "$id" > /dev/null
+          done
+          "${client[@]}" --offline list > /dev/null
+      # The publish job regenerates THIRD_PARTY_NOTICES.md from the state it
+      # writes; rendering it from the same update here fails the run before
+      # anything is published.
+      - name: Third-party notices of the updated catalog
+        run: |
+          go run ./tools/release notices generate --state "${RUNNER_TEMP}/local/state-1.json" \
+            --out "${RUNNER_TEMP}/local/THIRD_PARTY_NOTICES.md"
+      - if: always()
+        name: Remove the registry credentials
+        run: rm -rf "${RUNNER_TEMP}/auth" "${RUNNER_TEMP}/client.toml"
+name: Update schemas
+# Weekly, autonomous update of the published schema catalog. The prepare and
+# test jobs run without secrets. When upstream changed the catalog, the
+# publish job (only on main, in the protected schemas-publish environment,
+# which allows deployments from main only) pushes only the changed schema
+# artifacts and the new catalog, records catalog/state.json on main in one
+# commit with the regenerated THIRD_PARTY_NOTICES.md, tags and releases
+# catalog-<revision> and finally moves catalog-latest. A published schema
+# that cannot be refreshed is held at its last published version; only an
+# explicit exclude rule in sources/licenses.toml removes one. A run without
+# changes publishes, commits and tags nothing. A run that finds the recorded
+# revision without its tag, release or catalog-latest finishes it from the
+# state alone first. This workflow never builds or releases the client
+# binary.
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      refresh:
+        default: ""
+        description: >-
+          Published schema IDs to prepare anew although their inputs did not change (space-separated), or "all"; for a deliberate recipe or bundler change
+        required: false
+        type: string
+permissions: {}

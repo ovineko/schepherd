@@ -1,0 +1,68 @@
+# License and inclusion policy for the publisher. A source that no rule
+# matches is held for review and is never published; a schema is published
+# only when its source and every dependency it embeds are allowed.
+#
+# One SchemaStore file has many URLs (www. and json.schemastore.org, with or
+# without ".json", under /schemas/json/, raw GitHub URLs at any ref, and
+# github.com/<owner>/<repo>/raw|blob/ URLs, which automatic detection would
+# otherwise decide). Files held back from the host-wide allow rules are
+# therefore named by file_names, which match every such spelling, never by
+# exact URLs alone. GitHub owner and repository names match in any letter
+# case.
+#
+# URLs that no rule matches get their license detected automatically: a
+# GitHub repository at the URL's ref (pinned to a commit) through the GitHub
+# REST API, an npm package at the URL's exact version through the npm
+# registry and the CDN the URL names. A detected license on the allow list
+# publishes the schema with the license text (and an Apache-2.0 NOTICE file)
+# in its notice layer; anything else stays pending review. Rules always take
+# precedence over detection, so an exclude or review rule holds a source
+# whatever its detected license is.
+
+[auto]
+enabled = true
+allow = [
+  "MIT",
+  "MIT-0",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "0BSD",
+  "CC0-1.0",
+  "Unlicense",
+  "BlueOak-1.0.0",
+]
+hosts = ["api.github.com", "registry.npmjs.org", "unpkg.com", "cdn.jsdelivr.net"]
+
+[[rules]]
+id = "schemastore"
+decision = "allow"
+hosts = ["www.schemastore.org", "json.schemastore.org"]
+license = "Apache-2.0"
+notice_file = "notices/schemastore.txt"
+reason = "SchemaStore repository LICENSE: Apache-2.0, verified at commit 05b037b7a2b68ead6893c857db2594bcad9951d4"
+
+[[rules]]
+id = "schemastore-raw"
+decision = "allow"
+hosts = ["raw.githubusercontent.com"]
+path_prefix = "/SchemaStore/schemastore/"
+license = "Apache-2.0"
+notice_file = "notices/schemastore.txt"
+reason = "SchemaStore repository LICENSE: Apache-2.0, verified at commit 05b037b7a2b68ead6893c857db2594bcad9951d4"
+
+[[rules]]
+id = "schemastore-third-party-content"
+decision = "review"
+hosts = ["www.schemastore.org", "json.schemastore.org"]
+file_names = ["cargo-config.json", "partial-mypy.json", "partial-pyright.json", "rustfmt.json"]
+reason = "the file's top-level $comment says parts were copied or adapted from another project under MIT (rustfmt.json: MIT and Apache-2.0); its license and notice need a separate review"
+
+[[rules]]
+id = "schemastore-raw-third-party-content"
+decision = "review"
+hosts = ["raw.githubusercontent.com", "github.com"]
+path_prefix = "/SchemaStore/schemastore/"
+file_names = ["cargo-config.json", "partial-mypy.json", "partial-pyright.json", "rustfmt.json"]
+reason = "the file's top-level $comment says parts were copied or adapted from another project under MIT (rustfmt.json: MIT and Apache-2.0); its license and notice need a separate review"

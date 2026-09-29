@@ -1,0 +1,13 @@
+# Managed by datamitsu. Tune it: every value here is a policy, not a fact.
+
+# Politeness. The default is 128 requests in flight, which reads as an attack to a small host.
+max_concurrency = 8
+
+# A flaky endpoint is not a broken link. Two retries, then it counts.
+max_retries = 2
+
+# Anything on the machine or the network the runner happens to sit on is not a public link.
+exclude_all_private = true
+
+# Only a success is a success: 3xx that never lands and 4xx both stay failures.
+accept = ["200..=299"]

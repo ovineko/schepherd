@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A large schema whose compact form exceeds 4096 bytes and compresses well.",
+  "properties": {
+    "field001": {
+      "description": "Gamma field 001: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field002": {
+      "description": "Gamma field 002: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field003": {
+      "description": "Gamma field 003: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field004": {
+      "description": "Gamma field 004: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field005": {
+      "description": "Gamma field 005: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field006": {
+      "description": "Gamma field 006: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field007": {
+      "description": "Gamma field 007: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field008": {
+      "description": "Gamma field 008: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field009": {
+      "description": "Gamma field 009: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field010": {
+      "description": "Gamma field 010: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field011": {
+      "description": "Gamma field 011: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field012": {
+      "description": "Gamma field 012: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field013": {
+      "description": "Gamma field 013: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field014": {
+      "description": "Gamma field 014: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field015": {
+      "description": "Gamma field 015: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field016": {
+      "description": "Gamma field 016: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field017": {
+      "description": "Gamma field 017: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field018": {
+      "description": "Gamma field 018: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field019": {
+      "description": "Gamma field 019: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field020": {
+      "description": "Gamma field 020: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field021": {
+      "description": "Gamma field 021: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field022": {
+      "description": "Gamma field 022: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field023": {
+      "description": "Gamma field 023: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field024": {
+      "description": "Gamma field 024: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field025": {
+      "description": "Gamma field 025: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field026": {
+      "description": "Gamma field 026: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field027": {
+      "description": "Gamma field 027: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field028": {
+      "description": "Gamma field 028: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field029": {
+      "description": "Gamma field 029: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field030": {
+      "description": "Gamma field 030: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field031": {
+      "description": "Gamma field 031: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field032": {
+      "description": "Gamma field 032: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field033": {
+      "description": "Gamma field 033: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field034": {
+      "description": "Gamma field 034: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field035": {
+      "description": "Gamma field 035: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field036": {
+      "description": "Gamma field 036: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field037": {
+      "description": "Gamma field 037: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field038": {
+      "description": "Gamma field 038: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field039": {
+      "description": "Gamma field 039: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field040": {
+      "description": "Gamma field 040: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field041": {
+      "description": "Gamma field 041: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field042": {
+      "description": "Gamma field 042: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field043": {
+      "description": "Gamma field 043: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field044": {
+      "description": "Gamma field 044: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field045": {
+      "description": "Gamma field 045: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field046": {
+      "description": "Gamma field 046: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field047": {
+      "description": "Gamma field 047: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field048": {
+      "description": "Gamma field 048: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field049": {
+      "description": "Gamma field 049: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field050": {
+      "description": "Gamma field 050: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field051": {
+      "description": "Gamma field 051: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field052": {
+      "description": "Gamma field 052: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field053": {
+      "description": "Gamma field 053: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field054": {
+      "description": "Gamma field 054: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field055": {
+      "description": "Gamma field 055: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field056": {
+      "description": "Gamma field 056: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field057": {
+      "description": "Gamma field 057: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field058": {
+      "description": "Gamma field 058: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field059": {
+      "description": "Gamma field 059: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field060": {
+      "description": "Gamma field 060: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field061": {
+      "description": "Gamma field 061: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field062": {
+      "description": "Gamma field 062: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field063": {
+      "description": "Gamma field 063: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field064": {
+      "description": "Gamma field 064: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field065": {
+      "description": "Gamma field 065: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field066": {
+      "description": "Gamma field 066: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field067": {
+      "description": "Gamma field 067: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field068": {
+      "description": "Gamma field 068: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field069": {
+      "description": "Gamma field 069: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field070": {
+      "description": "Gamma field 070: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field071": {
+      "description": "Gamma field 071: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field072": {
+      "description": "Gamma field 072: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field073": {
+      "description": "Gamma field 073: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field074": {
+      "description": "Gamma field 074: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field075": {
+      "description": "Gamma field 075: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field076": {
+      "description": "Gamma field 076: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field077": {
+      "description": "Gamma field 077: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field078": {
+      "description": "Gamma field 078: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field079": {
+      "description": "Gamma field 079: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    },
+    "field080": {
+      "description": "Gamma field 080: a deliberately repetitive description that makes this fixture large and easy to compress.",
+      "maxLength": 256,
+      "type": "string"
+    }
+  },
+  "required": [
+    "field001"
+  ],
+  "title": "Gamma",
+  "type": "object"
+}

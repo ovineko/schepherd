@@ -1,0 +1,248 @@
+{
+  "$id": "https://schemas.example/gamma.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "setting00": {
+      "description": "Setting number 0 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting01": {
+      "description": "Setting number 1 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting02": {
+      "description": "Setting number 2 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting03": {
+      "description": "Setting number 3 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting04": {
+      "description": "Setting number 4 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting05": {
+      "description": "Setting number 5 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting06": {
+      "description": "Setting number 6 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting07": {
+      "description": "Setting number 7 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting08": {
+      "description": "Setting number 8 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting09": {
+      "description": "Setting number 9 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting10": {
+      "description": "Setting number 10 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting11": {
+      "description": "Setting number 11 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting12": {
+      "description": "Setting number 12 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting13": {
+      "description": "Setting number 13 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting14": {
+      "description": "Setting number 14 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting15": {
+      "description": "Setting number 15 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting16": {
+      "description": "Setting number 16 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting17": {
+      "description": "Setting number 17 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting18": {
+      "description": "Setting number 18 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting19": {
+      "description": "Setting number 19 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting20": {
+      "description": "Setting number 20 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting21": {
+      "description": "Setting number 21 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting22": {
+      "description": "Setting number 22 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting23": {
+      "description": "Setting number 23 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting24": {
+      "description": "Setting number 24 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting25": {
+      "description": "Setting number 25 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting26": {
+      "description": "Setting number 26 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting27": {
+      "description": "Setting number 27 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting28": {
+      "description": "Setting number 28 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting29": {
+      "description": "Setting number 29 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting30": {
+      "description": "Setting number 30 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting31": {
+      "description": "Setting number 31 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting32": {
+      "description": "Setting number 32 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting33": {
+      "description": "Setting number 33 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting34": {
+      "description": "Setting number 34 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting35": {
+      "description": "Setting number 35 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting36": {
+      "description": "Setting number 36 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting37": {
+      "description": "Setting number 37 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting38": {
+      "description": "Setting number 38 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting39": {
+      "description": "Setting number 39 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting40": {
+      "description": "Setting number 40 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting41": {
+      "description": "Setting number 41 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting42": {
+      "description": "Setting number 42 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting43": {
+      "description": "Setting number 43 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting44": {
+      "description": "Setting number 44 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting45": {
+      "description": "Setting number 45 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting46": {
+      "description": "Setting number 46 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting47": {
+      "description": "Setting number 47 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting48": {
+      "description": "Setting number 48 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting49": {
+      "description": "Setting number 49 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting50": {
+      "description": "Setting number 50 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting51": {
+      "description": "Setting number 51 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting52": {
+      "description": "Setting number 52 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting53": {
+      "description": "Setting number 53 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting54": {
+      "description": "Setting number 54 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting55": {
+      "description": "Setting number 55 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting56": {
+      "description": "Setting number 56 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting57": {
+      "description": "Setting number 57 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting58": {
+      "description": "Setting number 58 controls one aspect of the gamma component.",
+      "type": "string"
+    },
+    "setting59": {
+      "description": "Setting number 59 controls one aspect of the gamma component.",
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

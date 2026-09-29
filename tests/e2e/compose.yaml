@@ -1,0 +1,80 @@
+# dclint disable no-duplicate-exported-ports
+# (Every service publishes an ephemeral host port, "127.0.0.1::<port>", which
+# the linter reads as the same port 0; ephemeral ports cannot collide.)
+#
+# Infrastructure of the black-box end-to-end suite (go test -tags e2e
+# ./tests/e2e/...). The harness always runs it under a unique project name
+# (-p schepherd-e2e-<pid>-<random>), generates the TLS and htpasswd files the
+# auth profile mounts, and removes the project with "down -v" afterwards. See
+# README.md in this directory.
+#
+# Healthchecks are disabled: they would run a tool inside the images. The
+# harness probes /v2/ (registries) and /-/ping (verdaccio) over HTTP itself.
+name: schepherd-e2e
+services:
+  registry-auth:
+    image: distribution/distribution:3.1.2@sha256:d106962e6fe3fa69c178cec77eeeee5edb626b8df6535b7bd6b95e658a0a5ca9
+    volumes:
+      - ${SCHEPHERD_E2E_AUTH_DIR:?set by the e2e harness}:/auth:ro
+      - ${SCHEPHERD_E2E_CERTS_DIR:?set by the e2e harness}:/certs:ro
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: schepherd-e2e-auth
+      REGISTRY_HTTP_RELATIVEURLS: "true"
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/server.key
+      REGISTRY_LOG_LEVEL: info
+    ports:
+      - "127.0.0.1::5000"
+    healthcheck:
+      disable: true
+    profiles:
+      - auth
+  registry-auth2:
+    image: distribution/distribution:3.1.2@sha256:d106962e6fe3fa69c178cec77eeeee5edb626b8df6535b7bd6b95e658a0a5ca9
+    volumes:
+      - ${SCHEPHERD_E2E_AUTH2_DIR:?set by the e2e harness}:/auth:ro
+      - ${SCHEPHERD_E2E_CERTS_DIR:?set by the e2e harness}:/certs:ro
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: schepherd-e2e-auth2
+      REGISTRY_HTTP_RELATIVEURLS: "true"
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/server.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/server.key
+      REGISTRY_LOG_LEVEL: info
+    ports:
+      - "127.0.0.1::5000"
+    healthcheck:
+      disable: true
+    profiles:
+      - auth
+  registry-mirror:
+    image: distribution/distribution:3.1.2@sha256:d106962e6fe3fa69c178cec77eeeee5edb626b8df6535b7bd6b95e658a0a5ca9
+    environment:
+      REGISTRY_HTTP_RELATIVEURLS: "true"
+      REGISTRY_LOG_LEVEL: info
+    ports:
+      - "127.0.0.1::5000"
+    healthcheck:
+      disable: true
+  registry-source:
+    image: distribution/distribution:3.1.2@sha256:d106962e6fe3fa69c178cec77eeeee5edb626b8df6535b7bd6b95e658a0a5ca9
+    environment:
+      REGISTRY_HTTP_RELATIVEURLS: "true"
+      REGISTRY_LOG_LEVEL: info
+    ports:
+      - "127.0.0.1::5000"
+    healthcheck:
+      disable: true
+  verdaccio:
+    image: verdaccio/verdaccio:6.10.4@sha256:43c4067288b050422265407ea2fe747e511fcd0c407a85ec90ab9a326d9400cd
+    volumes:
+      - ./verdaccio/config.yaml:/verdaccio/conf/config.yaml:ro
+    ports:
+      - "127.0.0.1::4873"
+    healthcheck:
+      disable: true
+    profiles:
+      - npm

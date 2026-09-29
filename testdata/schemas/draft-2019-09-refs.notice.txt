@@ -1,0 +1,2 @@
+This schema is a fictional example written for the Schepherd test suite.
+It is dedicated to the public domain under CC0-1.0.

@@ -1,0 +1,20 @@
+config_version = 1
+extends = ["../base/base.toml"]
+cache_dir = ".cache"
+
+[limits]
+max_schema_bytes = 2097152
+
+[registries."registry.example"]
+credentials_file = "auth/config.json"
+
+[runner]
+args = ["validate", "{schema}", "{files...}"]
+jobs = 2
+
+[runner.env]
+SHARED = "project"
+
+[[mappings]]
+file_match = ["project/*.json"]
+schema = "project-schema"

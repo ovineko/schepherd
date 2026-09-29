@@ -1,0 +1,34 @@
+{
+  "name": "schepherd",
+  "private": true,
+  "description": "Development toolchain for Schepherd (not published)",
+  "keywords": [],
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm dm exec task -- build",
+    "docs:build": "dm exec zensical -- build --strict",
+    "docs:clean": "rm -rf dist/website",
+    "docs:serve": "dm exec zensical -- serve --dev-addr 0.0.0.0:8000",
+    "test": "pnpm dm exec task -- test",
+    "test:coverage": "pnpm dm exec task -- test:coverage",
+    "test:e2e": "pnpm dm exec task -- test:e2e",
+    "test:e2e:install": "pnpm dm exec task -- test:e2e:prepare",
+    "test:e2e:perf": "pnpm dm exec task -- test:e2e:perf"
+  },
+  "devDependencies": {
+    "@shibanet0/datamitsu-config": "catalog:"
+  },
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "onFail": "warn",
+      "version": ">=26.10.0"
+    }
+  }
+}

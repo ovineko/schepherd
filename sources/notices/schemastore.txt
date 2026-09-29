@@ -1,0 +1,4 @@
+Includes JSON schemas from the JSON Schema Store repository
+(https://github.com/SchemaStore/schemastore), licensed under the Apache
+License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+The attribution notices of that repository are in its NOTICE file.

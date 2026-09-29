@@ -1,0 +1,160 @@
+tasks:
+  build:
+    cmds:
+      - go build -trimpath -o {{.DIST}}/bin/ ./cmd/schepherd ./cmd/schepherd-publisher
+    desc: Build schepherd and schepherd-publisher into dist/bin
+    env:
+      CGO_ENABLED: "0"
+  # Formatting, go vet and golangci-lint (with the e2e build tag, see
+  # .golangci.yaml) run in `pnpm dm check`.
+  lint:
+    cmds:
+      - go mod verify
+      - go mod tidy -diff
+      - task: lint:client-deps
+    desc: Module verification and the client dependency boundary (formatting, vet and golangci-lint run in pnpm dm check)
+  lint:client-deps:
+    cmds:
+      - |
+        bad="$(go list -deps ./cmd/schepherd | grep -E 'internal/publisher|internal/testutil|internal/cache/linktest|santhosh-tekuri' || true)"
+        if [ -n "$bad" ]; then
+          echo "cmd/schepherd must not depend on publisher, test-only or JSON Schema engine packages:"
+          echo "$bad"
+          exit 1
+        fi
+    desc: Fail when the client binary links publisher, test-only helper or JSON Schema engine packages
+  lint:vuln:
+    cmds:
+      - go run golang.org/x/vuln/cmd/govulncheck@{{.GOVULNCHECK_VERSION}} ./...
+    desc: Known-vulnerability scan (needs network for the vulnerability database)
+  test:
+    cmds:
+      - go test ./...
+    deps:
+      - tools
+    desc: Unit and integration tests (no Docker; pinned tools are installed once)
+  test:coverage:
+    cmds:
+      - go test -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out
+    deps:
+      - tools
+    desc: Unit and integration tests with a coverage profile in coverage.out
+  test:e2e:
+    cmds:
+      - task: test:e2e:prepare
+      - mkdir -p {{.E2E_ARTIFACTS_DIR}}
+      # e2e-stream writes e2e.json as it arrives and e2e-report.md when the
+      # stream ends, also after failures; it fails on any failed test and on
+      # any required scenario (RequiredScenarios in
+      # tools/release/internal/e2ereport) that did not pass.
+      - |
+        set -o pipefail
+        E2E_ARTIFACTS_DIR={{.E2E_ARTIFACTS_DIR}} go test -tags e2e -count=1 -timeout 60m -json ./tests/e2e/... | go run ./tools/release e2e-stream --save {{.E2E_ARTIFACTS_DIR}}/e2e.json --report {{.E2E_ARTIFACTS_DIR}}/e2e-report.md --strict
+    desc: Black-box end-to-end tests with real registries started by Docker Compose (runs test:e2e:prepare first)
+  test:e2e:perf:
+    cmds:
+      - task: test:e2e:prepare
+      - mkdir -p {{.E2E_ARTIFACTS_DIR}}
+      - E2E_PERF=1 E2E_ARTIFACTS_DIR={{.E2E_ARTIFACTS_DIR}} go test -tags e2e -count=1 -timeout 60m -run '^TestPerf_' -v ./tests/e2e
+    desc: Measure a synthetic catalog of 1000 schemas; writes perf/TestPerf_SyntheticCatalog.{json,md} to E2E_ARTIFACTS_DIR
+  test:e2e:prepare:
+    cmds:
+      - go mod download
+      - E2E_PREPARE=1 go test -tags e2e -count=1 -timeout 30m -run '^$' -v ./tests/e2e
+    deps:
+      - tools
+    desc: Pull and build everything the end-to-end scenarios use (pinned images, the validators image, Go modules)
+  test:fuzz:
+    cmds:
+      - |
+        for pkg in $(go list ./...); do
+          for target in $(go test -list '^Fuzz' "$pkg" | grep '^Fuzz' || true); do
+            echo "fuzz $pkg $target"
+            go test -run '^$' -fuzz "^${target}\$" -fuzztime {{.FUZZTIME}} "$pkg" || exit 1
+          done
+        done
+    desc: Run every fuzz target for FUZZTIME (default 20s)
+  test:race:
+    cmds:
+      - go test -race ./...
+    deps:
+      - tools
+    desc: Unit and integration tests with the race detector
+  tools:
+    cmds:
+      - go run ./tools/install-jsonschema
+      # go install verifies the GoReleaser module against the checksum
+      # database; CI and the release workflow run the same version through
+      # goreleaser/goreleaser-action.
+      - GOBIN="{{.ROOT_DIR}}/{{.TOOLS_BIN}}" go install github.com/goreleaser/goreleaser/v2@{{.GORELEASER_VERSION}}
+      # GoReleaser runs syft from PATH for the SBOMs; locally that is the
+      # syft datamitsu pins.
+      - printf '#!/bin/sh\nexec pnpm --silent dm exec syft -- "$@"\n' > {{.TOOLS_BIN}}/syft && chmod +x {{.TOOLS_BIN}}/syft
+    desc: Install the pinned Sourcemeta CLI (checksum verified) and GoReleaser into .tools/bin, with syft from datamitsu
+    status:
+      - test -x {{.TOOLS_BIN}}/jsonschema
+      - "{{.TOOLS_BIN}}/goreleaser --version 2>/dev/null | grep -q 'GitVersion: *{{.GORELEASER_VERSION}}$'"
+      - grep -q 'dm exec syft' {{.TOOLS_BIN}}/syft
+  verify:
+    cmds:
+      - pnpm dm check
+      - task: lint
+      - task: lint:vuln
+      - task: test:race
+      - task: test:fuzz
+        vars:
+          FUZZTIME: 10s
+      - task: test:e2e
+      - task: verify:packaging
+      - pnpm dm exec zensical -- build --strict
+    desc: "Local equivalent of CI on this platform (CI additionally runs the OS matrix)"
+  verify:packaging:
+    cmds:
+      - "{{.TOOLS_BIN}}/goreleaser check"
+      # The before hooks run `licenses check` and `notices check`. Archives,
+      # their SBOMs, the checksum file and the Homebrew cask, Scoop manifest
+      # and winget manifests (dist/homebrew, dist/scoop, dist/winget);
+      # nothing is signed or published.
+      - PATH="{{.ROOT_DIR}}/{{.TOOLS_BIN}}:$PATH" {{.TOOLS_BIN}}/goreleaser release --snapshot --clean --skip=sign
+      - rm -rf {{.DIST}}/packages {{.DIST}}/packages-again
+      # The npm packages, wheels and gem of the snapshot version
+      # 0.0.0-snapshot-<commit> of the archives just built (read after the
+      # build, never before), the packages of this platform installed and
+      # run; a second build must give the same bytes.
+      - |
+        set -e
+        version="$(go run ./tools/release version snapshot --dist {{.DIST}})"
+        go run ./tools/release packages build --dist {{.DIST}} --version "$version" --out {{.DIST}}/packages --ruby {{.GEM_RUBY}} --smoke
+        go run ./tools/release packages build --dist {{.DIST}} --version "$version" --out {{.DIST}}/packages-again --ruby {{.GEM_RUBY}} > /dev/null
+        for kind in npm pypi gem; do
+          diff "{{.DIST}}/packages/schepherd_${version}_${kind}_checksums.txt" "{{.DIST}}/packages-again/schepherd_${version}_${kind}_checksums.txt"
+        done
+        rm -rf {{.DIST}}/packages-again
+      - node --test packaging/npm/schepherd/test/
+      - PYTHONPATH=packaging/python PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover --start-directory packaging/python/tests
+      - |
+        if [ "{{.GEM_RUBY}}" = host ]; then
+          ruby -W packaging/ruby/test/schepherd_test.rb
+        else
+          docker run --rm --network none -v "{{.ROOT_DIR}}/packaging/ruby:/src:ro" -w /src "$(go run ./tools/release packages ruby-image)" ruby -W test/schepherd_test.rb
+        fi
+    deps:
+      - tools
+    desc: Third-party licenses and notices checked against their inputs, snapshot release of every target (archives, SBOMs, checksums, Homebrew, Scoop and winget manifests), the npm packages, PyPI wheels and RubyGems package (checked, installed, reproducible; needs npm and uv, and Ruby in the pinned image unless GEM_RUBY=host) and the launcher tests
+vars:
+  DIST: dist
+  E2E_ARTIFACTS_DIR:
+    sh: echo ${E2E_ARTIFACTS_DIR:-tests/e2e/.artifacts/latest}
+  FUZZTIME:
+    sh: echo ${FUZZTIME:-20s}
+  # Where Ruby runs for the gem: "docker" (pins.RubyImage) or "host" (the
+  # Ruby of packaging/ruby/.ruby-version from PATH); tools/pins/ruby.go.
+  GEM_RUBY:
+    sh: echo ${GEM_RUBY:-docker}
+  # Also the version of goreleaser/goreleaser-action in .github/workflows;
+  # tools/release/workflows_test.go keeps them equal.
+  GORELEASER_VERSION: v2.18.2
+  GOVULNCHECK_VERSION: v1.8.0
+  TOOLS_BIN: .tools/bin
+version: "3"

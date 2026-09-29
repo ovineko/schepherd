@@ -1,0 +1,328 @@
+concurrency:
+  cancel-in-progress: true
+  group: ci-${{ github.ref }}
+jobs:
+  e2e:
+    name: End-to-end (Docker Compose)
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          version: "0.12.19"
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      # The pinned Sourcemeta CLI and GoReleaser in .tools/bin, as locally.
+      - name: Install pinned maintainer tools
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm dm exec task -- tools
+      - env:
+          SCHEPHERD_E2E_AUTH_DIR: ${{ runner.temp }}
+          SCHEPHERD_E2E_AUTH2_DIR: ${{ runner.temp }}
+          SCHEPHERD_E2E_CERTS_DIR: ${{ runner.temp }}
+        name: Compose configuration
+        run: docker compose -f tests/e2e/compose.yaml --profile auth --profile npm config --quiet
+      # Scenarios never download anything: the suite refuses to start while an
+      # image is missing, and host Go commands run with GOPROXY=off.
+      - name: End-to-end preparation (images, validators image, wheel build backend, Go modules)
+        run: |
+          go mod download
+          E2E_PREPARE=1 go test -tags e2e -count=1 -timeout 30m -run '^$' -v ./tests/e2e
+      # e2e-stream also fails when a required scenario (RequiredScenarios in
+      # tools/release/internal/e2ereport) is missing or did not pass, and
+      # writes the report even after failures.
+      - env:
+          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e
+        name: End-to-end suite
+        run: |
+          mkdir -p "$E2E_ARTIFACTS_DIR"
+          set -o pipefail
+          go test -tags e2e -count=1 -timeout 55m -json ./tests/e2e/... | go run ./tools/release e2e-stream --save "$E2E_ARTIFACTS_DIR/e2e.json" --report "$E2E_ARTIFACTS_DIR/e2e-report.md" --strict
+      - env:
+          E2E_ARTIFACTS_DIR: ${{ runner.temp }}/e2e
+        if: always()
+        name: Scenario report
+        run: if [ -f "$E2E_ARTIFACTS_DIR/e2e-report.md" ]; then cat "$E2E_ARTIFACTS_DIR/e2e-report.md" >> "$GITHUB_STEP_SUMMARY"; fi
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-artifacts
+          path: ${{ runner.temp }}/e2e
+          retention-days: 14
+    # The preparation step (image pulls and the validators build) runs before
+    # the suite's own 55-minute limit.
+    timeout-minutes: 90
+  fuzz:
+    name: Fuzz (bounded)
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Repository toolchain (task through datamitsu)
+        run: pnpm install --frozen-lockfile
+      - env:
+          FUZZTIME: 15s
+        name: Fuzz every target for 15s
+        run: pnpm dm exec task -- test:fuzz
+  launchers-minimum:
+    name: Launcher tests on the oldest supported Python and Ruby
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The wheels require Python >= 3.8 and the gem Ruby >= 2.7, which
+      # actions/setup-python and ruby/setup-ruby no longer provide for the
+      # newest runner images, so the tests run in the official images of
+      # exactly those versions, without network.
+      - env:
+          IMAGE: python:3.8.20-slim@sha256:1d52838af602b4b5a831beb13a0e4d073280665ea7be7f69ce2382f29c5a613f
+        name: PyPI launcher tests (Python 3.8)
+        run: |
+          docker run --rm --network none -e PYTHONDONTWRITEBYTECODE=1 -e PYTHONPATH=/src \
+            -v "$PWD/packaging/python:/src:ro" -w /src "$IMAGE" \
+            python -m unittest discover --start-directory tests
+      - env:
+          IMAGE: ruby:2.7.8-slim@sha256:39f68389fd3fe8c04ed896b10cc90ba4553a42e555ae18b37b41ea8c3ce965fd
+        name: RubyGems launcher tests (Ruby 2.7)
+        run: docker run --rm --network none -v "$PWD/packaging/ruby:/src:ro" -w /src "$IMAGE" ruby -W test/schepherd_test.rb
+  # Formatting, go vet and golangci-lint (with the e2e build tag, see
+  # .golangci.yaml) run once, in `pnpm dm check` of the repository-checks job.
+  lint:
+    name: Lint (modules, client dependency boundary, govulncheck)
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - name: Repository toolchain (task through datamitsu)
+        run: pnpm install --frozen-lockfile
+      - name: Module verification and client dependency boundary
+        run: pnpm dm exec task -- lint
+      - name: govulncheck (needs the vulnerability database over the network)
+        run: pnpm dm exec task -- lint:vuln
+  packaging:
+    name: Packaging (snapshot, reproducibility, npm, PyPI, RubyGems, package managers)
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # Without caches, like the release job this job rehearses.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          cache: false
+          go-version-file: go.mod
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      # The same GoReleaser and syft as the release workflow.
+      - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          install-only: true
+          version: v2.18.2
+      - uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          syft-version: v1.52.0
+      - name: GoReleaser configuration (OSS)
+        run: goreleaser check
+      # The before hooks run `licenses check` and `notices check`: CI's only
+      # check that THIRD_PARTY_LICENSES.txt and THIRD_PARTY_NOTICES.md are
+      # current (the test matrix skips TestRepositoryFilesAreCurrent).
+      - name: Generated third-party files and snapshot release of every target (archives, SBOMs, checksums, Homebrew, Scoop and winget manifests; nothing signed or published)
+        run: goreleaser release --snapshot --clean --skip=sign
+      # A second build of the same commit from a fresh clone at another path
+      # must produce byte-identical archives. The SBOMs in the checksum file
+      # are not reproducible; the before hooks already ran above.
+      - name: Reproducible archives
+        run: |
+          clone="${RUNNER_TEMP}/reproduce"
+          git clone -q --no-local . "$clone"
+          (cd "$clone" && goreleaser release --snapshot --clean --skip=before,sign,sbom)
+          diff -u <(grep -v '\.sbom\.json$' dist/*_checksums.txt) "$clone"/dist/*_checksums.txt
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          version: "0.12.19"
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler: none
+          working-directory: packaging/ruby
+      # The release job's build of the npm packages, wheels and gem from the
+      # snapshot binaries (version 0.0.0-snapshot-<commit>, never a release),
+      # with the packages of this runner installed and run; a second build
+      # from other staging directories must give the same bytes.
+      - name: npm, PyPI and RubyGems packages (checked, installed, reproducible)
+        run: |
+          version="$(go run ./tools/release version snapshot --dist dist)"
+          go run ./tools/release packages build --dist dist --version "$version" --out "${RUNNER_TEMP}/packages" --smoke
+          go run ./tools/release packages build --dist dist --version "$version" --out "${RUNNER_TEMP}/packages-again" > /dev/null
+          for kind in npm pypi gem; do
+            diff "${RUNNER_TEMP}/packages/schepherd_${version}_${kind}_checksums.txt" "${RUNNER_TEMP}/packages-again/schepherd_${version}_${kind}_checksums.txt"
+          done
+      # What GoReleaser pushes to ovineko/homebrew-tap, ovineko/scoop-bucket
+      # and microsoft/winget-pkgs for a release, rendered by the snapshot.
+      - name: Homebrew cask, Scoop manifest and winget manifests
+        run: |
+          ruby -wc dist/homebrew/Casks/schepherd.rb
+          jq -e '.architecture["64bit"].hash and .architecture.arm64.hash' dist/scoop/bucket/schepherd.json
+          test "$(find dist/winget/manifests/o/ovineko/schepherd -name '*.yaml' | wc -l)" -eq 3
+  repository-checks:
+    name: Repository checks (datamitsu)
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Install toolchain
+        run: pnpm install --frozen-lockfile
+      - name: Linters and formatters (fails on any change)
+        run: |
+          pnpm dm check
+          git diff --exit-code
+      - name: Documentation website builds without warnings (strict)
+        run: pnpm dm exec zensical -- build --strict
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The caches only speed up tests: the snapshot binary GoReleaser builds
+      # below feeds the launcher smokes and is never published.
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0 # zizmor: ignore[cache-poisoning]
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0 # zizmor: ignore[cache-poisoning]
+        with:
+          node-version-file: .node-version
+      - if: matrix.os != 'windows-11-arm'
+        name: Install pinned bundler (publisher tests)
+        run: go run ./tools/install-jsonschema
+      # No windows-arm64 build of the bundler is published; Windows on Arm runs
+      # the pinned x86_64 build under its built-in emulation.
+      - if: matrix.os == 'windows-11-arm'
+        name: Install pinned bundler (x86_64 build under emulation)
+        run: go run ./tools/install-jsonschema -platform windows-x86_64
+      # Go's race detector does not support windows/arm64. The packaging job
+      # checks the generated third-party files once, not every runner.
+      - if: matrix.os == 'windows-11-arm'
+        name: Unit and integration tests
+        run: go test -skip '^TestRepositoryFilesAreCurrent$' ./...
+      # The race detector needs cgo; the Windows images ship a MinGW-w64 gcc.
+      - env:
+          CGO_ENABLED: "1"
+        if: matrix.os != 'windows-11-arm'
+        name: Unit and integration tests (race detector)
+        run: go test -race -skip '^TestRepositoryFilesAreCurrent$' ./...
+      - name: npm launcher tests
+        run: node --test packaging/npm/schepherd/test/
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTHONPATH: packaging/python
+        name: PyPI launcher tests
+        run: python -m unittest discover --start-directory packaging/python/tests
+        shell: bash
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
+        with:
+          bundler: none
+          windows-toolchain: none
+          working-directory: packaging/ruby
+      - name: RubyGems executable tests
+        run: ruby -W packaging/ruby/test/schepherd_test.rb
+      - env:
+          EXE: ${{ runner.os == 'Windows' && '.exe' || '' }}
+        name: Native smoke
+        run: |
+          go build -trimpath -o "${RUNNER_TEMP}/schepherd${EXE}" ./cmd/schepherd
+          "${RUNNER_TEMP}/schepherd${EXE}" version --json
+          set +e
+          "${RUNNER_TEMP}/schepherd${EXE}" --offline --cache-dir "${RUNNER_TEMP}/cache" --repository example.invalid/org/schemas \
+            --catalog sha256:0000000000000000000000000000000000000000000000000000000000000000 list
+          code=$?
+          set -e
+          test "$code" -eq 6
+        shell: bash
+      # Linux x64 installs the npm packages from a registry, the wheel with pip
+      # and the gem with gem install in the end-to-end suite (E37, E41), which
+      # runs only there; on every other runner, Linux arm64 included, the
+      # packages of this runner's binary are built and installed offline, and
+      # each launcher must run exactly like the binary.
+      - if: runner.os != 'Linux' || runner.arch != 'X64'
+        name: Snapshot binary of this runner (launcher smokes)
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          args: build --snapshot --clean --single-target --id schepherd
+          distribution: goreleaser
+          version: v2.18.2
+      - if: runner.os != 'Linux' || runner.arch != 'X64'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          version: "0.12.19"
+      - if: runner.os != 'Linux' || runner.arch != 'X64'
+        name: npm, PyPI and RubyGems launcher smokes (packages of this runner's binary)
+        run: |
+          version="$(go run ./tools/release version snapshot --dist dist)"
+          go run ./tools/release packages build --dist dist --version "$version" --out dist/packages --all-targets=false --smoke
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-26.04
+          - ubuntu-26.04-arm
+          - macos-26
+          - macos-26-intel
+          - windows-2025
+          - windows-11-arm
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  # The release workflow calls this workflow, so a release is built only
+  # after every mandatory check passed for the tagged commit.
+  workflow_call:
+permissions:
+  contents: read

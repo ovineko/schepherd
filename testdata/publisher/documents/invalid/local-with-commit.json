@@ -1,0 +1,54 @@
+{
+  "entries": [
+    {
+      "contentDigest": "sha256:8ed3f6ad685b959ead7022518e1af76cd816f8e8ec7ccdda1ed4018e8f2223f8",
+      "description": "Alpha\n\twith a tab",
+      "dialect": "http://json-schema.org/draft-07/schema#",
+      "fileMatch": [
+        "alpha.json",
+        "**/.github/workflows/*.yml",
+        "!**/node_modules/**"
+      ],
+      "id": "alpha",
+      "name": "alpha.json",
+      "notice": "notices/dbe1e16284a818621ee6a38a5fcd285723d0392cd3b7b875aebcde47afe2b436.txt",
+      "provenance": {
+        "dependencies": [
+          {
+            "digest": "sha256:ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+            "source": "https://schemas.example/a.json"
+          },
+          {
+            "digest": "sha256:3e23e8160039594a33894f6564e1b1348bbd7a0088d42c4acb73eeaed59c009d",
+            "source": "https://schemas.example/b.json"
+          }
+        ],
+        "license": "MIT",
+        "source": "https://schemas.example/alpha.json",
+        "sourceDigest": "sha256:5a23ba1b22ddf666bb0e941d434b79cffcfcde60292179eb9eeccdd1ecf2bfc7"
+      },
+      "schema": "schemas/alpha.json"
+    },
+    {
+      "contentDigest": "sha256:f44e64e75f3948e9f73f8dfa94721c4ce8cbb4f265c4790c702b2d41cfbf2753",
+      "fileMatch": [],
+      "id": "beta.v2",
+      "name": "Beta",
+      "provenance": {
+        "license": "Apache-2.0 AND MIT",
+        "source": "http://schemas.example/beta.json",
+        "sourceDigest": "sha256:f7c3e018ea8511d1d06978f7389260d337aa3a95b78d231a34ac323986902e97"
+      },
+      "schema": "schemas/beta.v2.json"
+    }
+  ],
+  "excluded": [],
+  "formatVersion": 1,
+  "held": [],
+  "recipe": "schepherd-prepare/2+sourcemeta-jsonschema-16.12.0",
+  "source": {
+    "commit": "05b037b7a2b68ead6893c857db2594bcad9951d4",
+    "kind": "local",
+    "name": "fixtures"
+  }
+}

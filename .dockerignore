@@ -1,0 +1,151 @@
+# Build outputs
+**/.next/
+**/build/
+**/dist/
+**/out/
+**/.turbo/
+**/.vercel/
+**/.output/
+**/public/build/
+
+# Cache & temporary files
+.datamitsu/
+**/tsconfig.tsbuildinfo
+**/.eslintcache
+**/.prettiercache
+**/.stylelintcache
+**/*.tmp
+**/*.swp
+**/*.swo
+**/*~
+**/.cache/
+**/.parcel-cache/
+**/.temp/
+**/.tmp/
+
+# Claude Code project files
+.claude/*
+!.claude/skills/
+
+# Codex CLI project files
+.codex/*
+!.codex/prompts/
+
+# Dependencies
+**/node_modules/
+**/.pnpm-store/
+**/vendor/
+**/.pnp.*
+**/.yarn/cache
+**/.yarn/unplugged
+**/.yarn/build-state.yml
+**/.yarn/install-state.gz
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env*.bak
+**/.env.local
+**/.env.*.local
+
+# Golang specific
+**/*.exe
+**/*.exe~
+**/*.dll
+**/*.so
+**/*.dylib
+**/*.test
+**/*.out
+**/go.work
+**/go.work.sum
+
+# IDE & OS
+**/.DS_Store
+**/Thumbs.db
+**/.idea/*
+**/.fleet/*
+**/.vscode/*
+!**/.vscode/launch.json
+!**/.vscode/settings.json
+!**/.vscode/extensions.json
+**/*.sublime-workspace
+**/*.iml
+**/.project
+**/.classpath
+**/.settings/*
+
+# Logs
+**/.pnpm-debug.log*
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/lerna-debug.log*
+**/*.log
+
+# Other
+**/*.gpg
+
+# Pulumi
+**/.pulumi/**/*.attrs
+**/.pulumi/locks/
+**/.pulumi/backups/
+**/.pulumi/history/
+**/.pulumi/**/*.bak
+**/.pulumi/**/*.json
+**/.pulumi/**/*.json.tmp
+**/.pulumi/**/*.yaml.tmp
+!**/.pulumi/**/*.enc.json
+!**/.pulumi/**/*.json.enc
+**/.pulumi/**/*.yaml
+!**/.pulumi/**/*.enc.yaml
+!**/.pulumi/**/*.yaml.enc
+**/.pulumi/**/*.yml
+!**/.pulumi/**/*.enc.yml
+!**/.pulumi/**/*.yml.enc
+
+# Security & Secrets
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.cer
+**/*.crt
+**/secrets.yml
+**/secrets.json
+
+# Terraform & Terragrunt
+**/.terraform/
+**/.terragrunt-cache/
+**/*.tfstate
+**/*.tfstate.backup
+**/crash.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# Testing
+**/coverage/
+**/*.cov
+**/coverage.out
+**/.cover/
+**/storybook-static/
+**/playwright-report/
+**/playwright-results/
+**/playwright/.cache/
+**/test-results/
+**/allure-report/
+**/.nyc_output/
+**/e2e/screenshots/
+**/e2e/videos/
+
+# ralphex progress logs
+.ralphex/progress/
+**/progress.txt
+**/progress-*.txt
+.ralphex/worktrees/

@@ -1,0 +1,9 @@
+# A consumer that reads the document from standard input, one process per file:
+#   SCHEPHERD_REPOSITORY=<host/path> SCHEPHERD_CATALOG=sha256:<catalog digest> JSONSCHEMA_BIN=/abs/path/to/jsonschema schepherd --config examples/stdin.schepherd.toml run -- <files>
+config_version = 1
+extends = ["./base.schepherd.toml"]
+
+[runner]
+mode = "stdin"
+command = "${JSONSCHEMA_BIN}"
+args = ["validate", "{schema}", "-"]

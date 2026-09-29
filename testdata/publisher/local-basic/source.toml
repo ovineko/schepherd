@@ -1,0 +1,42 @@
+# A small local schema set exercising every preparation path: a schema that
+# is only compacted, one bundled with a dependency served from a local file,
+# one large enough to be stored gzip-compressed, and one whose license comes
+# from the policy file instead of the entry.
+kind = "local"
+name = "basic"
+policy = "licenses.toml"
+
+[[entries]]
+name = "alpha.json"
+description = "Alpha configuration"
+url = "https://schemas.example/alpha.json"
+file = "schemas/alpha.json"
+file_match = ["alpha.json", "**/.github/workflows/*.yml"]
+license = "MIT"
+
+[[entries]]
+name = "Beta"
+description = "Beta configuration with a shared definition"
+url = "https://schemas.example/beta.json"
+file = "schemas/beta.json"
+file_match = ["config/**/*.toml", "beta.yaml"]
+license = "MIT"
+instances = ["tests/beta/valid.json", "tests/beta/invalid.json"]
+
+[[entries]]
+name = "Gamma"
+url = "https://schemas.example/gamma.json"
+file = "schemas/gamma.json"
+file_match = ["gamma.json"]
+license = "Apache-2.0"
+
+[[entries]]
+id = "delta-schema"
+name = "Delta"
+url = "https://schemas.example/delta.json"
+file = "schemas/delta.json"
+
+[[documents]]
+uri = "https://schemas.example/common.json"
+file = "schemas/common.json"
+license = "MIT"

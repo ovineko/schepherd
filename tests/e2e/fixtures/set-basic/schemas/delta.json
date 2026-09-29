@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "description": "A non-empty list of numbers.",
+  "items": {
+    "type": "number"
+  },
+  "minItems": 1,
+  "title": "Delta",
+  "type": "array"
+}

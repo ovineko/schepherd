@@ -1,0 +1,13 @@
+# What THIRD_PARTY_NOTICES.md needs to know about the catalog's sources that
+# no manifest records. `go run ./tools/release notices generate` refuses a
+# missing or unknown key.
+
+# The allow rules of sources/licenses.toml that cover files of the SchemaStore
+# repository, and that repository's NOTICE file, which the notices quote as
+# Apache-2.0 requires.
+[schemastore]
+rules = ["schemastore", "schemastore-raw"]
+notice = """
+JSON Schema Store
+Copyright 2015-Current Mads Kristensen and Contributors
+"""
