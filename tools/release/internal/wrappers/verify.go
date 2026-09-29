@@ -128,6 +128,8 @@ func readTar(r io.Reader, gzipped bool, prefix string) (map[string]member, error
 	for {
 		hdr, err := tr.Next()
 		if errors.Is(err, io.EOF) && gz != nil {
+			// bearer:disable go_gosec_filesystem_decompression_bomb
+			// Bounded by maxMember; this only reads the stream to its checksum.
 			if _, err := io.Copy(io.Discard, io.LimitReader(gz, maxMember)); err != nil {
 				return nil, fmt.Errorf("gzip: %w", err)
 			}

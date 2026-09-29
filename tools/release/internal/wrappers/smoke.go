@@ -114,6 +114,8 @@ func compare(ctx context.Context, r Runner, bin DistBinary, launcher, env []stri
 	}
 
 	direct := filepath.Join(r.Dir, "direct", bin.Target.Binary())
+	// bearer:disable go_gosec_file_permissions_file_perm
+	// The smoke test runs this copy of the binary, so it must be executable.
 	if err := errors.Join(os.MkdirAll(filepath.Dir(direct), 0o750), os.WriteFile(direct, data, 0o700)); err != nil { //nolint:gosec // G306: an executable
 		return fmt.Errorf("copy the binary: %w", err)
 	}

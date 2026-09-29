@@ -7,6 +7,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -140,6 +141,11 @@ func TestCheckPackage(t *testing.T) {
 		"package.json is executable: true, want false":  {{"package.json", "{}", 0o755}, good[1], good[2]},
 		`unexpected entry "../../etc/passwd"`:           slices.Concat(good, []entry{{"../../etc/passwd", "x", 0o644}}),
 	} {
+		// checkPackage does not compare execute bits on Windows.
+		if runtime.GOOS == "windows" && strings.Contains(want, "is executable") {
+			continue
+		}
+
 		if err := check("bad.tgz", tarball(t, true, prefixed(entries)...)); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("%v: %v, want %q", entries, err, want)
 		}

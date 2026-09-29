@@ -136,6 +136,8 @@ func Build(ctx context.Context, opts BuildOptions) ([]string, error) {
 			all = append(all, filepath.Join(dir, f))
 		}
 
+		// bearer:disable go_gosec_file_permissions_file_perm
+		// Release checksums are public.
 		if err := os.WriteFile(filepath.Join(b.Out, BinaryName+"_"+opts.Version+"_"+kind+"_checksums.txt"), []byte(sums.String()), 0o644); err != nil { //nolint:gosec // G306: world-readable
 			return nil, fmt.Errorf("write checksums: %w", err)
 		}
@@ -172,6 +174,8 @@ func (s *stage) put(rel string, data []byte, exec bool) error {
 		return fmt.Errorf("stage %s: %w", rel, err)
 	}
 
+	// bearer:disable go_gosec_file_permissions_file_perm
+	// Package files are public: 0644, or 0755 for executables.
 	//nolint:gosec // G703: rel is a fixed package path below the staging directory of this package
 	if err := errors.Join(os.WriteFile(name, data, mode), os.Chmod(name, mode)); err != nil {
 		return fmt.Errorf("stage %s: %w", rel, err)
@@ -444,6 +448,8 @@ func (b *builder) gem(ctx context.Context, out string) ([]string, error) {
 	}
 
 	file := GemFile(b.v.Gem)
+	// bearer:disable go_gosec_file_permissions_file_perm
+	// The gem is a public release artifact.
 	if err := os.WriteFile(filepath.Join(out, file), data, 0o644); err != nil { //nolint:gosec // G306: world-readable
 		return nil, fmt.Errorf("write the gem: %w", err)
 	}
