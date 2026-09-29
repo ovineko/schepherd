@@ -50,4 +50,2752 @@ and each catalog entry records its source, source digest and license. The licens
 published schemas is [`sources/licenses.toml`](sources/licenses.toml); see
 [Publishing](docs/publishing.md#licenses).
 
-No catalog has been published yet: `catalog/state.json` does not exist.
+Catalog revision `20260929.1809` (manifest `sha256:d2cb65dd400b02862cda6ecf87159a3aaf8c55fff17b87cd8153c9defa081a67`), prepared from the SchemaStore catalog at commit `ed615703bc10ba15940ebb053a9e9b32bb512498`, lists 998 schemas. Each schema is listed under every source of its content: its own document and every dependency bundled into it.
+
+### SchemaStore repository (Apache-2.0)
+
+Files of the SchemaStore repository `https://github.com/SchemaStore/schemastore` at commit `ed615703bc10ba15940ebb053a9e9b32bb512498`, allowed by the rules `schemastore` and `schemastore-raw` of `sources/licenses.toml`. The notice layer of each of these schemas also carries the LICENSE and NOTICE files of the repository. Its NOTICE file reads:
+
+```text
+JSON Schema Store
+Copyright 2015-Current Mads Kristensen and Contributors
+```
+
+661 schemas:
+
+- `abc-clinical-demand-forecast-5.1.0`
+- `abc-inventory-module-data-5.4.0`
+- `abc-supply-plan-14.2.0`
+- `abtop`
+- `accelerator`
+- `act3`
+- `actionlint`
+- `agripparc-1.4`
+- `aiconfig-1.0`
+- `aider-0.82`
+- `aih-config`
+- `aih-org-policy`
+- `aio-connector-metadata-7.0-preview`
+- `aio-wasm-graph-config-1.1.0`
+- `aiproj-1.11`
+- `airlock-microgateway-3.2`
+- `algovoi-compliance-receipt-v1`
+- `aliases`
+- `all-contributors`
+- `allstar-action`
+- `allstar-admin`
+- `allstar-binary`
+- `allstar-branch`
+- `allstar-codeowners`
+- `allstar-config`
+- `allstar-outside`
+- `allstar-scorecard`
+- `allstar-security`
+- `allstar-workflow`
+- `amplify`
+- `amx-muse`
+- `any`
+- `anywork-ac-1.1`
+- `apibuilder`
+- `apollo-router-2.9.0`
+- `app-config`
+- `apple-app-site-association`
+- `appsettings`
+- `appsscript`
+- `appveyor`
+- `architectfx`
+- `artifacthub-repo`
+- `asconfig-schema`
+- `asmdef`
+- `aspire-8.0`
+- `assetlinks`
+- `attw`
+- `aurora-2.0`
+- `ava`
+- `avro-avsc`
+- `aws-cdk-appconfig-featureflags-1.0.0`
+- `azure-containerapp-template`
+- `azure-deviceupdate-import-manifest-5.0`
+- `azure-deviceupdate-update-manifest-5`
+- `azure-devops-extension-manifest-1.0`
+- `azure-iot-edge-deployment-2.0`
+- `azure-iot-edge-deployment-template-4.0`
+- `azure-iot-edgeagent-deployment-1.1`
+- `azure-iot-edgehub-deployment-1.2`
+- `babelrc`
+- `backportrc`
+- `bamboo-spec`
+- `band-manifest`
+- `behat`
+- `bettercodehub`
+- `bigconfig`
+- `bigquery-table`
+- `bitrise`
+- `bitrise-step`
+- `biztalkserverapplicationschema`
+- `bmml`
+- `bootstraprc`
+- `bosh-bpm-config`
+- `bosh-cpi-config`
+- `bosh-deploy-config`
+- `bosh-job-spec`
+- `bosh-ops-file`
+- `bosh-package-spec`
+- `bower`
+- `bowerrc`
+- `boyka-config`
+- `bozr`
+- `bpkg`
+- `browser.i18n`
+- `buf`
+- `buf.gen`
+- `buf.lock`
+- `buf.plugin`
+- `buf.policy`
+- `buf.work`
+- `bukkit-plugin`
+- `bun-lock`
+- `bundleconfig`
+- `bunfig`
+- `bungee-plugin`
+- `bxci.schema-3.x`
+- `cargo`
+- `cargo-make`
+- `cargo-mutants-config`
+- `case_schema`
+- `catalog-info`
+- `cdk`
+- `cfgd-config-0.11.0`
+- `cfgd-configsource-0.11.0`
+- `cfgd-module-0.11.0`
+- `cfgd-profile-0.11.0`
+- `changepacks`
+- `chart`
+- `chart-lock`
+- `cheatsheets`
+- `chezmoi`
+- `chisel-slices`
+- `chrome-extension-locales-messages`
+- `chrome-manifest`
+- `chutzpah`
+- `cibuildwheel`
+- `cinnamon-spice-metadata`
+- `cinnamon-spice-settings`
+- `cinnamon-spice.info`
+- `clang-format-21.x`
+- `clang-tidy`
+- `clangd`
+- `clasp`
+- `claude-code-keybindings`
+- `claude-code-launch`
+- `claude-code-marketplace`
+- `claude-code-plugin-manifest`
+- `claude-code-settings`
+- `clib`
+- `cloud-run-v1`
+- `cloud-sdk-pipeline-config-schema`
+- `cloudbuild`
+- `cloudfoundry-application-manifest`
+- `cloudify`
+- `codeclimate`
+- `codecov`
+- `codex-hooks`
+- `codex-plugin-manifest`
+- `codex-skill-metadata`
+- `coffeelint`
+- `commands`
+- `commit-check`
+- `commitlintrc`
+- `compile-commands`
+- `compilerconfig`
+- `component`
+- `component-detection-manifest`
+- `container-structure-test`
+- `contextive-glossary`
+- `cosmos-config`
+- `creatomic`
+- `crowdin`
+- `crucible-code-schema`
+- `cryproj`
+- `csscomb`
+- `csslintrc`
+- `ctfd`
+- `dart-build`
+- `dart-test`
+- `datalogic-scan2deploy-android`
+- `datalogic-scan2deploy-ce`
+- `debugsettings`
+- `dein`
+- `dependabot`
+- `dependabot-2.0`
+- `deployed`
+- `detekt-1.22.0`
+- `devinit.schema-6.0`
+- `devup`
+- `docfx`
+- `docker-bake`
+- `docker-extension-metadata`
+- `dockerd`
+- `dofigen`
+- `dotnet-releases-index`
+- `dotnet-tools`
+- `dotnetcli.host`
+- `drone`
+- `drupal-breakpoints`
+- `drupal-config`
+- `drupal-info`
+- `drupal-layouts`
+- `drupal-libraries`
+- `drupal-links-action`
+- `drupal-links-contextual`
+- `drupal-links-menu`
+- `drupal-links-task`
+- `drupal-migration`
+- `drupal-permissions`
+- `drupal-recipe`
+- `drupal-routing`
+- `drupal-services`
+- `drush.site.yml`
+- `dss-2.0.0`
+- `dtool-dataset-metadata-1.0`
+- `dust`
+- `easyvcr-net`
+- `electron-builder`
+- `elgato-stream-deck-plugin`
+- `elm`
+- `embrace-config-schema-1.0.0`
+- `emmet`
+- `enonic-xp-admin-extension-8.0.0`
+- `enonic-xp-admin-tool-8.0.0`
+- `enonic-xp-api-8.0.0`
+- `enonic-xp-application-8.0.0`
+- `enonic-xp-cms-8.0.0`
+- `enonic-xp-content-type-8.0.0`
+- `enonic-xp-form-fragment-8.0.0`
+- `enonic-xp-idprovider-8.0.0`
+- `enonic-xp-layout-8.0.0`
+- `enonic-xp-macro-8.0.0`
+- `enonic-xp-mixin-8.0.0`
+- `enonic-xp-page-8.0.0`
+- `enonic-xp-part-8.0.0`
+- `enonic-xp-service-8.0.0`
+- `enonic-xp-site-8.0.0`
+- `enonic-xp-style-8.0.0`
+- `enonic-xp-task-8.0.0`
+- `enonic-xp-webapp-8.0.0`
+- `epr-manifest`
+- `es6importsorterrc`
+- `eslint-suppressions`
+- `eslintrc`
+- `esmrc`
+- `esquio`
+- `ethereum-erc1155`
+- `ethereum-erc721`
+- `evidence-bundle`
+- `evolving-resolutive-process-notation-1.0`
+- `expo-57.0.0`
+- `fabric.mod`
+- `factorial-drupal-breakpoints-css-0.2.0`
+- `feed`
+- `first-timers`
+- `flatpak-manifest`
+- `fly`
+- `foundryvtt-base-package-manifest`
+- `foundryvtt-module-manifest`
+- `foundryvtt-system-manifest`
+- `foundryvtt-template`
+- `foundryvtt-world-manifest`
+- `foxx-manifest`
+- `function`
+- `gadget-yaml`
+- `gama`
+- `gaspar-3.0`
+- `gcp-blueprint-metadata`
+- `gematik-test-hcpis`
+- `gematik-test-hcps`
+- `gematik-test-insurances`
+- `gematik-test-patients`
+- `gematik-tiger`
+- `git-cliff`
+- `gitea-issue-config`
+- `gitea-issue-forms`
+- `github-action`
+- `github-cli-config`
+- `github-cli-hosts`
+- `github-discussion`
+- `github-funding`
+- `github-issue-config`
+- `github-issue-forms`
+- `github-pages-jekyll`
+- `github-prompt`
+- `github-release-config`
+- `github-secret-scanning`
+- `github-workflow`
+- `github-workflow-template-properties`
+- `gitleaks`
+- `glamour-style`
+- `glazewm`
+- `global`
+- `gollama`
+- `gpc`
+- `grafana-dashboard-5.x`
+- `grpc-api-gateway`
+- `grunt-clean-task`
+- `grunt-copy-task`
+- `grunt-cssmin-task`
+- `grunt-jshint-task`
+- `grunt-task`
+- `grunt-watch-task`
+- `hammerkit`
+- `hatch`
+- `helmfile`
+- `heloisa-marketplace`
+- `hemtt-0.6.2`
+- `hias-hitf`
+- `host`
+- `host-meta`
+- `htmlhint`
+- `httpmockrc`
+- `hugo`
+- `hugo-theme`
+- `huskyrc`
+- `hws-config`
+- `ide.host`
+- `imageoptimizer`
+- `img-catapult-psp-1.0.0`
+- `imgbotconfig`
+- `importmap`
+- `intlayer`
+- `jasmine`
+- `jdt`
+- `jekyll`
+- `jest`
+- `jfrog-pipelines`
+- `jovo-language-model`
+- `jreleaser-1.26.0`
+- `jsbeautifyrc`
+- `jsbeautifyrc-nested`
+- `jsconfig`
+- `jscpd`
+- `jscsrc`
+- `jsdoc-1.0.0`
+- `jshintrc`
+- `jsinspectrc`
+- `json-patch`
+- `jsone`
+- `jsonld`
+- `jsontron-0.1`
+- `karakum-schema`
+- `kestra-0.19.0`
+- `kind-cluster`
+- `knowledge-unit`
+- `kode-ci-build-1.0.0`
+- `kong_json_schema`
+- `kustomization`
+- `kya`
+- `label-commenter-config`
+- `language-configuration`
+- `launchsettings`
+- `lazydocker`
+- `lego`
+- `lerna`
+- `lgtm`
+- `libman`
+- `license-report-config`
+- `linkinator-config`
+- `lintstagedrc`
+- `linutil-tab-data`
+- `linutil-tabs`
+- `liquibase-3.2`
+- `litertlm_manifest`
+- `local.settings`
+- `loki`
+- `loobin-1.0`
+- `lsd-colors`
+- `lsd-config`
+- `lsd-icons`
+- `lsdlschema`
+- `luaurc`
+- `lychee`
+- `madge`
+- `maestro-flow`
+- `mail-servers-config`
+- `mapehr`
+- `markdown-link-check`
+- `maturin`
+- `mboats-config-0.2`
+- `mdxlintrc`
+- `metaschema-draft-07-unofficial-strict`
+- `metricshub`
+- `metricshub-connector`
+- `micro`
+- `micro-syntax`
+- `mimetypes`
+- `minecraft-advancement`
+- `minecraft-biome`
+- `minecraft-configured-carver`
+- `minecraft-custom-main-menu-mod`
+- `minecraft-damage-type`
+- `minecraft-dimension`
+- `minecraft-dimension-type`
+- `minecraft-item-modifier`
+- `minecraft-lang`
+- `minecraft-loot-table`
+- `minecraft-pack-mcmeta`
+- `minecraft-particle`
+- `minecraft-predicate`
+- `minecraft-recipe`
+- `minecraft-tag`
+- `minecraft-template-pool`
+- `minecraft-texture-mcmeta`
+- `minecraft-trim-material`
+- `minecraft-trim-pattern`
+- `mkdocs-1.6`
+- `mocharc`
+- `modelparams`
+- `modelsdev`
+- `modernizrrc`
+- `monade-stack-config`
+- `mongodb-atlas-search-index-definition`
+- `monika-config-schema`
+- `mprocs-0.6.4`
+- `mta`
+- `mtad`
+- `mtaext`
+- `mycode`
+- `nest-cli`
+- `netlify`
+- `nightwatch`
+- `ninjs-2.0`
+- `nodehawkrc`
+- `nodemon`
+- `now`
+- `npm-badges`
+- `npmpackagejsonlintrc`
+- `nswag`
+- `nuejs-site`
+- `nuget-project`
+- `nycrc`
+- `ocelot`
+- `odgs-data-rules`
+- `odgs-ontology-graph`
+- `odgs-standard-metrics`
+- `ogen`
+- `okf-0.2`
+- `okh`
+- `omletrc`
+- `omnisharp`
+- `one-changelog-schema-0.1`
+- `one-service-descriptor-schema-0.1`
+- `openfin`
+- `openhab-5.1`
+- `opensrm`
+- `openutau-character`
+- `openutau-ustx`
+- `openweather.current`
+- `openweather.roadrisk`
+- `opspec-io-0.1.7`
+- `package`
+- `package.manifest`
+- `packer`
+- `packwiz-index`
+- `packwiz-mod`
+- `packwiz-pack`
+- `pactspec`
+- `pantsbuild-2.32.0`
+- `paper-plugin`
+- `partial-black`
+- `partial-fastapi`
+- `partial-inwards`
+- `partial-pixi`
+- `partial-pytest`
+- `partial-scheduled`
+- `pattern`
+- `pdm`
+- `pep-723`
+- `petstore-v1.0`
+- `pgap_yaml_input_reader`
+- `pgrls`
+- `phrase`
+- `phraseapp`
+- `plagiarize`
+- `plagiarize-me`
+- `pm2-ecosystem`
+- `pnpm-workspace`
+- `pocketmine-plugin`
+- `podman-desktop-extension`
+- `popxf-1.0`
+- `popxf-corr-1.0`
+- `postcssrc`
+- `powerpages-web-template-manifest`
+- `powerpages.config`
+- `pre-commit-config`
+- `pre-commit-hooks`
+- `prek`
+- `prettierrc`
+- `prisma`
+- `problem-object-rfc9457`
+- `project-1.0.0-beta3`
+- `project-1.0.0-beta4`
+- `project-1.0.0-beta5`
+- `project-1.0.0-beta6`
+- `project-1.0.0-beta8`
+- `project-1.0.0-rc1`
+- `project-1.0.0-rc2`
+- `project-schemastore-org`
+- `projektor`
+- `prometheus`
+- `prometheus-alertmanager`
+- `prometheus.rules`
+- `prometheus.rules.test`
+- `promtail`
+- `proxies`
+- `pterodactyl`
+- `publiccode`
+- `pubspec`
+- `pull-request-labeler`
+- `pulumi`
+- `putout`
+- `pylock`
+- `pyrseas-0.8`
+- `qfconfig`
+- `qodana-1.0`
+- `quikrun`
+- `qwen-code-settings`
+- `radiohound-v0`
+- `rc3-auth-0.0.3`
+- `rc3-collection-0.0.3`
+- `rc3-environment-0.0.3`
+- `rc3-folder-0.0.3`
+- `rc3-request-0.0.3`
+- `rc3-settings-0.0.3`
+- `rehyperc`
+- `remarkrc`
+- `replacement-transformer`
+- `replit`
+- `resjson`
+- `revola`
+- `roomodes`
+- `rudder-techniques`
+- `ruff`
+- `rumdl`
+- `rust-project`
+- `rust-toolchain`
+- `ryl`
+- `s3-bucket-cors`
+- `safebox-schema-v1.0.0`
+- `sake`
+- `samt`
+- `samtrc`
+- `sarif-1.0.0`
+- `sarif-2.0.0`
+- `sarif-2.1.0`
+- `sarif-2.1.0-rtm.2`
+- `sarif-2.1.0-rtm.3`
+- `sarif-2.1.0-rtm.4`
+- `sarif-2.1.0-rtm.5`
+- `sarif-2.1.0-rtm.6`
+- `sarif-external-property-file-2.1.0-rtm.2`
+- `sarif-external-property-file-2.1.0-rtm.3`
+- `sarif-external-property-file-2.1.0-rtm.4`
+- `sarif-external-property-file-2.1.0-rtm.5`
+- `scarb`
+- `schema-catalog`
+- `schema-draft-v4`
+- `semantic-release`
+- `sergen`
+- `servicehub.config`
+- `servicehub.service`
+- `settings.job`
+- `sigmacv`
+- `sigrid-scope-file`
+- `sil-kit-participant-configuration`
+- `sil-kit-registry-configuration`
+- `size-limit`
+- `skypilot-task`
+- `slack-app-manifest`
+- `snowflake-config`
+- `snowflake-connections`
+- `solarxy-config`
+- `solidarityschema`
+- `solution-filter`
+- `sourcehut-build-0.65.0`
+- `sourcemap-v3`
+- `sourcery_yaml_schema`
+- `specif-1.1`
+- `specmatic`
+- `sponge-mixins`
+- `sprite`
+- `sqlc-2.0`
+- `stackblitzrc`
+- `stale`
+- `starlake`
+- `staticwebapp.config`
+- `streamlit-config`
+- `stylelintrc`
+- `stylua`
+- `sublime-syntax`
+- `swa-cli.config`
+- `taplo`
+- `task-schemastore-org`
+- `taurus`
+- `template`
+- `templatesources`
+- `testenvironments`
+- `tfpowershell-datasource`
+- `tfpowershell-provider`
+- `tfpowershell-resource`
+- `tfpowershell-settings`
+- `thunderbird-extension`
+- `ti8m-cdk-concrete-environment-config`
+- `ti8m-cdk-concrete-environments`
+- `ti8m-cdk-environment-definition`
+- `tizen_workspace`
+- `tldr`
+- `tmlanguage`
+- `tmuxinator`
+- `tombi`
+- `traefik-v2`
+- `traefik-v2-file-provider`
+- `traefik-v3`
+- `traefik-v3-file-provider`
+- `travis`
+- `treefmt`
+- `truescript`
+- `ts-force-config`
+- `tsbuild`
+- `tsconfig`
+- `tsd`
+- `tsdrc`
+- `tslint`
+- `tsoa`
+- `tunnelhub`
+- `twee-ts.config`
+- `ty`
+- `typewiz`
+- `typings`
+- `typingsrc`
+- `typo3`
+- `ubuntu-server-autoinstall`
+- `unist`
+- `up`
+- `uplugin`
+- `uproject`
+- `urai-ecma`
+- `utam-page-object`
+- `utcm-monitor`
+- `uv`
+- `uxp-manifest-5`
+- `value-add-transformer`
+- `vault`
+- `vector`
+- `vespertide`
+- `vespertide-migration`
+- `vespertide-model`
+- `vhwdebugger-binding-schema`
+- `vim-addon-info`
+- `vs-2017.3.host`
+- `vs-nesting`
+- `vsconfig`
+- `vsext`
+- `vsix-manifestinjection`
+- `vsix-publish`
+- `vsls`
+- `vss-extension`
+- `vtcfg-v19.0.0`
+- `warp-keysets`
+- `warp-themes`
+- `warp-workflows`
+- `web-manifest-combined`
+- `web-types`
+- `webextension`
+- `webjob-publish-settings`
+- `webjobs-list`
+- `winget-pkgs-installer-1.0.0`
+- `winget-pkgs-locale-1.0.0`
+- `winget-pkgs-singleton-1.0.0`
+- `winutil-applications`
+- `winutil-presets`
+- `workflows`
+- `xs-app`
+- `yamlfmt`
+- `yamllint`
+- `yap`
+- `youtrack-app`
+- `zarf`
+- `zuul`
+
+### GitHub repository `abhiyoheswaran1/agentloopkit` (MIT)
+
+License detected from `LICENSE` at commit `4bca176ba2b27b041d961f6078e8035476d874e3`.
+
+1 schema:
+
+- `agentloop.config`
+
+### GitHub repository `abordage/schemas` (MIT)
+
+License detected from `LICENSE` at commit `b43de4727d7a2bf5f5b65906ec33df9f9c516b6b`.
+
+1 schema:
+
+- `awesome-repositories`
+
+### GitHub repository `ackee-blockchain/trident` (MIT)
+
+License detected from `LICENSE` at commit `053656638bfcbbd7951799f3a6b81f85cf55fac0`.
+
+1 schema:
+
+- `trident-spec`
+
+### GitHub repository `ackee-blockchain/wake` (ISC)
+
+License detected from `LICENSE` at commit `9089173dc13e54e906678e731415da4e133c591c`.
+
+1 schema:
+
+- `wake-schema`
+
+### GitHub repository `adonisjs/application` (MIT)
+
+License detected from `LICENSE.md` at commit `19ea1364f68039d51075ad7c3c42b33adfc634c6`.
+
+1 schema:
+
+- `adonisrc`
+
+### GitHub repository `aerleon/aerleon` (Apache-2.0)
+
+License detected from `LICENSE` at commit `9580a6cb6b333eb4331ce41375aa88f4509e1716`.
+
+3 schemas:
+
+- `aerleon-config`
+- `aerleon-definitions`
+- `aerleon-policies`
+
+### GitHub repository `ahmadnassri/har-schema` (ISC)
+
+License detected from `LICENSE` at commit `c01b2e49edc33cd2cd22c980c57681be57bbb1f6`.
+
+1 schema:
+
+- `har`
+
+### GitHub repository `akiomik/mado` (Apache-2.0)
+
+License detected from `LICENSE` at commit `032ad75b781a0cd03cefac77e46c1bc87d5bc3d9`.
+
+1 schema:
+
+- `mado`
+
+### GitHub repository `andig/evcc` (MIT)
+
+License detected from `LICENSE` at commit `37479e7704581b97b39a56f2131fd07e6e8ef45b`.
+
+1 schema:
+
+- `schema-12`
+
+### GitHub repository `angular/angular-cli` (MIT)
+
+License detected from `LICENSE` at commit `53df0c81513c34b20bf11d03240c2052570df62c`.
+
+1 schema:
+
+- `schema-13`
+
+### GitHub repository `ansible/ansible-navigator` (Apache-2.0)
+
+License detected from `LICENSE` at commit `968b23182d726eb6691290651b533a3aa7db8d79`.
+
+1 schema:
+
+- `ansible-navigator`
+
+### GitHub repository `ansible/ansible-rulebook` (Apache-2.0)
+
+License detected from `LICENSE` at commit `bbe75e6ad25423f075237fd39c4331f0b19ea032`.
+
+1 schema:
+
+- `ruleset_schema`
+
+### GitHub repository `apache/camel` (Apache-2.0)
+
+License detected from `LICENSE.txt` at commit `381fb137ce7937e73ccd2c621f7412a4d6d6db57` with the notice file `NOTICE.txt`.
+
+1 schema:
+
+- `camelyamldsl`
+
+### GitHub repository `apideck-libraries/portman` (Apache-2.0)
+
+License detected from `LICENSE.md` at commit `a5bea50eb4d3857c755be7498cac0fc7f65fd93b`.
+
+1 schema:
+
+- `portman-config-schema`
+
+### GitHub repository `architect/parser` (Apache-2.0)
+
+License detected from `LICENSE` at commit `e0a207cf24b984e65b1a8f687f2630da1ac9f3f3`.
+
+1 schema:
+
+- `arc-schema`
+
+### GitHub repository `argoproj/argo-workflows` (Apache-2.0)
+
+License detected from `LICENSE` at commit `dadd69141c570fa678f7d51ee6decfe3fa77f109`.
+
+1 schema:
+
+- `schema-14`
+
+### GitHub repository `arvinxx/components` (MIT)
+
+License detected from `LICENSE` at commit `229753f23eb01d9d3e8095e411ed82dbc6522893`.
+
+1 schema:
+
+- `journey-map`
+
+### GitHub repository `ast-grep/ast-grep` (MIT)
+
+License detected from `LICENSE` at commit `25334496c105c9c728f0a6024f3d164aed40cacc`.
+
+2 schemas:
+
+- `project-raw-githubusercontent-com`
+- `rule`
+
+### GitHub repository `avanade/beef` (MIT)
+
+License detected from `LICENSE` at commit `e0d5de6dbd2df76bfdc434d7758a840d3f13c9a8`.
+
+4 schemas:
+
+- `database.beef`
+- `database.beef-5`
+- `entity.beef`
+- `entity.beef-5`
+
+### GitHub repository `avanade/ntangle` (MIT)
+
+License detected from `LICENSE` at commit `0f8a5e596b5b8f9c516dca36d1e52f1fe0e9af43`.
+
+1 schema:
+
+- `ntangle`
+
+### GitHub repository `aws-quickstart/taskcat` (Apache-2.0)
+
+License detected from `LICENSE.txt` at commit `cb9b82b5f59f1e37b7a1caa1fbd50c79ec2264b4`.
+
+1 schema:
+
+- `config_schema`
+
+### GitHub repository `aws/aws-sam-cli` (Apache-2.0)
+
+License detected from `LICENSE` at commit `aa9da5562ce7ea65b01f7bfe10c53a4c85fa8840` with the notice file `NOTICE`.
+
+1 schema:
+
+- `samcli`
+
+### GitHub repository `awslabs/goformation` (Apache-2.0)
+
+License detected from `LICENSE` at commit `cd9ca74c84b4ff99d0d6c3db9fca042f447e5f86` with the notice file `NOTICE`.
+
+1 schema:
+
+- `cloudformation`
+
+### GitHub repository `awslabs/landing-zone-accelerator-on-aws` (Apache-2.0)
+
+License detected from `LICENSE.txt` at commit `61bba812ce71472684bb7c07f60f1e7100b18cc9` with the notice file `NOTICE.txt`.
+
+8 schemas:
+
+- `accounts-config`
+- `customizations-config`
+- `global-config`
+- `iam-config`
+- `network-config`
+- `organization-config`
+- `replacements-config`
+- `security-config`
+
+### GitHub repository `azure/azure-dev` (MIT)
+
+License detected from `LICENSE` at commit `973ffa9c86cee0c1377767b34ea6f6cf546f088b`.
+
+1 schema:
+
+- `azure.yaml`
+
+### GitHub repository `azure/azure-landing-zones-library` (MIT)
+
+License detected from `LICENSE` at commit `4eae565287844360a61545f9799400431adb6d0a`.
+
+5 schemas:
+
+- `archetype_definition`
+- `archetype_override`
+- `architecture_definition`
+- `default_policy_values`
+- `library_metadata`
+
+### GitHub repository `bastienwirtz/homer` (Apache-2.0)
+
+License detected from `LICENSE` at commit `daa017dfe1ea8d0875697aede091319b6134bb4b`.
+
+1 schema:
+
+- `config-schema-raw-githubusercontent-com`
+
+### GitHub repository `bazaarvoice/qtype` (Apache-2.0)
+
+License detected from `LICENSE` at commit `d86cf4f8ab0ae588cc6e4e229e732b9d0f69a58b`.
+
+1 schema:
+
+- `qtype`
+
+### GitHub repository `bazelbuild/bazel-central-registry` (Apache-2.0)
+
+License detected from `LICENSE` at commit `78f8db41de52705cc83025e353371c0f8a371131`.
+
+1 schema:
+
+- `metadata`
+
+### GitHub repository `bergercookie/asm-lsp` (BSD-2-Clause)
+
+License detected from `LICENSE` at commit `ebc00fd4c1368370783afe91159b41370f79f52e`.
+
+1 schema:
+
+- `asm-lsp_config_schema`
+
+### GitHub repository `bitmovin/bitmovin-api-sdk-examples` (MIT)
+
+License detected from `LICENSE` at commit `e986ca1c6bbb6fb9be694176b45d050bc2556eac`.
+
+1 schema:
+
+- `bitmovin-encoding-template`
+
+### GitHub repository `bitol-io/open-data-contract-standard` (Apache-2.0)
+
+License detected from `LICENSE` at commit `d3e1cb3e69849e05c9a7522abed9b27fb9af50d7`.
+
+1 schema:
+
+- `odcs-json-schema-latest`
+
+### GitHub repository `bitol-io/open-data-product-standard` (Apache-2.0)
+
+License detected from `LICENSE` at commit `5f54a17296c3f294ea40c949a2a5ef268c20eb6b`.
+
+1 schema:
+
+- `odps-json-schema-latest`
+
+### GitHub repository `brettinternet/hum` (MIT)
+
+License detected from `LICENSE` at commit `55e3561b0394e70a4eda987576346e0695e53a4b`.
+
+1 schema:
+
+- `hum`
+
+### GitHub repository `brickkit/brickkit` (Apache-2.0)
+
+License detected from `LICENSE` at commit `f0b865be0350822986377087a22670b6bb5f8b9d`.
+
+1 schema:
+
+- `brickkit`
+
+### GitHub repository `budimanjojo/talhelper` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `a40a7695187e3c35a9353a5984709d1d85660f79`.
+
+1 schema:
+
+- `talconfig`
+
+### GitHub repository `buildkite/pipeline-schema` (MIT)
+
+License detected from `LICENSE` at commit `a1b20fa9f35dbc5221987ff967bacca1f03373dd`.
+
+1 schema:
+
+- `schema-15`
+
+### GitHub repository `candrewlee14/webman` (MIT)
+
+License detected from `LICENSE` at commit `6e01830565567cb041113b0fbd24721ac507790c`.
+
+1 schema:
+
+- `pkg_schema`
+
+### GitHub repository `canonical/charmcraft` (Apache-2.0)
+
+License detected from `LICENSE` at commit `0712d308cb641cd7aa2f893ab0376223ac8f0183`.
+
+1 schema:
+
+- `charmcraft`
+
+### GitHub repository `chainguard-dev/apko` (Apache-2.0)
+
+License detected from `LICENSE` at commit `739e7ce3f675ffb232e16849b51ff93657f1570c`.
+
+1 schema:
+
+- `schema-16`
+
+### GitHub repository `chainguard-dev/melange` (Apache-2.0)
+
+License detected from `LICENSE` at commit `7ef76304833f0e5b7da7c8c969c896fd07edeff3`.
+
+1 schema:
+
+- `schema-17`
+
+### GitHub repository `chris48s/v8r` (MIT)
+
+License detected from `LICENSE` at commit `b46ca839117e1dd665fa01b91c8a8268fa7d916f`.
+
+1 schema:
+
+- `config-schema-2`
+
+### GitHub repository `cirruslabs/cirrus-cli` (MIT)
+
+License detected from `LICENSE` at commit `1769788a20dc72f6aef85bcdc92abaa1bf061cdc`.
+
+1 schema:
+
+- `cirrus`
+
+### GitHub repository `cityjson/specs` (CC0-1.0)
+
+License detected from `LICENSE` at commit `877ee49e16c82a4bc7ab598926efcb9ba1075374`.
+
+1 schema:
+
+- `cityjson.min`
+
+### GitHub repository `clawject/clawject` (MIT)
+
+License detected from `LICENSE` at commit `982751f8f54b127d1d296511ea50aa11267402bb`.
+
+1 schema:
+
+- `schema-18`
+
+### GitHub repository `clementtsang/bottom` (MIT)
+
+License detected from `LICENSE` at commit `048deff9431ec538ca86f3ac010e998a4f878691`.
+
+1 schema:
+
+- `bottom`
+
+### GitHub repository `cloud-pipelines/component_spec_schema` (Apache-2.0)
+
+License detected from `LICENSE` at commit `5a20cb0d4b83c46c7a4584d2263244475d7a9f50`.
+
+1 schema:
+
+- `component_spec.json_schema`
+
+### GitHub repository `cloudevents/spec` (Apache-2.0)
+
+License detected from `LICENSE` at commit `2ed3806b4ad8fda35813263cfefb2d73098b7655`.
+
+1 schema:
+
+- `cloudevents`
+
+### GitHub repository `cloudtoid/gateway-core` (MIT)
+
+License detected from `LICENSE` at commit `9a7605633f23e749908c21d06427024bd510ace9`.
+
+1 schema:
+
+- `2021-07`
+
+### GitHub repository `codecv-co/codecv` (MIT)
+
+License detected from `license.md` at commit `633d8df785c15483e0a0944ac99b111bcee13a4f`.
+
+1 schema:
+
+- `cv`
+
+### GitHub repository `columbuslabs/debtlens` (MIT)
+
+License detected from `LICENSE` at commit `2d577cf30f5f6f99c79b09d4c613395dcc2e423d`.
+
+1 schema:
+
+- `debtlens.config`
+
+### GitHub repository `commercetools/telefonistka` (MIT)
+
+License detected from `LICENSE` at commit `d4856719f50605d5c8c7e6dafb158f45475f10e7`.
+
+1 schema:
+
+- `telefonistka`
+
+### GitHub repository `common-workflow-lab/cwl-ts-auto` (Apache-2.0)
+
+License detected from `LICENSE` at commit `a21adf89d5a0df075da4fba49f4ccd9344758101`.
+
+1 schema:
+
+- `cwl_schema`
+
+### GitHub repository `compomics/ms2rescore` (Apache-2.0)
+
+License detected from `LICENSE` at commit `48ececbbca56ff4c10d52b26b098800f4d3a24bd`.
+
+1 schema:
+
+- `config_schema-raw-githubusercontent-com`
+
+### GitHub repository `compose-spec/compose-go` (Apache-2.0)
+
+License detected from `LICENSE` at commit `32d8d5d602975fae367ba521b2af2ce97753ff05` with the notice file `NOTICE`.
+
+1 schema:
+
+- `compose-spec`
+
+### GitHub repository `configu/configu` (Apache-2.0)
+
+License detected from `LICENSE` at commit `89c0cabd595caa1849551416a6a703efeb7c8a20`.
+
+2 schemas:
+
+- `cfgu`
+- `configu`
+
+### GitHub repository `coreruleset/ftw-tests-schema` (Apache-2.0)
+
+License detected from `LICENSE` at commit `7bb8f9d8a6f9f26647e42002fce5bd9fd4dfc43b`.
+
+2 schemas:
+
+- `waf-platform-overrides-schema-v2.2.0`
+- `waf-tests-schema-v2.2.0`
+
+### GitHub repository `crystal-ameba/ameba` (MIT)
+
+License detected from `LICENSE` at commit `0925f0bd2b81bcfa38d25c73fd73ed0390ce3429`.
+
+1 schema:
+
+- `ameba.yml`
+
+### GitHub repository `crystal-lang/shards` (Apache-2.0)
+
+License detected from `LICENSE` at commit `3faa3dcad705ca1a141533b003bd3fcc9423ec04`.
+
+1 schema:
+
+- `shard.yml`
+
+### GitHub repository `cveproject/cve-schema` (CC0-1.0)
+
+License detected from `LICENSE.txt` at commit `ce5f5c865f14dc40a6548d36b74751abca1c588a`.
+
+1 schema:
+
+- `cve_record_format_bundled`
+
+### GitHub repository `daciertech/schedulerstartup` (MIT)
+
+License detected from `LICENSE` at commit `824d5b0e77ce24f7bfbdacedb2ea8bac9c768068`.
+
+1 schema:
+
+- `dacier-schema-vscode`
+
+### GitHub repository `dahag-ag/keycloak-openapi` (MIT)
+
+License detected from `LICENSE.txt` at commit `2e3d10857fe34a037dc4439459cfe4f23515a02b`.
+
+1 schema:
+
+- `keycloak-19.0.0`
+
+### GitHub repository `dannyben/bashly` (MIT)
+
+License detected from `LICENSE` at commit `3cf4064103b934de28ec4c5131610d4207ada76c`.
+
+1 schema:
+
+- `bashly`
+
+### GitHub repository `dannyben/completely` (MIT)
+
+License detected from `LICENSE` at commit `bb3c2a0db5640787031310b6dd93414370301c82`.
+
+1 schema:
+
+- `completely`
+
+### GitHub repository `dannyben/madness` (MIT)
+
+License detected from `LICENSE` at commit `713116c624f3f1d2e91dacf107630e71ea89657a`.
+
+1 schema:
+
+- `madness`
+
+### GitHub repository `dannyben/secret_hub` (MIT)
+
+License detected from `LICENSE` at commit `27cdcf4ed7bff8468ae3520fab88341ba1f49f7a`.
+
+1 schema:
+
+- `secrethub`
+
+### GitHub repository `datacontract/datacontract-specification` (MIT)
+
+License detected from `LICENSE` at commit `d6604661bc07832cafcf586efd5d3ff27140af2a`.
+
+1 schema:
+
+- `datacontract`
+
+### GitHub repository `datadog/schema` (Apache-2.0)
+
+License detected from `LICENSE` at commit `1fe094ddde7020e0f5b549c43d8817e15c82cec6`.
+
+3 schemas:
+
+- `entity`
+- `service`
+- `test-config`
+
+### GitHub repository `datamesh-architecture/dataproduct-specification` (MIT)
+
+License detected from `LICENSE` at commit `f5242f6102223c04e4f7492f40fcabb5b0eef9d4`.
+
+1 schema:
+
+- `dataproduct`
+
+### GitHub repository `datayoga-io/datayoga` (Apache-2.0)
+
+License detected from `LICENSE` at commit `06aa28879b0150d797908cbfccd0072e9ca34501`.
+
+2 schemas:
+
+- `connections`
+- `job`
+
+### GitHub repository `davidanson/markdownlint` (MIT)
+
+License detected from `LICENSE` at commit `3f1f479322e863a53e56c94b01266b9785cd3bfd`.
+
+1 schema:
+
+- `markdownlint-config-schema`
+
+### GitHub repository `dbt-labs/dbt-jsonschema` (Apache-2.0)
+
+License detected from `License.md` at commit `6a401244651d3b5e0fd2f7cfcfb120187118edb4`.
+
+5 schemas:
+
+- `dbt_project-latest-fusion`
+- `dbt_yml_files-latest-fusion`
+- `dependencies-latest-fusion`
+- `packages-latest-fusion`
+- `selectors-latest-fusion`
+
+### GitHub repository `dcermak/vscode-rke-cluster-config` (MIT)
+
+License detected from `LICENSE` at commit `052da8d433dc0614d6e5e7feab1e3f2519d14ef1`.
+
+2 schemas:
+
+- `cluster`
+- `cluster.yml`
+
+### GitHub repository `ddev/ddev` (Apache-2.0)
+
+License detected from `LICENSE` at commit `42cf1aec745417e2476c57cd316a05e7f4335bff`.
+
+2 schemas:
+
+- `schema-19`
+- `schema-20`
+
+### GitHub repository `denoland/deno` (MIT)
+
+License detected from `LICENSE.md` at commit `1b48a20f85a8164aebe4fb29ae53909136a3d777`.
+
+1 schema:
+
+- `config-file.v1`
+
+### GitHub repository `deployphp/deployer` (MIT)
+
+License detected from `LICENSE` at commit `c08d1367d8f1688e5ee66ba5c3821a12743125f4`.
+
+1 schema:
+
+- `schema-21`
+
+### GitHub repository `devfile/api` (Apache-2.0)
+
+License detected from `LICENSE` at commit `2568944140c38aa941390d0f8e941534bf88f793`.
+
+1 schema:
+
+- `devfile`
+
+### GitHub repository `dipdup-io/dipdup` (MIT)
+
+License detected from `LICENSE` at commit `e3e6291e33586c9233c1c78e8034cbc966747f82`.
+
+1 schema:
+
+- `dipdup-3.0`
+
+### GitHub repository `distinction-dev/alacritty-schema` (MIT)
+
+License detected from `LICENSE` at commit `5237f174c09714ecd22d6e3c185dc7f0220514f0`.
+
+1 schema:
+
+- `reference`
+
+### GitHub repository `dolittle-obsolete/dotnet.fundamentals` (MIT)
+
+License detected from `LICENSE` at commit `057ffeb8e37a6f4ffb1d5b01f89d3483afed4791`.
+
+1 schema:
+
+- `tenant-map`
+
+### GitHub repository `dolittle/dotnet.fundamentals` (MIT)
+
+License detected from `LICENSE` at commit `a20836ffa9b66bcd2d44b2c3d7f3d06cd97fbd38`.
+
+1 schema:
+
+- `resources`
+
+### GitHub repository `dolittle/runtime` (MIT)
+
+License detected from `LICENSE` at commit `8a86b7f7eb93129dc534db224bfabdf3e6622a59`.
+
+4 schemas:
+
+- `bounded-context`
+- `event-horizons`
+- `server-raw-githubusercontent-com`
+- `tenants`
+
+### GitHub repository `dotnet/nerdbank.gitversioning` (MIT)
+
+License detected from `LICENSE` at commit `46be5a2b091eb9f26b99082468f7f7ac15564ae9`.
+
+1 schema:
+
+- `version`
+
+### GitHub repository `dotnet/tye` (MIT)
+
+License detected from `LICENSE.txt` at commit `75465614e67b5f1e500d1f8b1cb70af22c0c683e`.
+
+1 schema:
+
+- `tye-schema`
+
+### GitHub repository `dotnetanalyzers/stylecopanalyzers` (MIT)
+
+License detected from `LICENSE` at commit `513ba0fefdf66e86c030c00a73812322585358ae`.
+
+1 schema:
+
+- `stylecop`
+
+### GitHub repository `dwp/schemas` (ISC)
+
+License detected from `LICENSE` at commit `af79e8b95d4146b7ee9c5920372bf4cdfb0aae81`.
+
+2 schemas:
+
+- `catalogue-entry-schema`
+- `meta-schema`
+
+### GitHub repository `eclipse-apoapsis/ort-server` (Apache-2.0)
+
+License detected from `LICENSE` at commit `7e41e2148c23b4f7a0fc2c1b935f02f851dc9a5b` with the notice file `NOTICE`.
+
+1 schema:
+
+- `repository-environment-config`
+
+### GitHub repository `editorconfig-checker/editorconfig-checker` (MIT)
+
+License detected from `LICENSE` at commit `0adfdb012938ada0cf563a40f2fceaf9466290ca`.
+
+1 schema:
+
+- `editorconfig-checker`
+
+### GitHub repository `ehfive/v2ray-jsonschema` (MIT)
+
+License detected from `LICENSE` at commit `c089bc0509108484e4bf7aa5ab4aab068378561a`.
+
+1 schema:
+
+- `v4-config`
+
+### GitHub repository `erda-project/erda` (Apache-2.0)
+
+License detected from `LICENSE` at commit `7195c3a774d577783ab834c60cb0a6480ba0300d`.
+
+2 schemas:
+
+- `dice.yaml`
+- `pipeline.yaml`
+
+### GitHub repository `estampo/estampo` (Apache-2.0)
+
+License detected from `LICENSE` at commit `f627129930406616333592d268ed9ad1e533c6b2`.
+
+1 schema:
+
+- `estampo`
+
+### GitHub repository `eurobotics-association/barba-cv` (Apache-2.0)
+
+License detected from `LICENSE` at commit `b2d3571fae5bbe35e271af4026c59cfc707e9fc1`.
+
+1 schema:
+
+- `barba-cv`
+
+### GitHub repository `evg4b/uncors` (MIT)
+
+License detected from `LICENSE` at commit `365fdbaab0931a8aa3a6a0c5b82ef964297efd2e`.
+
+1 schema:
+
+- `schema-22`
+
+### GitHub repository `evilmartians/lefthook` (MIT)
+
+License detected from `LICENSE` at commit `d050364655420db8a4241f2480942a8d8ddb3486`.
+
+1 schema:
+
+- `schema-23`
+
+### GitHub repository `firebase/firebase-tools` (MIT)
+
+License detected from `LICENSE` at commit `dfd823438f63fd1bb755ea544592415ae87f8941`.
+
+1 schema:
+
+- `firebase-config`
+
+### GitHub repository `fujaba/fulibworkflows` (MIT)
+
+License detected from `LICENSE.md` at commit `52e282b5ca4631b057f24bb59c4416292f952fde`.
+
+1 schema:
+
+- `fulibworkflows`
+
+### GitHub repository `gauge-sh/tach` (MIT)
+
+License detected from `LICENSE` at commit `65df67ac51a8d0e8f9e0398ea72c924fea34fd25`.
+
+2 schemas:
+
+- `tach-domain-toml-schema`
+- `tach-toml-schema`
+
+### GitHub repository `gerardorodriguezdev/chamaleon` (Apache-2.0)
+
+License detected from `LICENSE` at commit `ba1dfac906998a397ced112473521bda9a3c670f`.
+
+3 schemas:
+
+- `environment-schema`
+- `properties-schema`
+- `template-schema`
+
+### GitHub repository `getmockd/mockd` (Apache-2.0)
+
+License detected from `LICENSE` at commit `45c2906b095a0428842faaa931afab0edbde3fdb` with the notice file `NOTICE`.
+
+1 schema:
+
+- `mockd`
+
+### GitHub repository `gherking/gherking` (MIT)
+
+License detected from `LICENSE` at commit `a758ef312ebb3e14fd4c29ccd1d8e14a9ea24aa3`.
+
+1 schema:
+
+- `gherking`
+
+### GitHub repository `git-town/git-town` (MIT)
+
+License detected from `LICENSE` at commit `2fabf99bfd18f6ddc4e80e23f970df4ce3de9ff5`.
+
+1 schema:
+
+- `git-town`
+
+### GitHub repository `godatadriven/dbt-bouncer` (MIT)
+
+License detected from `LICENSE` at commit `6aab33cd7457516cf895597f10c8c2f8bc4ad5d5`.
+
+1 schema:
+
+- `schema-24`
+
+### GitHub repository `google-gemini/gemini-cli` (Apache-2.0)
+
+License detected from `LICENSE` at commit `d75234cae935d58f896f4dbf305e0c51602fa385`.
+
+1 schema:
+
+- `settings-raw-githubusercontent-com`
+
+### GitHub repository `googleapis/release-please` (Apache-2.0)
+
+License detected from `LICENSE` at commit `edce3d805ef3ac964d1ba2b29b0f42905f2fa412`.
+
+2 schemas:
+
+- `config`
+- `manifest`
+
+### GitHub repository `googlechrome/related-website-sets` (Apache-2.0)
+
+License detected from `LICENSE` at commit `e5c97f8517e8b0a78a71dd643052f74bf7987217`.
+
+1 schema:
+
+- `schema`
+
+### GitHub repository `googlecontainertools/skaffold` (Apache-2.0)
+
+License detected from `LICENSE` at commit `38cbd2d1fb3e105b1a45471ff3f595f7fc104dd3`.
+
+1 schema:
+
+- `v3`
+
+### GitHub repository `haxefoundation/haxelib` (MIT)
+
+License detected from `LICENSE` at commit `7a4968dd404162931b762e3b97940ec27a0c1ce4`.
+
+1 schema:
+
+- `schema-raw-githubusercontent-com`
+
+### GitHub repository `hazelops/ize` (Apache-2.0)
+
+License detected from `LICENSE` at commit `5a8df5bdb7cb016699dc6c1d90cd472c23c7bfdc`.
+
+1 schema:
+
+- `ize-spec`
+
+### GitHub repository `helm-unittest/helm-unittest` (MIT)
+
+License detected from `LICENSE` at commit `0d79286ddf79dae3cd2cae783119294eba874616`.
+
+1 schema:
+
+- `helm-testsuite`
+
+### GitHub repository `home-assistant/core` (Apache-2.0)
+
+License detected from `LICENSE.md` at commit `c2c3ceb3a91c19c3cd7a976d6514c11841656efc`.
+
+1 schema:
+
+- `manifest_schema`
+
+### GitHub repository `hrtips/cvx` (Apache-2.0)
+
+License detected from `LICENSE` at commit `59d4d23d9e10f706617f149a5e3fda6e8bde815c`.
+
+10 schemas:
+
+- `achievements`
+- `competencies`
+- `config-raw-githubusercontent-com`
+- `education`
+- `experience`
+- `keywords`
+- `layout`
+- `personal`
+- `referees`
+- `summary`
+
+### GitHub repository `hudson-trading/slang-server` (MIT)
+
+License detected from `LICENSE` at commit `a85abe34a802816f7dfded6e90d173c69ffc3364`.
+
+1 schema:
+
+- `config-2`
+
+### GitHub repository `ibm/zopeneditor-about` (Apache-2.0)
+
+License detected from `LICENSE` at commit `3c77d0a6b28e9b16a36ae6a4d0bc226a036ab3a3`.
+
+2 schemas:
+
+- `zapp-schema-1.12.0`
+- `zcodeformat-schema-0.0.1`
+
+### GitHub repository `inetis-ch/october-schemas` (MIT)
+
+License detected from `LICENSE.md` at commit `1d7fefdb4ca3601a2990e66b3695d32d8af467d3`.
+
+2 schemas:
+
+- `columns`
+- `fields`
+
+### GitHub repository `int-brain-lab/bpod-core` (MIT)
+
+License detected from `LICENSE` at commit `2ffcb5320db4f124c483345975d3dc1103f656fb`.
+
+1 schema:
+
+- `statemachine`
+
+### GitHub repository `iobroker/iobroker.js-controller` (MIT)
+
+License detected from `LICENSE` at commit `587444e1cd24858845c2a0297f76e8ba72fe8ed5`.
+
+2 schemas:
+
+- `io-package`
+- `iobroker`
+
+### GitHub repository `iobroker/json-config` (MIT)
+
+License detected from `LICENSE` at commit `b7be652aca47e1eef20aeae6ac66e546d40cab9a`.
+
+1 schema:
+
+- `jsonconfig`
+
+### GitHub repository `iterative/dvcyaml-schema` (Apache-2.0)
+
+License detected from `LICENSE` at commit `57dfe17ebaf8339cfe83dfd0086eb0525042d9a5`.
+
+1 schema:
+
+- `schema-25`
+
+### GitHub repository `itslab42/agentctl` (Apache-2.0)
+
+License detected from `LICENSE` at commit `0ab9695efc56fa22e07d7ff7ef9a3ba35362524a` with the notice file `NOTICE`.
+
+3 schemas:
+
+- `config-3`
+- `mcp`
+- `permissions`
+
+### GitHub repository `jandedobbeleer/oh-my-posh` (MIT)
+
+License detected from `COPYING` at commit `1a3d8609573d22f21cbb00357284050cfcb50a36`.
+
+1 schema:
+
+- `schema-2`
+
+### GitHub repository `jelmore1674/build-changelog` (MIT)
+
+License detected from `LICENSE` at commit `283e6cd4499035a3547aa02a2d86e20058a0d713`.
+
+1 schema:
+
+- `changlelog`
+
+### GitHub repository `jesseduffield/lazygit` (MIT)
+
+License detected from `LICENSE` at commit `a3fae72578e472b11b9763c7d5536c6853f31da4`.
+
+1 schema:
+
+- `config-4`
+
+### GitHub repository `jetify-com/devbox` (Apache-2.0)
+
+License detected from `LICENSE` at commit `1d9ea45e1e51826df32ef0db7035c4c00ae2c184`.
+
+2 schemas:
+
+- `devbox`
+- `devbox-plugin`
+
+### GitHub repository `jfrog/build-info-go` (Apache-2.0)
+
+License detected from `LICENSE` at commit `f9d40441f2628e32d7dd78c9226673e71904ba0e`.
+
+1 schema:
+
+- `buildinfo-schema`
+
+### GitHub repository `jfrog/jfrog-apps-config` (Apache-2.0)
+
+License detected from `LICENSE` at commit `ef4f9b2a4a46667ae909b7dfb7dadc8876f556ef`.
+
+1 schema:
+
+- `schema-26`
+
+### GitHub repository `jfrog/jfrog-cli` (Apache-2.0)
+
+License detected from `LICENSE` at commit `2ab1a83e0ad7fcc7c27740a87f0dd0822d62413b`.
+
+1 schema:
+
+- `filespec-schema`
+
+### GitHub repository `json-api/json-api` (CC0-1.0)
+
+License detected from `LICENSE` at commit `db7abaac8fd865c63ed846ae9d20d3aad2da6b14`.
+
+1 schema:
+
+- `schema-27`
+
+### GitHub repository `jsonresume/resume-schema` (MIT)
+
+License detected from `LICENSE.md` at commit `8a5b3982f8e5b9f8840398e162a6e0c418d023da`.
+
+1 schema:
+
+- `schema-28`
+
+### GitHub repository `kaitai-io/ksy_schema` (MIT)
+
+License detected from `LICENSE` at commit `959e6f782179cb614a41b2beeec15153ed136b3c`.
+
+1 schema:
+
+- `ksy_schema`
+
+### GitHub repository `karakum-team/karakum` (Apache-2.0)
+
+License detected from `LICENSE` at commit `9465ab3a68872cb5270d7fc48d4048e1ded132d0`.
+
+1 schema:
+
+- `karakum-schema`
+
+### GitHub repository `kevgo/tikibase` (ISC)
+
+License detected from `LICENSE` at commit `b50475878c32efdb11bcc680cee96a5555c7afa1`.
+
+1 schema:
+
+- `tikibase`
+
+### GitHub repository `kitware/cmake` (BSD-3-Clause)
+
+License detected from `LICENSE.rst` at commit `d291927f5ddb49ccfc20acc907863c7d71f3d46e`.
+
+1 schema:
+
+- `schema-3`
+
+### GitHub repository `kometa-team/kometa` (MIT)
+
+License detected from `LICENSE` at commit `1b43f5f113242059c74330bebed041d5f94f50c7` and `LICENSE` at commit `e30cb6a7e65cd6ebfa703486456f0baa13813f95`.
+
+2 schemas:
+
+- `config-schema-3`
+- `config-schema-4`
+
+### GitHub repository `konafets/statamic-blueprint-validation` (MIT)
+
+License detected from `LICENSE` at commit `23b3c418b7a995f6423b0b04ac4bb1b8fe39662c`.
+
+1 schema:
+
+- `statamic.blueprint`
+
+### GitHub repository `langchain-ai/langgraph` (MIT)
+
+License detected from `LICENSE` at commit `07b33185eab893be2ed031eedae52f09314bf77c`.
+
+1 schema:
+
+- `version-raw-githubusercontent-com`
+
+### GitHub repository `leanprover/lean4` (Apache-2.0)
+
+License detected from `LICENSE` at commit `a332ad1000004723f3fedf2990e775762dbe6ecd`.
+
+1 schema:
+
+- `lakefile-toml-schema`
+
+### GitHub repository `loft-sh/devspace` (Apache-2.0)
+
+License detected from `LICENSE` at commit `8ff6260787edacfa2c0d30d1ff62358d36d482bc`.
+
+1 schema:
+
+- `devspace-schema`
+
+### GitHub repository `loft-sh/vcluster` (Apache-2.0)
+
+License detected from `LICENSE` at commit `7d4225aeb6d64ea7181f66d6daf4bc90dade86df`.
+
+1 schema:
+
+- `values`
+
+### GitHub repository `lxman/contractguard` (MIT)
+
+License detected from `LICENSE` at commit `27e6ca6d53d81c25c5ac5369933311fd61f0981e`.
+
+1 schema:
+
+- `contractguard`
+
+### GitHub repository `mcdreforged/schema` (CC0-1.0)
+
+License detected from `LICENSE` at commit `d25261d81356166f1d6a7181f8ba14c3eb1c85cb`.
+
+2 schemas:
+
+- `mcdreforged-link-directory-plugin`
+- `mcdreforged-plugin-metadata`
+
+### GitHub repository `mearman/agent-permissions` (Apache-2.0)
+
+License detected from `LICENSE` at commit `66791f57f44a409974ff2231306051118dd1cf23`.
+
+1 schema:
+
+- `agent-permissions`
+
+### GitHub repository `meltano/meltano` (MIT)
+
+License detected from `LICENSE` at commit `248ad2b0fbeed2ee68a592faafd48b7466096868`.
+
+1 schema:
+
+- `meltano`
+
+### GitHub repository `metalbear-co/mirrord` (MIT)
+
+License detected from `LICENSE` at commit `5dc5ebb305cad76b654413c8ee4e7c860b9bcc98`.
+
+1 schema:
+
+- `mirrord-schema`
+
+### GitHub repository `microsoft/azure-pipelines-vscode` (MIT)
+
+License detected from `LICENSE` at commit `e8090fd525cd6ba47d7685c698f3f51983e298c6`.
+
+1 schema:
+
+- `service-schema`
+
+### GitHub repository `microsoft/briefcase` (MIT)
+
+License detected from `LICENSE` at commit `f551079b05d3f8494cdff6a0b393969def5a2443`.
+
+1 schema:
+
+- `briefcase-schema`
+
+### GitHub repository `microsoft/mlos` (MIT)
+
+License detected from `LICENSE.txt` at commit `549a69ab057c1372a54c194bed404e5dd539df85`.
+
+1 schema:
+
+- `mlos-bench-config-schema`
+
+### GitHub repository `microsoft/rulesengine` (MIT)
+
+License detected from `LICENSE` at commit `5650f93f843865610240e0498b26b68b477a3920`.
+
+2 schemas:
+
+- `workflow-list-schema`
+- `workflow-schema`
+
+### GitHub repository `microsoft/testfx` (MIT)
+
+License detected from `LICENSE` at commit `0e4470aa013f92e8c341f6fcf5c20a394cf703da`.
+
+1 schema:
+
+- `testconfig`
+
+### GitHub repository `microsoft/vcpkg-tool` (MIT)
+
+License detected from `LICENSE.txt` at commit `38ac2f11e167e20ca340e626f5c93126b6e7a37d`.
+
+2 schemas:
+
+- `vcpkg`
+- `vcpkg-configuration`
+
+### GitHub repository `mirrexone/unqueryvet` (MIT)
+
+License detected from `LICENSE` at commit `7b52a67b39b491a51bd21fda42a4179dfa32aa6d`.
+
+1 schema:
+
+- `schema-4`
+
+### GitHub repository `moduleassembler/moduleassembler-schema` (MIT)
+
+License detected from `LICENSE` at commit `335b4c5badd4a478883baa63d89f09aec3b81017`.
+
+1 schema:
+
+- `moduleassembler`
+
+### GitHub repository `monoweave/monoweave` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `29817f32d5f46386cd707e91530851f7509a9ea1`.
+
+1 schema:
+
+- `schema-29`
+
+### GitHub repository `nagyesta/yippee-ki-json` (MIT)
+
+License detected from `LICENSE` at commit `ff42db3120deca1401bb92f12855f463d55cbe81`.
+
+1 schema:
+
+- `yippee-ki-json_config_schema`
+
+### GitHub repository `nekitdev/changelogging` (MIT)
+
+License detected from `LICENSE` at commit `2458ef654a84aca98e4017eb1ed7fb332c722432`.
+
+1 schema:
+
+- `changelogging`
+
+### GitHub repository `neotys-labs/neoload-cli` (BSD-2-Clause)
+
+License detected from `LICENSE` at commit `62ff2b794a3502bef40686e383b478751d7b70f3`.
+
+1 schema:
+
+- `as-code.latest`
+
+### GitHub repository `nexus-rpc/nexus-rpc-gen` (MIT)
+
+License detected from `LICENSE` at commit `37bcab26af122d2b79b0efaae4d7857c67282157`.
+
+1 schema:
+
+- `nexus-rpc-gen`
+
+### GitHub repository `nf-core/modules` (MIT)
+
+License detected from `LICENSE` at commit `972faf6f783fe9685267220965a91690741465f9`.
+
+3 schemas:
+
+- `environment-schema-raw-githubusercontent-com`
+- `meta-schema-raw-githubusercontent-com`
+- `yaml-schema`
+
+### GitHub repository `nodejsmith/hassette` (MIT)
+
+License detected from `LICENSE` at commit `a146d370ba596855735fa3d4b683a2d76392ce87`.
+
+1 schema:
+
+- `hassette`
+
+### GitHub repository `nvuillam/npm-groovy-lint` (MIT)
+
+License detected from `LICENSE` at commit `2080dffcddb215d409b149ccc7f595cb242a6209`.
+
+1 schema:
+
+- `groovy-lint.jsonschema`
+
+### GitHub repository `ogen-go/ogen` (Apache-2.0)
+
+License detected from `LICENSE` at commit `2569478736aed33cf1fe9d2a5b6e2d659bea0e69`.
+
+1 schema:
+
+- `ogen`
+
+### GitHub repository `okteto/okteto` (Apache-2.0)
+
+License detected from `LICENSE` at commit `a06c777dcab3ccd1fdf230a572dd6a0cfad73f8c`.
+
+1 schema:
+
+- `schema-30`
+
+### GitHub repository `onflow/flow-cli` (Apache-2.0)
+
+License detected from `LICENSE` at commit `d6883e4435423bc04049087129d2d114b4e96358` with the notice file `NOTICE`.
+
+1 schema:
+
+- `schema-31`
+
+### GitHub repository `open-telemetry/opentelemetry-configuration` (Apache-2.0)
+
+License detected from `LICENSE` at commit `3b04ae78576ec407854d734eb4da4f78a67f902c`.
+
+1 schema:
+
+- `opentelemetry_configuration`
+
+### GitHub repository `openrewrite/rewrite` (Apache-2.0)
+
+License detected from `LICENSE` at commit `56545201840ec35664a47aa0efd8c964aa9d05f5`.
+
+1 schema:
+
+- `openrewrite`
+
+### GitHub repository `oresoftware/npm-link-up` (MIT)
+
+License detected from `license.md` at commit `fe0bec9feaab13243be097c67002bc329aac7be0`.
+
+1 schema:
+
+- `nlu`
+
+### GitHub repository `orieg/yaml-workflow` (MIT)
+
+License detected from `LICENSE` at commit `b87ac214b9b4b6ecefd5c0333af7c78c1728c517`.
+
+1 schema:
+
+- `workflow-schema-raw-githubusercontent-com`
+
+### GitHub repository `ortus-solutions/vscode-commandbox` (MIT)
+
+License detected from `LICENSE` at commit `a808c7b36087b2902ac0cb6b30d993ebde0dbc5f`.
+
+2 schemas:
+
+- `box`
+- `server`
+
+### GitHub repository `oss-review-toolkit/ort` (Apache-2.0)
+
+License detected from `LICENSE` at commit `f9ebbbcdcbda1198133e5ece49d40778c01d8979` with the notice file `NOTICE`.
+
+4 schemas:
+
+- `curations-schema`
+- `ort-project-schema`
+- `package-configuration-schema`
+- `resolutions-schema`
+
+### GitHub repository `outblocks/outblocks-cli` (MIT)
+
+License detected from `LICENSE` at commit `cfa5a039ff6ce6604101cbbac6b9ae65796f7b53`.
+
+3 schemas:
+
+- `schema-app`
+- `schema-project`
+- `schema-table`
+
+### GitHub repository `owasp/nest-schema` (MIT)
+
+License detected from `LICENSE` at commit `f724e228b38d495142a679c555ae8814a13c9bc7`.
+
+1 schema:
+
+- `project`
+
+### GitHub repository `oxc-project/oxc` (MIT)
+
+License detected from `LICENSE` at commit `5914a24cfae43e0f29320fac80fe0b5751f91db5`.
+
+2 schemas:
+
+- `configuration_schema`
+- `configuration_schema-raw-githubusercontent-com`
+
+### GitHub repository `oyvindberg/bleep` (MIT)
+
+License detected from `LICENSE` at commit `5fbb078a62482ba87210a368581a338dda37c0c3`.
+
+1 schema:
+
+- `schema-32`
+
+### GitHub repository `palantir/conjure` (Apache-2.0)
+
+License detected from `LICENSE` at commit `31fcfb8673eea5fdd2810fddb4403bee84a06c9f`.
+
+1 schema:
+
+- `conjure`
+
+### GitHub repository `petrsx/aibench` (MIT)
+
+License detected from `LICENSE` at commit `e6d4d9ea3cf6c4188e3eed37953f863f003e7418`.
+
+1 schema:
+
+- `aibench`
+
+### GitHub repository `platformsh/platformify` (MIT)
+
+License detected from `LICENSE` at commit `dc7b173f389dec43461a79af3f875f38373a2ecf`.
+
+3 schemas:
+
+- `platformsh.application`
+- `platformsh.routes`
+- `platformsh.services`
+
+### GitHub repository `prefecthq/prefect` (Apache-2.0)
+
+License detected from `LICENSE` at commit `72fd185f4a42cc88b3458dbb1700dde6b0865654`.
+
+2 schemas:
+
+- `prefect.yaml`
+- `settings`
+
+### GitHub repository `prefix-dev/pixi` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `277e1948c103a87b34a6b352159df7f647c0cd06`.
+
+1 schema:
+
+- `schema-33`
+
+### GitHub repository `prefix-dev/recipe-format` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `7be6ba9f7085359eda3c3c18e405fe6247142cf8`.
+
+1 schema:
+
+- `schema-34`
+
+### GitHub repository `projectdiscovery/nuclei` (MIT)
+
+License detected from `LICENSE.md` at commit `a8c88feb4a1c8e961b7902534ce3af97e9d524a4`.
+
+1 schema:
+
+- `nuclei-jsonschema`
+
+### GitHub repository `qlik-oss/schemas` (Apache-2.0)
+
+License detected from `LICENSE` at commit `70a8914093af4e9a5e708bc42a68dadc372778cf` with the notice file `NOTICE`.
+
+8 schemas:
+
+- `newtaskdefaults`
+- `project-2`
+- `task`
+- `task.model`
+- `task.schedule`
+- `task.sourceselection`
+- `task.transformationdataflow`
+- `task.transformationrules`
+
+### GitHub repository `qualisys/qualisys-schemas` (MIT)
+
+License detected from `LICENSE` at commit `02a964c94ef2c17d61ae53b5f5b52fd250e080a6`.
+
+2 schemas:
+
+- `calqulus-pipeline`
+- `paf-module`
+
+### GitHub repository `qualitorque/torque-vs-code-extensions` (Apache-2.0)
+
+License detected from `LICENSE` at commit `af8c0b1e89096903c7f33a7fa154f3b1a154fd5d`.
+
+1 schema:
+
+- `blueprint-spec2-schema`
+
+### GitHub repository `rancher/fleet` (Apache-2.0)
+
+License detected from `LICENSE` at commit `032a89d755b5f686d257a7525cbf11bd9e16ae3b`.
+
+1 schema:
+
+- `fleet.yaml`
+
+### GitHub repository `rasinmuhammed/misata` (MIT)
+
+License detected from `LICENSE` at commit `b48e05ae8e8afbe06d17d5342180da3b2494ad9a`.
+
+1 schema:
+
+- `misata`
+
+### GitHub repository `ray-project/ray` (Apache-2.0)
+
+License detected from `LICENSE` at commit `d5bf9ce377589912700d37921f68f32d0b57d5d4`.
+
+1 schema:
+
+- `ray-schema`
+
+### GitHub repository `readthedocs/readthedocs.org` (MIT)
+
+License detected from `LICENSE` at commit `ba0ae7a97f1f0b2ec5f4f3a71db6ad783108e358`.
+
+1 schema:
+
+- `schema-35`
+
+### GitHub repository `reasoning-formats/reasoning-formats` (Apache-2.0)
+
+License detected from `LICENSE` at commit `2d39ef4fc6e1f9057a414b95803b7c78a491282c`.
+
+2 schemas:
+
+- `crf-schema`
+- `drf-schema`
+
+### GitHub repository `rebaz94/macro_kit` (MIT)
+
+License detected from `LICENSE` at commit `803ef2ed93f28b9ba2f362b26d34e48cc297a0e4`.
+
+1 schema:
+
+- `macro_schema`
+
+### GitHub repository `redhat-developer/vscode-tekton` (MIT)
+
+License detected from `LICENSE` at commit `b9543d32d904f0a335501002a35bdf3a47f90158`.
+
+4 schemas:
+
+- `v1_pipeline`
+- `v1_pipelinerun`
+- `v1_task`
+- `v1_taskrun`
+
+### GitHub repository `redhat-ux/next-gen-ui-agent` (Apache-2.0)
+
+License detected from `LICENSE` at commit `4ede561a18c23de3625f6fcb9837b0a9eada7356`.
+
+3 schemas:
+
+- `a2a_agent_config`
+- `agent_config`
+- `mcp_agent_config`
+
+### GitHub repository `release-drafter/release-drafter` (ISC)
+
+License detected from `LICENSE` at commit `849a80bdcbde17861c8b44248720925a79b8dc56`.
+
+1 schema:
+
+- `schema-36`
+
+### GitHub repository `replicate/cog` (Apache-2.0)
+
+License detected from `LICENSE` at commit `6b32b31dfaff88705e19f6de63ca51b1b1592296`.
+
+1 schema:
+
+- `config_schema_v1.0`
+
+### GitHub repository `rliebz/tusk` (MIT)
+
+License detected from `LICENSE` at commit `90a7fa3327a4af1ed3dd7d8a8d02a483e0c54d75`.
+
+1 schema:
+
+- `tusk`
+
+### GitHub repository `rstudio/renv` (MIT)
+
+License detected from `LICENSE` at commit `2238f5c1f0b65d933bad5e78aeec1e26b6aacbe8`.
+
+1 schema:
+
+- `draft-07.renv.lock`
+
+### GitHub repository `sapphiredev/cli` (MIT)
+
+License detected from `LICENSE.md` at commit `e1b0965d66257a01d89e255c563d6919eeda707c`.
+
+1 schema:
+
+- `sapphirerc.scheme`
+
+### GitHub repository `saucelabs/saucectl` (Apache-2.0)
+
+License detected from `LICENSE` at commit `5b28d6989d663184afc5dea0528ee88c9369fb13`.
+
+1 schema:
+
+- `saucectl`
+
+### GitHub repository `scandltd/storm-petrel` (MIT)
+
+License detected from `LICENSE` at commit `96f38d4b286a52592d9e784d342058f32e515b13`.
+
+1 schema:
+
+- `appsettings.stormpetrel`
+
+### GitHub repository `sharproduction/production-delivery-manifest-schema` (MIT)
+
+License detected from `LICENSE` at commit `f097ef04a5ea299edd82ac2edda176168db4eed2`.
+
+1 schema:
+
+- `schema-5`
+
+### GitHub repository `shopware/platform` (MIT)
+
+License detected from `LICENSE` at commit `3fc1be23134b056feb8b394a2ded4763e7ba4c9d`.
+
+1 schema:
+
+- `config-schema-5`
+
+### GitHub repository `shravan-1908/stellapy` (MIT)
+
+License detected from `LICENSE.txt` at commit `af7850441a33e7a12fe13e8aa5e17c55d2876433`.
+
+1 schema:
+
+- `schema-6`
+
+### GitHub repository `siemens/kas` (MIT)
+
+License detected from `LICENSE` at commit `055518846c3963114efbd0107bf3f2e59b4b3ba5`.
+
+1 schema:
+
+- `schema-kas`
+
+### GitHub repository `sinaatalay/rendercv` (MIT)
+
+License detected from `LICENSE` at commit `1d4b87bc427e4cf61c0ef49623c971b0e2224708`.
+
+1 schema:
+
+- `schema-37`
+
+### GitHub repository `slavavedernikov/c4interflow` (MIT)
+
+License detected from `LICENSE.txt` at commit `526dc7c765c6348588631d15d1534c6f55aecd18`.
+
+1 schema:
+
+- `schema-7`
+
+### GitHub repository `socialgouv/dashlord` (Apache-2.0)
+
+License detected from `LICENSE` at commit `83c73b028de9eaf7869f354bfb1cc5d21c19e3e4`.
+
+1 schema:
+
+- `schema-38`
+
+### GitHub repository `socialgouv/kontinuous` (MIT)
+
+License detected from `LICENSE` at commit `5336cafe16252655513c78dc285b9dbdb6ab15d1`.
+
+1 schema:
+
+- `config-5`
+
+### GitHub repository `speakeasy-api/sdk-gen-config` (MIT)
+
+License detected from `LICENSE` at commit `56d4986508a86ef954f2ec448ef0800f9f492390`.
+
+4 schemas:
+
+- `gen.config`
+- `lint`
+- `tests`
+- `workflow`
+
+### GitHub repository `spectolabs/hoverfly` (Apache-2.0)
+
+License detected from `LICENSE` at commit `bcbca62aa6f03565b46d03459fb9d1bfdceba409`.
+
+1 schema:
+
+- `schema-8`
+
+### GitHub repository `spectral-discord/tson` (Unlicense)
+
+License detected from `LICENSE` at commit `5fdbfe2d0c034b6b3333495719912dcca464afbf`.
+
+1 schema:
+
+- `tson`
+
+### GitHub repository `spencerbeggs/reposets` (MIT)
+
+License detected from `LICENSE` at commit `0d35ff357a51c2ac280a151547a694154a0743b8`.
+
+2 schemas:
+
+- `reposets.config`
+- `reposets.credentials`
+
+### GitHub repository `spiceai/spiceai` (Apache-2.0)
+
+License detected from `LICENSE` at commit `e26724b345c0e10f8c40b00d61423f9803e1a6e6`.
+
+1 schema:
+
+- `spicepod`
+
+### GitHub repository `srl-labs/containerlab` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `0bb144e1d03fb3546abd15a0565562382ab85437`.
+
+1 schema:
+
+- `clab`
+
+### GitHub repository `statelyai/xstate` (MIT)
+
+License detected from `LICENSE` at commit `fbee62e7c1586315ed478c2fedf530d7e0ff5a3e`.
+
+1 schema:
+
+- `machine`
+
+### GitHub repository `streetsidesoftware/cspell` (MIT)
+
+License detected from `LICENSE` at commit `a10edd756c94a96e437bc54b465ebe540e7525db`.
+
+1 schema:
+
+- `cspell`
+
+### GitHub repository `stripe/stripe-apps` (MIT)
+
+License detected from `LICENSE` at commit `987e53810f64660ba56af0e23c5c27185bf44e31`.
+
+1 schema:
+
+- `stripe-app`
+
+### GitHub repository `stryker-mutator/stryker` (Apache-2.0)
+
+License detected from `LICENSE` at commit `f2a49ff02437e3b7fe2682dba808ac93039895bf`.
+
+1 schema:
+
+- `stryker-core`
+
+### GitHub repository `supernovae-st/nika-spec` (Apache-2.0)
+
+License detected from `LICENSE` at commit `29f82dd847180d79b2262ebc3eb67d6a8d4ff623`.
+
+1 schema:
+
+- `workflow-raw-githubusercontent-com`
+
+### GitHub repository `suzuki-shunsuke/cmdx` (MIT)
+
+License detected from `LICENSE` at commit `713015e5b355c67e3939cae149c47053d86c0eb0`.
+
+1 schema:
+
+- `cmdx`
+
+### GitHub repository `sverweij/dependency-cruiser` (MIT)
+
+License detected from `LICENSE` at commit `918d9193edfae3fe1fb76cfe3d06cc0624539b91`.
+
+1 schema:
+
+- `configuration`
+
+### GitHub repository `symfony/symfony` (MIT)
+
+License detected from `LICENSE` at commit `2e56795f4ecbff21f62ec4dc60376993617db8d5`.
+
+4 schemas:
+
+- `routing`
+- `serialization`
+- `services`
+- `validation`
+
+### GitHub repository `symphonyplatformsolutions/symphony-wdk` (Apache-2.0)
+
+License detected from `LICENSE` at commit `e9657492bfcffde29d2e0cb1ec9d7b0355aeeab6` with the notice file `NOTICE`.
+
+1 schema:
+
+- `swadl-schema-1.0`
+
+### GitHub repository `tektronix/tm_devices` (Apache-2.0)
+
+License detected from `LICENSE.md` at commit `b43f3cde303c318f7acb138236e4bf30b69de918`.
+
+1 schema:
+
+- `tm_devices_config_schema`
+
+### GitHub repository `teneplaysofficial/release-hub` (Apache-2.0)
+
+License detected from `LICENSE` at commit `5c38e2444fd05f3a8365a5a97a733b6e4f159a6c`.
+
+1 schema:
+
+- `release-hub`
+
+### GitHub repository `thomaspoignant/go-feature-flag` (MIT)
+
+License detected from `LICENSE` at commit `b1a76bb739b107299fd0a66e0ae36b302c5920e1`.
+
+1 schema:
+
+- `flag-schema`
+
+### GitHub repository `thoughtworks/talisman` (MIT)
+
+License detected from `LICENSE` at commit `efcb1a3629f60b5e0bec21c1f2a74c19bd2210f5`.
+
+1 schema:
+
+- `schema-store-talismanrc`
+
+### GitHub repository `threagile/threagile` (MIT)
+
+License detected from `LICENSE.txt` at commit `74e323ed635f026ca85bd61b5082f0da053ba1b2`.
+
+1 schema:
+
+- `schema-9`
+
+### GitHub repository `tierrun/tier` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `1947598f797d517efbfb2204261295ac712f5475`.
+
+1 schema:
+
+- `schema-39`
+
+### GitHub repository `tkcrm/pgxgen` (MIT)
+
+License detected from `LICENSE` at commit `50cf4584132fa52aed3585242aa20db8ad3a13e0`.
+
+1 schema:
+
+- `pgxgen-schema`
+
+### GitHub repository `tox-dev/tox` (MIT)
+
+License detected from `LICENSE` at commit `24f433b6670c85748e025af886d7ee2a922342ed`.
+
+1 schema:
+
+- `tox`
+
+### GitHub repository `transcend-io/tools` (Apache-2.0)
+
+License detected from `LICENSE` at commit `d515059c0a89b80b79bffa4e4f6192cc1764b97c`.
+
+1 schema:
+
+- `transcend-yml-schema-latest`
+
+### GitHub repository `tree-sitter/tree-sitter` (MIT)
+
+License detected from `LICENSE` at commit `790e6ad9c5a26dfcf96785fe4c9cc7ad6e24d6d5`.
+
+1 schema:
+
+- `config-6`
+
+### GitHub repository `tugboatqa/docs` (MIT)
+
+License detected from `LICENSE` at commit `02f4be1a4aed08953d375fe7d523d1f9af156605`.
+
+1 schema:
+
+- `config-schema`
+
+### GitHub repository `typesafegithub/github-actions-typing` (Apache-2.0)
+
+License detected from `LICENSE` at commit `f9d0e253a1b72f3c3bc13d9ecd319b47cf65633f`.
+
+1 schema:
+
+- `github-actions-typing`
+
+### GitHub repository `upcloudltd/upcloud-cli` (MIT)
+
+License detected from `LICENSE` at commit `f5302fd46b6f5f6e2780b0b300f0542d0269f99c`.
+
+1 schema:
+
+- `upctl`
+
+### GitHub repository `use-tusk/fence` (Apache-2.0)
+
+License detected from `LICENSE` at commit `737751a82b49f287b41f8a3e62ec62919d7b9224`.
+
+1 schema:
+
+- `fence`
+
+### GitHub repository `usf-org/usf` (MIT)
+
+License detected from `LICENSE` at commit `b6dcab2526d3a9f2075b556da6e21d16526c5009`.
+
+1 schema:
+
+- `usf`
+
+### GitHub repository `veepee-oss/json-schema` (ISC)
+
+License detected from `LICENSE` at commit `ecfe63bd802b38a976b538effb21bd7bbee30929`.
+
+1 schema:
+
+- `starfish-schema`
+
+### GitHub repository `vega/schema` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `8feea15c3a84d4261887f5c7e0cbb74909f1c8a2`.
+
+2 schemas:
+
+- `v6.4.0`
+- `v6.4.3`
+
+### GitHub repository `webcomponents/custom-elements-manifest` (BSD-3-Clause)
+
+License detected from `LICENSE` at commit `d2f79f0d22c4d48a68628cf867c2319576ffc5d2`.
+
+1 schema:
+
+- `schema-40`
+
+### GitHub repository `webhintio/hint` (Apache-2.0)
+
+License detected from `LICENSE.txt` at commit `62bfce68b934aab205bd60beb136112a5bfa1da1`.
+
+1 schema:
+
+- `config-schema-6`
+
+### GitHub repository `wiremock/wiremock` (Apache-2.0)
+
+License detected from `LICENSE.txt` at commit `fafa0a9f76c7086b76d892f0b4c5f22cc8dc4433` with the notice file `NOTICE.txt`.
+
+2 schemas:
+
+- `wiremock-message-stub-mapping-or-mappings`
+- `wiremock-stub-mapping-or-mappings`
+
+### GitHub repository `woodpecker-ci/woodpecker` (Apache-2.0)
+
+License detected from `LICENSE` at commit `a28a1fcccd950cce5806bfb22572f5a08a693cca`.
+
+1 schema:
+
+- `schema-41`
+
+### GitHub repository `woodruffw/zizmor` (MIT)
+
+License detected from `LICENSE` at commit `9a0b330c8c5847ffe8d45ca3820b118deece8c68`.
+
+1 schema:
+
+- `zizmor`
+
+### GitHub repository `wp-cli/wp-cli` (MIT)
+
+License detected from `LICENSE` at commit `760208e896455c4991af672731ae4ae6df107d63`.
+
+1 schema:
+
+- `wp-cli-config`
+
+### GitHub repository `wykiki/jocker` (MIT)
+
+License detected from `LICENSE` at commit `bf3097ff45b02eefc69336cf59a997a090bb68a5`.
+
+1 schema:
+
+- `schema-10`
+
+### GitHub repository `xaaha/hulak` (MIT)
+
+License detected from `LICENSE` at commit `3f0667df208edbc26e54c0694f65aabc891fa334`.
+
+1 schema:
+
+- `schema-42`
+
+### GitHub repository `yandex-cloud/json-schema-store` (MIT)
+
+License detected from `LICENSE` at commit `76bd001922ff0992066877639eab2f419a396c86`.
+
+1 schema:
+
+- `yawl`
+
+### GitHub repository `yash-singh1/vscode-snippets-json-schema` (MIT)
+
+License detected from `LICENSE` at commit `25dadf38ae304a86413ce52d8d2e48ec33d57b0a`.
+
+1 schema:
+
+- `schema-11`
+
+### GitHub repository `zeldigas/text2confl` (Apache-2.0)
+
+License detected from `LICENSE` at commit `260606be1f73b0aa7ef84a5617249621570a590d`.
+
+1 schema:
+
+- `config-7`

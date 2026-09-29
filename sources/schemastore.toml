@@ -5,7 +5,7 @@
 # and, only when that changes the published catalog, records the new commit
 # here in the same bot commit as catalog/state.json.
 kind = "upstream"
-commit = "05b037b7a2b68ead6893c857db2594bcad9951d4"
+commit = "ed615703bc10ba15940ebb053a9e9b32bb512498"
 tarball_base_url = "https://codeload.github.com/SchemaStore/schemastore/tar.gz"
 # 64 MiB; the tarball is about 8 MiB at the imported commit.
 max_tarball_bytes = 67108864
