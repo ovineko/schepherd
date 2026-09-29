@@ -13,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 )
@@ -59,7 +60,10 @@ func checkPackage(file string, want map[string]member, generated []string) error
 			problems = append(problems, name+" is not allowed")
 		case ok && w.sum != m.sum:
 			problems = append(problems, name+" differs from its source")
-		case ok && w.exec != m.exec:
+		// Windows records no execute bit, and RubyGems there marks .exe files
+		// executable by their name; packages built on Windows are only smoke
+		// tested, never published.
+		case ok && w.exec != m.exec && runtime.GOOS != "windows":
 			problems = append(problems, fmt.Sprintf("%s is executable: %t, want %t", name, m.exec, w.exec))
 		}
 	}
