@@ -534,7 +534,7 @@ func watchForPartialReads(path string, done <-chan struct{}, accepted ...[]byte)
 		default:
 		}
 
-		data, err := os.ReadFile(path)
+		data, err := readShared(path)
 
 		switch {
 		// A writer replacing the file makes Windows refuse the open for a
