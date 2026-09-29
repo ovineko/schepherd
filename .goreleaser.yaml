@@ -30,31 +30,31 @@
 archives:
   - builds_info:
       group: root
-      mode: 755
+      mode: 0o755
       mtime: "{{ .CommitDate }}"
       owner: root
     files:
       - info:
           group: root
-          mode: 644
+          mode: 0o644
           mtime: "{{ .CommitDate }}"
           owner: root
         src: LICENSE
       - info:
           group: root
-          mode: 644
+          mode: 0o644
           mtime: "{{ .CommitDate }}"
           owner: root
         src: README.md
       - info:
           group: root
-          mode: 644
+          mode: 0o644
           mtime: "{{ .CommitDate }}"
           owner: root
         src: THIRD_PARTY_NOTICES.md
       - info:
           group: root
-          mode: 644
+          mode: 0o644
           mtime: "{{ .CommitDate }}"
           owner: root
         src: THIRD_PARTY_LICENSES.txt
@@ -96,10 +96,10 @@ builds:
 changelog:
   filters:
     exclude:
-      - "^docs:"
-      - "^test:"
-      - "^ci:"
-      - "^chore:"
+      - "^([0-9a-f]+ )?docs(\\([^)]+\\))?!?:"
+      - "^([0-9a-f]+ )?test(\\([^)]+\\))?!?:"
+      - "^([0-9a-f]+ )?ci(\\([^)]+\\))?!?:"
+      - "^([0-9a-f]+ )?chore(\\([^)]+\\))?!?:"
       - Merge pull request
       - Merge branch
   groups:
