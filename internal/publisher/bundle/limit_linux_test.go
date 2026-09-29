@@ -55,7 +55,9 @@ func TestCLIRunsAreBoundedInMemory(t *testing.T) {
 
 	tool := pinnedTool(t)
 	tool.addressSpace = 512 << 20
-	tool.runTimeout = 3 * time.Second
+	// Generous, so a loaded runner still reaches the memory limit first;
+	// without the limit the run would end at this timeout and fail below.
+	tool.runTimeout = time.Minute
 
 	ws, err := newWorkspace()
 	if err != nil {
