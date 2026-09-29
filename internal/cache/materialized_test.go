@@ -534,10 +534,12 @@ func watchForPartialReads(path string, done <-chan struct{}, accepted ...[]byte)
 		default:
 		}
 
-		data, err := os.ReadFile(path)
+		data, err := readShared(path)
 
 		switch {
-		case errors.Is(err, fs.ErrNotExist):
+		// A writer replacing the file makes Windows refuse the open for a
+		// moment; a reader then sees no file, never a partial one.
+		case errors.Is(err, fs.ErrNotExist), transient(err):
 		case err != nil:
 			return err
 		case !slices.ContainsFunc(accepted, func(want []byte) bool { return bytes.Equal(data, want) }):

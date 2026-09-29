@@ -169,6 +169,10 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   by `limits.max_manifest_bytes` (4 MiB, also the registries' cap): never raise that default; the publisher refuses
   a larger index. There are no `schema-sha256-*`/`catalog-sha256-*` tags; the index keeps schemas alive, so do not
   reintroduce tags for retention.
+- On Windows a file opened without `FILE_SHARE_DELETE` (plain `os.Open`, a validator reading a schema) blocks renames of
+  it, and a pending rename or delete makes opens fail for a moment. Every cache open and rename goes through
+  `retryTransient` (`internal/cache/retry.go`); use it for new ones. `.gitattributes` checks every text file out with LF
+  on every platform, which golden files, fixture digests and the line-based rewrites of the tooling rely on.
 - Since Go 1.23, `os.Lstat` reports Windows junctions as `fs.ModeIrregular`, not `fs.ModeSymlink`. Path-safety checks
   must refuse whatever is not a regular file or a real directory, not only symlinks.
 - `artifact.ErrUnsupported` errors are already `fault.Usage`; `fault.Wrap(fault.Integrity, …)` keeps exit 2. Do not

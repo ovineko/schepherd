@@ -38,7 +38,17 @@ func (c *Cache) openRegular(label, name string) (*os.File, fs.FileInfo, error) {
 		return nil, nil, corruptf(label, path, "%s, not a regular file", describeType(info))
 	}
 
-	f, err := c.root.Open(name)
+	var f *os.File
+
+	err = retryTransient(func() error {
+		var openErr error
+		f, openErr = c.root.Open(name)
+		if openErr != nil {
+			return fmt.Errorf("%w", openErr)
+		}
+
+		return nil
+	})
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil, notFound(label, path)
 	}
@@ -294,12 +304,22 @@ func (s *staged) tryInstall(dst slot) (retry bool, err error) {
 		return true, fault.Wrap(fault.Internal, err, "store %s: create %s", dst.label, c.path(dst.parent))
 	}
 
-	if err := c.root.Rename(s.name, dst.name); err != nil {
-		if dst.verify() == nil {
-			return false, nil
+	// A rename onto an entry another writer has meanwhile installed and
+	// verified is not needed; otherwise a transient failure is retried.
+	err = retryTransient(func() error {
+		renameErr := c.root.Rename(s.name, dst.name)
+		if renameErr == nil || dst.verify() == nil {
+			return nil
 		}
 
+		return fmt.Errorf("%w", renameErr)
+	})
+	if err != nil {
 		return errors.Is(err, fs.ErrNotExist), fault.Wrap(fault.Internal, err, "store %s at %s", dst.label, c.path(dst.name))
+	}
+
+	if _, statErr := c.root.Lstat(s.name); statErr == nil {
+		return false, nil
 	}
 
 	s.installed = true

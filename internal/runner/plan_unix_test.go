@@ -122,7 +122,7 @@ func TestResolveRelativeExecutableAgainstCwd(t *testing.T) {
 	}
 
 	recs := h.records()
-	if len(recs) != 1 || recs[0].Cwd != work {
+	if len(recs) != 1 || !samePath(t, recs[0].Cwd, work) {
 		t.Fatalf("records = %+v, want one run in %s", recs, work)
 	}
 }

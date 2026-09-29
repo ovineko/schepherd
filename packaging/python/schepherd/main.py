@@ -46,6 +46,9 @@ def replace_process(binary: str, argv: list[str]) -> NoReturn:
     signum = getattr(signal, name, None)
     if signum is not None:
       signal.signal(signum, signal.SIG_DFL)
+  # The launcher runs its own bundled binary with the user's arguments, as
+  # the user asked; no shell is involved.
+  # bearer:disable python_lang_code_injection
   os.execv(binary, argv)
 
 
@@ -54,6 +57,7 @@ def wait_for(argv: list[str]) -> int:
   # one at once, so the console would not wait for the binary.
   for name in CONSOLE_SIGNALS:
     signal.signal(getattr(signal, name), signal.SIG_IGN)
+  # bearer:disable python_lang_os_command_injection
   code = subprocess.call(argv)
   # Exit statuses are unsigned 32-bit on Windows, and older CPython versions
   # fail on sys.exit values above 2**31 - 1 (gh-125842). The signed form

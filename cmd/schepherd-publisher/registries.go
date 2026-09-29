@@ -83,7 +83,9 @@ func regularFile(dir, name string) (string, error) {
 		return "", nil
 	}
 
-	if !filepath.IsAbs(name) {
+	if filepath.IsAbs(name) {
+		name = filepath.Clean(name)
+	} else {
 		name = filepath.Join(dir, name)
 	}
 

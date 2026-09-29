@@ -141,11 +141,13 @@ func TestWriteReportErrors(t *testing.T) {
 }
 
 func TestPlanFailureReport(t *testing.T) {
+	root := t.TempDir()
+	abs := func(p string) string { return filepath.Join(root, filepath.FromSlash(p)) }
 	schemas := map[string]SchemaInfo{
-		"a": {ID: "a", Path: "/c/a.json", Ref: "r@a", Origin: "catalog"},
-		"b": {ID: "b", Path: "/w/schemas/b.json", Ref: "local:schemas/b.json", Origin: "local"},
+		"a": {ID: "a", Path: abs("c/a.json"), Ref: "r@a", Origin: "catalog"},
+		"b": {ID: "b", Path: abs("w/schemas/b.json"), Ref: "local:schemas/b.json", Origin: "local"},
 	}
-	inputs := []Input{{Path: "/w/1.json", SchemaID: "a"}, {Path: "/w/2.json", SchemaID: "b"}, {Path: "/w/3.json", SchemaID: "a"}}
+	inputs := []Input{{Path: abs("w/1.json"), SchemaID: "a"}, {Path: abs("w/2.json"), SchemaID: "b"}, {Path: abs("w/3.json"), SchemaID: "a"}}
 
 	start := PlanFailureReport(inputs, schemas, ModeBatch, fault.New(fault.ConsumerStart, "no such command"))
 	if start == nil || start.ExitCode != 7 || len(start.Tasks) != 2 {
@@ -158,7 +160,7 @@ func TestPlanFailureReport(t *testing.T) {
 		}
 	}
 
-	if got := start.Tasks[0].Files; len(got) != 2 || got[0] != "/w/1.json" || got[1] != "/w/3.json" {
+	if got := start.Tasks[0].Files; len(got) != 2 || got[0] != abs("w/1.json") || got[1] != abs("w/3.json") {
 		t.Errorf("batch grouping = %v", got)
 	}
 

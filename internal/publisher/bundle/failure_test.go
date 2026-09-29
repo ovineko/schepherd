@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -86,8 +87,16 @@ func TestCLIFailureParsesJSONAndSanitizesPaths(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	report := `{"error":"Could not resolve the reference to an external schema","identifier":"https://example.com/x.json","filePath":"` + file + `"}`
-	if _, err := out.WriteString(report); err != nil {
+	report, err := json.Marshal(cliError{
+		Error:      "Could not resolve the reference to an external schema",
+		Identifier: "https://example.com/x.json",
+		FilePath:   file,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := out.Write(report); err != nil {
 		t.Fatal(err)
 	}
 

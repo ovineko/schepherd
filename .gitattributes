@@ -1,0 +1,4 @@
+# Every text file is checked out with LF on every platform: golden files,
+# digests of fixtures and the line-oriented rewrites of the tooling depend
+# on exact bytes.
+* text=auto eol=lf

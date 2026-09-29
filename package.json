@@ -11,6 +11,7 @@
     "docs:build": "dm exec zensical -- build --strict",
     "docs:clean": "rm -rf dist/website",
     "docs:serve": "dm exec zensical -- serve --dev-addr 0.0.0.0:8000",
+    "prepare": "datamitsu init",
     "test": "pnpm dm exec task -- test",
     "test:coverage": "pnpm dm exec task -- test:coverage",
     "test:e2e": "pnpm dm exec task -- test:e2e",
