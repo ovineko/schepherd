@@ -23,6 +23,9 @@ func (s *Store) open() (Remote, error) {
 		return nil, fault.New(fault.Offline, "network access is disabled (--offline)")
 	}
 
+	s.openMu.Lock()
+	defer s.openMu.Unlock()
+
 	if !s.opened {
 		s.opened = true
 		s.remote, s.remoteErr = s.opts.Open()

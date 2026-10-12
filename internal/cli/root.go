@@ -130,6 +130,7 @@ func (a *app) newRoot() *cobra.Command {
 		a.newResolveCmd(),
 		a.newPinCmd(),
 		a.newMirrorCmd(),
+		a.newMaterializeCmd(),
 		a.newRunCmd(),
 		a.newConfigCmd(),
 	)

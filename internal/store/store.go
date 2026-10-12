@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
+	"sync/atomic"
 
 	godigest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -42,11 +44,18 @@ type Options struct {
 
 // Store resolves catalogs and schemas.
 type Store struct {
-	remote    Remote
-	remoteErr error
-	opts      Options
-	opened    bool
+	remote         Remote
+	remoteErr      error
+	opts           Options
+	opened         bool
+	openMu         sync.Mutex
+	logMu          sync.Mutex
+	catalogFetched atomic.Bool
 }
+
+// CatalogFetched reports whether the last Catalog call went to the network
+// (false: served from the cache).
+func (s *Store) CatalogFetched() bool { return s.catalogFetched.Load() }
 
 // New returns a store.
 func New(opts Options) *Store {
@@ -115,8 +124,11 @@ func (s *Store) Catalog(ctx context.Context, catalogDigest string) (*LoadedCatal
 
 	loaded, err := s.localCatalog(catalogDigest)
 	if err == nil {
+		s.catalogFetched.Store(false)
 		return loaded, nil
 	}
+
+	s.catalogFetched.Store(true)
 
 	if err := s.recoverable(err, what, false); err != nil {
 		return nil, err

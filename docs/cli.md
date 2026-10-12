@@ -194,6 +194,37 @@ copied from the source is verified by digest and size on the way (a mismatch
 exits with code 5 before any catalog tag is created), and an interrupted
 mirror exits with code 130 and can be re-run. See [Mirroring](mirroring.md).
 
+## `materialize [--concurrency <n>] [--json]`
+
+Fills the cache directory with the whole pinned catalog: every schema
+manifest, its payload blob, its unpacked `schema.json` and every notice
+layer. After a successful run, every catalog command works with `--offline`
+from that directory — and from a byte copy of it on another machine, or
+from a read-only copy. The catalog is pinned the usual way
+(`--repository`/`--catalog`, the environment, or `[catalog]`); no project
+configuration file is required, and local `[schemas]` are project files,
+so they are not copied.
+
+Repeated runs download nothing: they re-verify every entry and report the
+counts. An interrupted run can simply be re-run; only what is missing is
+fetched. With `--offline` the command never opens the registry: it
+verifies completeness and exits with code 6 listing the absent or corrupt
+entries (`missing` in the `--json` summary). `--concurrency` sets how many
+schemas are processed at once (default 4, 1–64). Online, the first failure
+stops the run; everything already verified stays.
+
+Without `--json`, the summary is `key<TAB>value` lines (`repository`,
+`catalog`, `revision`, `cacheDir`, `entries`, `schemas`, `notices`,
+`fetched`, `cached`).
+
+```bash
+schepherd --repository ghcr.io/ovineko/schepherd-schemas \
+  --catalog sha256:<digest> --cache-dir ./cache materialize --json
+
+# verify a restored copy without touching the network
+schepherd --cache-dir ./cache --offline materialize --json
+```
+
 ## `run [--schema <id>] [--ignore-unmatched] [--report <file>] -- <files...>`
 
 Runs the configured consumer for the given files. Files are paths you pass;

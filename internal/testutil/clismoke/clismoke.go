@@ -140,6 +140,7 @@ func Run(t *testing.T, client Client) {
 	s.runConsumer()
 	s.localSchemas()
 	s.mirror()
+	s.materializeCatalog()
 	s.warmCache()
 	s.localWithoutRegistry()
 }
@@ -666,6 +667,74 @@ func (s *scenario) mirror() {
 	fresh := []string{"--config", s.config, "--cache-dir", filepath.Join(s.root, "mirror-cache"), "--repository", dest}
 	s.expectStdout(string(s.set.catalogRaw), append(fresh, "catalog", "--json")...)
 	s.expectStdout(string(s.set.schemas["gamma"]), append(fresh, "cat", "gamma")...)
+}
+
+// materializeCatalog exercises "materialize" end to end: a cold run fills a
+// separate cache directory with the whole catalog (notices included), a
+// repeated run verifies without fetching, --offline reports completeness,
+// and a deleted notice shows up as the one missing entry.
+func (s *scenario) materializeCatalog() {
+	dir := filepath.Join(s.root, "materialized-cache")
+
+	var cold struct {
+		Complete           bool `json:"complete"`
+		Entries            int  `json:"entries"`
+		Schemas            int  `json:"schemas"`
+		Notices            int  `json:"notices"`
+		FetchedManifests   int  `json:"fetchedManifests"`
+		CachedManifests    int  `json:"cachedManifests"`
+		FetchedBlobs       int  `json:"fetchedBlobs"`
+		WrittenSchemaFiles int  `json:"writtenSchemaFiles"`
+		Missing            []struct {
+			Kind string   `json:"kind"`
+			IDs  []string `json:"ids"`
+		} `json:"missing"`
+	}
+
+	s.decode(s.ok("--config", s.config, "--cache-dir", dir, "materialize", "--json"), &cold)
+
+	if !cold.Complete || len(cold.Missing) != 0 {
+		s.t.Errorf("cold materialize = %+v, want complete with no missing entries", cold)
+	}
+
+	if cold.Entries != len(s.set.schemas) || cold.WrittenSchemaFiles < 1 {
+		s.t.Errorf("cold materialize entries=%d writtenSchemaFiles=%d, want %d entries and written schema files", cold.Entries, cold.WrittenSchemaFiles, len(s.set.schemas))
+	}
+
+	if cold.CachedManifests != 0 {
+		s.t.Errorf("cold materialize had cached manifests: %+v", cold)
+	}
+
+	var warm struct {
+		Complete           bool `json:"complete"`
+		FetchedManifests   int  `json:"fetchedManifests"`
+		CachedManifests    int  `json:"cachedManifests"`
+		WrittenSchemaFiles int  `json:"writtenSchemaFiles"`
+	}
+
+	s.decode(s.ok("--config", s.config, "--cache-dir", dir, "materialize", "--json"), &warm)
+
+	if !warm.Complete || warm.FetchedManifests != 0 || warm.WrittenSchemaFiles != 0 {
+		s.t.Errorf("warm materialize = %+v, want everything cached", warm)
+	}
+
+	s.reg.Close()
+
+	offline := []string{"--config", s.config, "--cache-dir", dir, "--offline"}
+
+	var verify struct {
+		Complete bool `json:"complete"`
+	}
+
+	s.decode(s.ok(append(offline, "materialize", "--json")...), &verify)
+
+	if !verify.Complete {
+		s.t.Errorf("offline materialize of a complete cache is not complete")
+	}
+
+	// The catalog commands work from the materialized directory offline.
+	s.checkSchemaFile(strings.TrimSuffix(s.ok(append(offline, "path", "alpha")...).Stdout, "\n"), "alpha")
+	s.expectStdout(string(s.set.schemas["gamma"]), append(offline, "cat", "gamma")...)
 }
 
 // warmCache checks that a populated cache serves every command without the
