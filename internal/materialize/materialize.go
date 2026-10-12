@@ -81,6 +81,17 @@ type schemaGroup struct {
 	ids   []string
 }
 
+// counters are the mutable side of a run: workers increment them in
+// parallel, Run folds them into the Result before returning.
+type counters struct {
+	fetchedManifests   atomic.Int64
+	cachedManifests    atomic.Int64
+	fetchedBlobs       atomic.Int64
+	cachedBlobs        atomic.Int64
+	writtenSchemaFiles atomic.Int64
+	cachedSchemaFiles  atomic.Int64
+}
+
 // Run makes the cache behind st complete for the loaded catalog lc. In
 // offline mode it only verifies and collects missing entries; the returned
 // Result carries Complete and Missing either way.
@@ -93,6 +104,18 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		opts.Log = func(string, ...any) {}
 	}
 
+	// The progress lines share the caller's Log with the store's own fetch
+	// lines: serialize both writers through one mutex so lines never
+	// interleave when workers run in parallel.
+	logMu := &sync.Mutex{}
+	innerLog := opts.Log
+	opts.Log = func(format string, args ...any) {
+		logMu.Lock()
+		defer logMu.Unlock()
+
+		innerLog(format, args...)
+	}
+
 	groups := groupSchemas(lc.Catalog)
 
 	res := &Result{
@@ -102,17 +125,19 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		Revision:      lc.Catalog.Revision,
 	}
 
-	progress := newProgress(len(groups), opts.Log)
+	cnt := &counters{}
 
 	// The catalog itself (index, metadata manifest, catalog.json) counts as
 	// manifests and blobs: Catalog() has already verified or fetched them.
-	countCatalog(res, lc, st.Offline(), st.CatalogFetched())
+	countCatalog(cnt, st.Offline(), st.CatalogFetched())
 
 	// Notice digests are shared across many schema manifests; the first
 	// group that claims a digest does the work, the rest only count it.
 	notices := &noticeTracker{}
 
 	var missing missingList
+
+	progress := newProgress(len(groups), opts.Log)
 
 	group, gctx := errgroup.WithContext(ctx)
 	group.SetLimit(opts.Concurrency)
@@ -121,7 +146,7 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		g := groups[i]
 
 		group.Go(func() error {
-			if err := completeSchema(gctx, st, g, res, notices); err != nil {
+			if err := completeSchema(gctx, st, g, cnt, notices); err != nil {
 				if st.Offline() {
 					// Offline collects problems; the run itself keeps going.
 					missing.add(err)
@@ -131,7 +156,7 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 				return err
 			}
 
-			progress.done(res)
+			progress.done()
 
 			return nil
 		})
@@ -141,6 +166,13 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		return nil, fmt.Errorf("materialize schemas: %w", err)
 	}
 
+	res.FetchedManifests = int(cnt.fetchedManifests.Load())
+	res.CachedManifests = int(cnt.cachedManifests.Load())
+	res.FetchedBlobs = int(cnt.fetchedBlobs.Load())
+	res.CachedBlobs = int(cnt.cachedBlobs.Load())
+	res.WrittenSchemaFiles = int(cnt.writtenSchemaFiles.Load())
+	res.CachedSchemaFiles = int(cnt.cachedSchemaFiles.Load())
+	res.FetchedBytes = 0
 	res.Notices = notices.count()
 	res.Offline = st.Offline()
 	res.Missing = missing.entries()
@@ -172,18 +204,15 @@ func groupSchemas(c *catalog.Catalog) []schemaGroup {
 	return groups
 }
 
-// countCatalog adds the catalog's own artifacts to the result counters: the
+// countCatalog adds the catalog's own artifacts to the run counters: the
 // index and the metadata manifest (two manifests) and the catalog.json blob.
-// LoadedCatalog keeps only the parsed catalog; the raw sizes come from the
-// descriptor-backed counters of the store's catalog load (see EnsureCatalog).
-func countCatalog(res *Result, lc *store.LoadedCatalog, offline, fetched bool) {
+func countCatalog(cnt *counters, offline, fetched bool) {
 	if fetched && !offline {
-		res.FetchedManifests += 2
-		res.CachedBlobs++
-		res.FetchedBytes += int64(len(lc.Raw))
+		cnt.fetchedManifests.Add(2)
+		cnt.cachedBlobs.Add(1)
 	} else {
-		res.CachedManifests += 2
-		res.CachedBlobs++
+		cnt.cachedManifests.Add(2)
+		cnt.cachedBlobs.Add(1)
 	}
 }
 
@@ -191,7 +220,7 @@ func countCatalog(res *Result, lc *store.LoadedCatalog, offline, fetched bool) {
 // manifest, payload (even when schema.json is already whole — the
 // completeness definition differs from Store.Materialize here), schema.json
 // and the notice layer.
-func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, res *Result, notices *noticeTracker) error {
+func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, cnt *counters, notices *noticeTracker) error {
 	entry := &g.entry
 
 	desc := ocispec.Descriptor{MediaType: entry.Artifact.MediaType, Digest: digestOf(entry.Artifact.Digest), Size: entry.Artifact.Size}
@@ -208,7 +237,7 @@ func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, res *Re
 		return err
 	}
 
-	countManifest(res, fetched)
+	countManifest(cnt, fetched)
 
 	if err := st.EnsurePayload(ctx, what, sm); err != nil {
 		err = fmt.Errorf("schema %q: %w", g.ids[0], err)
@@ -230,13 +259,13 @@ func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, res *Re
 	}
 
 	if written {
-		res.WrittenSchemaFiles++
+		cnt.writtenSchemaFiles.Add(1)
 	} else {
-		res.CachedSchemaFiles++
+		cnt.cachedSchemaFiles.Add(1)
 	}
 
 	if sm.Notice != nil {
-		if err := notices.ensure(ctx, st, what, *sm.Notice, res); err != nil {
+		if err := notices.ensure(ctx, st, what, *sm.Notice, cnt); err != nil {
 			err = fmt.Errorf("schema %q: %w", g.ids[0], err)
 			if offlineProblem(err) {
 				return &missingEntryError{kind: "notice", digest: sm.Notice.Digest.String(), ids: g.ids, err: err}
@@ -249,11 +278,11 @@ func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, res *Re
 	return nil
 }
 
-func countManifest(res *Result, fetched bool) {
+func countManifest(cnt *counters, fetched bool) {
 	if fetched {
-		res.FetchedManifests++
+		cnt.fetchedManifests.Add(1)
 	} else {
-		res.CachedManifests++
+		cnt.cachedManifests.Add(1)
 	}
 }
 
@@ -326,7 +355,7 @@ type noticeTracker struct {
 	seen map[string]struct{}
 }
 
-func (t *noticeTracker) ensure(ctx context.Context, st *store.Store, what string, desc ocispec.Descriptor, res *Result) error {
+func (t *noticeTracker) ensure(ctx context.Context, st *store.Store, what string, desc ocispec.Descriptor, cnt *counters) error {
 	t.mu.Lock()
 	if t.seen == nil {
 		t.seen = map[string]struct{}{}
@@ -339,7 +368,7 @@ func (t *noticeTracker) ensure(ctx context.Context, st *store.Store, what string
 	t.mu.Unlock()
 
 	if claimed {
-		res.CachedBlobs++
+		cnt.cachedBlobs.Add(1)
 
 		return nil
 	}
@@ -357,9 +386,9 @@ func (t *noticeTracker) ensure(ctx context.Context, st *store.Store, what string
 	}
 
 	if fetched {
-		res.FetchedBlobs++
+		cnt.fetchedBlobs.Add(1)
 	} else {
-		res.CachedBlobs++
+		cnt.cachedBlobs.Add(1)
 	}
 
 	return nil
@@ -380,7 +409,7 @@ func newProgress(total int, log func(string, ...any)) *progress {
 	return &progress{total: total, log: log}
 }
 
-func (p *progress) done(res *Result) {
+func (p *progress) done() {
 	n := p.finished.Add(1)
 
 	next := p.next.Load()
@@ -388,7 +417,7 @@ func (p *progress) done(res *Result) {
 
 	if mark > next && int(n) < p.total {
 		if p.next.CompareAndSwap(next, mark) {
-			p.log("materialize: %d/%d schemas, %.1f MB fetched", n, p.total, float64(res.FetchedBytes)/(1<<20))
+			p.log("materialize: %d/%d schemas done", n, p.total)
 		}
 	}
 }

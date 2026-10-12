@@ -57,13 +57,25 @@ type Store struct {
 // (false: served from the cache).
 func (s *Store) CatalogFetched() bool { return s.catalogFetched.Load() }
 
-// New returns a store.
+// New returns a store. The log callback is wrapped so concurrent workers
+// never interleave lines: every Store method may be called in parallel once
+// the completeness operations are in play.
 func New(opts Options) *Store {
 	if opts.Log == nil {
 		opts.Log = func(string, ...any) {}
 	}
 
-	return &Store{opts: opts}
+	st := &Store{opts: opts}
+	inner := opts.Log
+	opts.Log = func(format string, args ...any) {
+		st.logMu.Lock()
+		defer st.logMu.Unlock()
+
+		inner(format, args...)
+	}
+	st.opts = opts
+
+	return st
 }
 
 // LoadedCatalog is a verified catalog.

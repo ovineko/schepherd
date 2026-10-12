@@ -20,12 +20,10 @@ import (
 // Offline reports whether the store never opens the registry.
 func (s *Store) Offline() bool { return s.opts.Offline }
 
-// log emits one store message; concurrent workers serialize through logMu so
-// lines never interleave mid-write.
+// logf emits one store message. opts.Log is already serialized: New wraps
+// the caller's callback with logMu, so every path - including the legacy
+// fetch helpers - writes whole lines without a nested lock here.
 func (s *Store) logf(format string, args ...any) {
-	s.logMu.Lock()
-	defer s.logMu.Unlock()
-
 	s.opts.Log(format, args...)
 }
 

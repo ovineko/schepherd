@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -42,6 +43,11 @@ type app struct {
 	root   *cobra.Command
 	cfg    *config.Config
 	flags  globalFlags
+
+	// logMu serializes logf writes: concurrent workers (materialize's pool,
+	// the store's fetch paths) share one stderr writer, and fmt.Fprintf on
+	// a shared buffer is not safe for parallel whole-line writes.
+	logMu sync.Mutex
 }
 
 // Main runs the command line and returns the process exit code.
@@ -90,6 +96,9 @@ func (a *app) logf(format string, args ...any) {
 	if a.flags.quiet {
 		return
 	}
+
+	a.logMu.Lock()
+	defer a.logMu.Unlock()
 
 	_, _ = fmt.Fprintf(a.stderr, "schepherd: "+format+"\n", args...)
 }
