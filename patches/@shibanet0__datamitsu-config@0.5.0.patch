@@ -1,0 +1,44 @@
+diff --git a/dist/s0/index.js b/dist/s0/index.js
+index 0efc8b9374a23a233cfcec6c971a289c8a2b6f3f..2aec9c1a919412ba629b2cf74f44a20a94216653 100644
+--- a/dist/s0/index.js
++++ b/dist/s0/index.js
+@@ -4,7 +4,8 @@ import { execa } from "execa";
+ import fs from "node:fs/promises";
+ import path, { join } from "node:path";
+ import { fileURLToPath } from "node:url";
+-import fastGlob from "fast-glob";
++import { glob } from "glob";
++import { minimatch } from "minimatch";
+ import crypto, { randomUUID } from "node:crypto";
+ import os from "node:os";
+ import util from "node:util";
+@@ -6843,16 +6844,24 @@ function canonicalYaml(text) {
+ * so symlinks are not followed and results are deduplicated by real path.
+ */
+ async function findStateFiles(patterns, ignore = []) {
+-	const { glob } = fastGlob;
++	const excluded = [...PULUMI_GLOB_IGNORE_PATTERNS, ...ignore];
++	const ignored = (entry) => entry.isSymbolicLink() || excluded.some((pattern) => minimatch(entry.relativePosix(), pattern, { dot: true }));
+ 	const files = await glob([...patterns], {
+-		absolute: true,
+ 		cwd: process.cwd(),
+-		followSymbolicLinks: false,
+-		ignore: [...PULUMI_GLOB_IGNORE_PATTERNS, ...ignore]
++		nocase: false,
++		nodir: true,
++		follow: false,
++		withFileTypes: true,
++		ignore: {
++			ignored,
++			childrenIgnored: (entry) => ignored(entry) || excluded.some((pattern) => minimatch(`${entry.relativePosix()}/`, pattern, { dot: true }))
++		}
+ 	});
+ 	const seen = /* @__PURE__ */ new Set();
+ 	const unique = [];
+-	for (const file of files) {
++	for (const entry of files) {
++		if (!entry.isFile()) continue;
++		const file = entry.fullpath();
+ 		const realPath = await fs.realpath(file).catch(() => file);
+ 		if (!seen.has(realPath)) {
+ 			seen.add(realPath);

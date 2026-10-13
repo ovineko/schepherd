@@ -15,6 +15,7 @@ import (
 	"github.com/ovineko/schepherd/internal/catalog"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/match"
+	"github.com/ovineko/schepherd/internal/store"
 )
 
 func (a *app) writeJSON(v any) error {
@@ -32,13 +33,17 @@ func (a *app) writeJSON(v any) error {
 }
 
 func (a *app) withCatalog(cmd *cobra.Command, fn func(s *session) error) error {
+	return a.withCatalogLoader(cmd, (*store.Store).Catalog, fn)
+}
+
+func (a *app) withCatalogLoader(cmd *cobra.Command, load catalogLoader, fn func(s *session) error) error {
 	ctx, cancel, err := a.withTimeout(cmd.Context())
 	if err != nil {
 		return err
 	}
 	defer cancel()
 
-	s, err := a.openSession(ctx)
+	s, err := a.openCatalogSession(ctx, load)
 	if err != nil {
 		return err
 	}

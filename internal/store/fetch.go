@@ -15,6 +15,7 @@ import (
 	"github.com/ovineko/schepherd/internal/artifact"
 	"github.com/ovineko/schepherd/internal/cache"
 	"github.com/ovineko/schepherd/internal/catalog"
+	"github.com/ovineko/schepherd/internal/digest"
 	"github.com/ovineko/schepherd/internal/fault"
 )
 
@@ -22,6 +23,9 @@ func (s *Store) open() (Remote, error) {
 	if s.opts.Offline {
 		return nil, fault.New(fault.Offline, "network access is disabled (--offline)")
 	}
+
+	s.openMu.Lock()
+	defer s.openMu.Unlock()
 
 	if !s.opened {
 		s.opened = true
@@ -72,7 +76,7 @@ func (s *Store) localCatalog(catalogDigest string) (*LoadedCatalog, error) {
 
 	ci, err := artifact.ParseCatalogIndex(index, s.opts.ArtifactLimits)
 	if err != nil {
-		return nil, localParseError(catalogDigest, "catalog index", err)
+		return nil, fault.Wrap(fault.Integrity, err, "cached catalog index %s", catalogDigest)
 	}
 
 	metadata, err := s.readDescribed(ci.Metadata, "catalog index")
@@ -82,7 +86,7 @@ func (s *Store) localCatalog(catalogDigest string) (*LoadedCatalog, error) {
 
 	cm, err := artifact.ParseCatalogMetadata(metadata, s.opts.ArtifactLimits)
 	if err != nil {
-		return nil, localParseError(ci.Metadata.Digest.String(), "catalog metadata manifest", err)
+		return nil, fault.Wrap(fault.Integrity, err, "cached catalog metadata manifest %s", ci.Metadata.Digest)
 	}
 
 	raw, err := s.readDescribed(cm.Payload, "catalog metadata manifest")
@@ -99,7 +103,7 @@ func (s *Store) localCatalog(catalogDigest string) (*LoadedCatalog, error) {
 		return nil, fault.Wrap(fault.Integrity, err, "cached catalog %s", catalogDigest)
 	}
 
-	return &LoadedCatalog{Catalog: c, Digest: catalogDigest, Raw: raw}, nil
+	return &LoadedCatalog{Catalog: c, Digest: catalogDigest, Raw: raw, Stats: CatalogStats{CachedManifests: 2, CachedBlobs: 1}}, nil
 }
 
 // readDescribed reads the cached blob desc describes; parent names the
@@ -107,39 +111,170 @@ func (s *Store) localCatalog(catalogDigest string) (*LoadedCatalog, error) {
 func (s *Store) readDescribed(desc ocispec.Descriptor, parent string) ([]byte, error) {
 	dgst := desc.Digest.String()
 
-	data, err := s.opts.Cache.ReadBlob(dgst, desc.Size)
+	data, err := s.opts.Cache.ReadBlob(dgst, s.blobLimit(desc.MediaType))
 	if err := readLocal(dgst, err); err != nil {
 		return nil, err
 	}
 
-	if int64(len(data)) != desc.Size {
-		return nil, corrupt(dgst, fmt.Errorf("%w: size %d, %s declares %d", cache.ErrCorrupt, len(data), parent, desc.Size))
+	if desc.Size >= 0 && int64(len(data)) != desc.Size {
+		return nil, fault.Wrap(fault.Integrity, artifact.ErrInvalid, "cached blob %s has %d bytes, %s declares %d", dgst, len(data), parent, desc.Size)
 	}
 
 	return data, nil
 }
 
+func (s *Store) blobLimit(mediaType string) int64 {
+	switch mediaType {
+	case artifact.CatalogMediaType:
+		return s.opts.ArtifactLimits.MaxCatalogBytes
+	case artifact.SchemaMediaType, artifact.SchemaGzipMediaType:
+		return s.opts.ArtifactLimits.MaxPayloadBytes
+	case artifact.NoticeMediaType:
+		return s.opts.ArtifactLimits.MaxNoticeBytes
+	default:
+		return s.opts.ArtifactLimits.MaxManifestBytes
+	}
+}
+
 func (s *Store) fetchCatalog(ctx context.Context, catalogDigest string) (*LoadedCatalog, error) {
-	remote, err := s.open()
+	index, indexOutcome, releaseIndex, err := s.catalogBlob(ctx, ocispec.Descriptor{
+		MediaType: artifact.IndexMediaType, Digest: godigest.Digest(catalogDigest), Size: -1,
+	}, true)
 	if err != nil {
 		return nil, err
 	}
+	if releaseIndex != nil {
+		defer releaseIndex()
+	}
+	ci, err := artifact.ParseCatalogIndex(index.Data, s.opts.ArtifactLimits)
+	if err != nil {
+		return nil, fault.Wrap(fault.Integrity, err, "catalog %s", catalogDigest)
+	}
 
-	s.opts.Log("fetching catalog %s from %s", catalogDigest, s.opts.Repository)
-
-	snap, err := FetchCatalog(ctx, remote, catalogDigest, s.opts.ArtifactLimits, s.opts.CatalogLimits)
+	metadata, metadataOutcome, releaseMetadata, err := s.catalogBlob(ctx, ci.Metadata, false)
 	if err != nil {
 		return nil, err
 	}
+	if releaseMetadata != nil {
+		defer releaseMetadata()
+	}
+	cm, err := artifact.ParseCatalogMetadata(metadata.Data, s.opts.ArtifactLimits)
+	if err != nil {
+		return nil, fault.Wrap(fault.Integrity, err, "catalog %s: metadata manifest %s", catalogDigest, ci.Metadata.Digest)
+	}
 
-	for _, b := range []artifact.Blob{snap.Payload, snap.Metadata, snap.Index} {
-		size := b.Descriptor.Size
-		if err := s.opts.Cache.WriteBlob(b.Descriptor.Digest.String(), size, size, bytes.NewReader(b.Data)); err != nil {
-			return nil, cacheWriteError(err)
+	payload, payloadOutcome, releasePayload, err := s.catalogBlob(ctx, cm.Payload, false)
+	if err != nil {
+		return nil, err
+	}
+	if releasePayload != nil {
+		defer releasePayload()
+	}
+	c, err := catalog.Parse(payload.Data, s.opts.CatalogLimits)
+	if err != nil {
+		return nil, fault.Wrap(fault.Integrity, err, "catalog %s", catalogDigest)
+	}
+	if err := ci.CheckSchemas(c.Artifacts()); err != nil {
+		return nil, fault.Wrap(fault.Integrity, err, "catalog %s", catalogDigest)
+	}
+
+	stats := CatalogStats{}
+	blobs := [3]artifact.Blob{index, metadata, payload}
+	for i, outcome := range [3]EnsureOutcome{indexOutcome, metadataOutcome, payloadOutcome} {
+		b := &blobs[i]
+		if outcome.Fetched {
+			if err := checkContext(ctx); err != nil {
+				return nil, err
+			}
+			if err := s.opts.Cache.WriteBlob(b.Descriptor.Digest.String(), b.Descriptor.Size, s.blobLimit(b.Descriptor.MediaType), bytes.NewReader(b.Data)); err != nil {
+				return nil, contextError(ctx, cacheWriteError(err))
+			}
+			stats.FetchedBytes += outcome.FetchedBytes
+		}
+		switch {
+		case outcome.Fetched && i < 2:
+			stats.FetchedManifests++
+		case outcome.Fetched:
+			stats.FetchedBlobs++
+		case i < 2:
+			stats.CachedManifests++
+		default:
+			stats.CachedBlobs++
+		}
+		if outcome.Repaired {
+			stats.RepairedEntries++
 		}
 	}
 
-	return &LoadedCatalog{Catalog: snap.Catalog, Digest: catalogDigest, Raw: snap.Payload.Data}, nil
+	return &LoadedCatalog{Catalog: c, Digest: catalogDigest, Raw: payload.Data, Stats: stats}, nil
+}
+
+// A fetched blob stays locked until fetchCatalog validates and stores the
+// whole graph: an index must not be cached before CheckSchemas succeeds.
+func (s *Store) catalogBlob(ctx context.Context, desc ocispec.Descriptor, index bool) (artifact.Blob, EnsureOutcome, func(), error) {
+	if err := checkContext(ctx); err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, err
+	}
+	data, err := s.readDescribed(desc, "catalog manifest")
+	if err == nil {
+		desc.Size = int64(len(data))
+		return artifact.Blob{Descriptor: desc, Data: data}, EnsureOutcome{}, nil, checkContext(ctx)
+	}
+	what := "catalog artifact " + desc.Digest.String()
+	if err := s.recoverableForComplete(err, what); err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, err
+	}
+
+	release, err := s.opts.Cache.Lock(ctx, digest.Hex(desc.Digest.String()))
+	if err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, lockError(err)
+	}
+	handedOff := false
+	defer func() {
+		if !handedOff {
+			release()
+		}
+	}()
+
+	data, err = s.readDescribed(desc, "catalog manifest")
+	if err == nil {
+		desc.Size = int64(len(data))
+		return artifact.Blob{Descriptor: desc, Data: data}, EnsureOutcome{}, nil, checkContext(ctx)
+	}
+	if err := s.recoverableForComplete(err, what); err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, err
+	}
+	_, repaired := errors.AsType[*corruptError](err)
+	remote, err := s.open()
+	if err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, err
+	}
+	s.logf("fetching %s from %s", what, s.opts.Repository)
+	if index {
+		data, err = remote.FetchManifestByDigest(ctx, desc.Digest.String(), desc.MediaType, s.opts.ArtifactLimits.MaxManifestBytes)
+	} else {
+		var buf bytes.Buffer
+		err = remote.FetchTo(ctx, desc, &buf)
+		data = buf.Bytes()
+	}
+	if err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, contextError(ctx, fault.Wrap(fault.Registry, err, "fetch catalog artifact %s", desc.Digest))
+	}
+	if err := checkContext(ctx); err != nil {
+		return artifact.Blob{}, EnsureOutcome{}, nil, err
+	}
+	if digest.FromBytes(data) != desc.Digest.String() {
+		return artifact.Blob{}, EnsureOutcome{}, nil, fault.Wrap(fault.Integrity, cache.ErrDigestMismatch, "catalog artifact %s has a different digest", desc.Digest)
+	}
+	if desc.Size >= 0 && int64(len(data)) != desc.Size {
+		return artifact.Blob{}, EnsureOutcome{}, nil, fault.Wrap(fault.Integrity, artifact.ErrInvalid, "catalog artifact %s has %d bytes, expected %d", desc.Digest, len(data), desc.Size)
+	}
+	if index {
+		desc.Size = int64(len(data))
+	}
+	handedOff = true
+	outcome := EnsureOutcome{Fetched: true, Repaired: repaired, FetchedBytes: int64(len(data))}
+	return artifact.Blob{Descriptor: desc, Data: data}, outcome, release, nil
 }
 
 // Snapshot is a catalog fetched and verified by FetchCatalog: the index,
@@ -208,16 +343,23 @@ func FetchCatalog(ctx context.Context, remote Remote, catalogDigest string, al a
 
 func (s *Store) verifyMaterialized(entry *catalog.Entry, sm *artifact.SchemaManifest) error {
 	err := s.opts.Cache.VerifyMaterialized(entry.Artifact.Digest, sm.ContentDigest, sm.ContentSize)
+	if err == nil {
+		return nil
+	}
+	var what string
+	if entry.ID == "" {
+		what = "materialized schema " + entry.Artifact.Digest
+	} else {
+		what = fmt.Sprintf("materialized schema %q", entry.ID)
+	}
 
 	switch {
-	case err == nil:
-		return nil
 	case errors.Is(err, cache.ErrNotFound):
-		return fmt.Errorf("materialized schema %q: %w", entry.ID, err)
+		return fmt.Errorf("%s: %w", what, err)
 	case errors.Is(err, cache.ErrCorrupt):
-		return &corruptError{digest: entry.Artifact.Digest, err: fmt.Errorf("materialized schema %q: %w", entry.ID, err)}
+		return &corruptError{digest: entry.Artifact.Digest, err: fmt.Errorf("%s: %w", what, err)}
 	default:
-		return fault.Wrap(fault.Internal, err, "verify materialized schema %q", entry.ID)
+		return fault.Wrap(fault.Internal, err, "verify %s", what)
 	}
 }
 
@@ -285,36 +427,17 @@ func (s *Store) materializeLocked(ctx context.Context, entry *catalog.Entry, des
 }
 
 func (s *Store) localManifest(desc ocispec.Descriptor) (*artifact.SchemaManifest, error) {
-	dgst := desc.Digest.String()
-
-	data, err := s.opts.Cache.ReadBlob(dgst, desc.Size)
-	if err := readLocal(dgst, err); err != nil {
+	data, err := s.readDescribed(desc, "catalog")
+	if err != nil {
 		return nil, err
-	}
-
-	if int64(len(data)) != desc.Size {
-		return nil, corrupt(dgst, fmt.Errorf("%w: size %d, catalog declares %d", cache.ErrCorrupt, len(data), desc.Size))
 	}
 
 	sm, err := artifact.ParseSchemaManifest(data, s.opts.ArtifactLimits)
 	if err != nil {
-		return nil, localParseError(dgst, "schema manifest", err)
+		return nil, fault.Wrap(fault.Integrity, err, "cached schema manifest %s", desc.Digest)
 	}
 
 	return sm, nil
-}
-
-// localParseError classifies a cached manifest that verified against its
-// digest but was refused by the parser. A manifest of a newer wire format
-// (stored by a newer client sharing the cache) is not corrupt: fetching it
-// again returns the same bytes, and quarantining it would damage that
-// client's cache.
-func localParseError(dgst, what string, err error) error {
-	if errors.Is(err, artifact.ErrUnsupported) {
-		return fault.Wrap(fault.Usage, err, "cached %s %s", what, dgst)
-	}
-
-	return corrupt(dgst, fmt.Errorf("%w: %w", cache.ErrCorrupt, err))
 }
 
 func (s *Store) fetchManifest(ctx context.Context, entry *catalog.Entry, desc ocispec.Descriptor) (*artifact.SchemaManifest, error) {

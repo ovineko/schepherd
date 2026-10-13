@@ -27,7 +27,7 @@ Release targets: darwin/amd64, darwin/arm64, linux/amd64, linux/arm64, windows/a
 
 | Module                                                       | Version  | License      |
 | ------------------------------------------------------------ | -------- | ------------ |
-| Go standard library                                          | go1.27.1 | BSD-3-Clause |
+| Go standard library                                          | go1.27.2 | BSD-3-Clause |
 | `github.com/bmatcuk/doublestar/v4`                           | v4.10.2  | MIT          |
 | `github.com/inconshreveable/mousetrap` (Windows builds only) | v1.1.0   | Apache-2.0   |
 | `github.com/opencontainers/go-digest`                        | v1.0.0   | Apache-2.0   |

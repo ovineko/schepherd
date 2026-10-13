@@ -24,6 +24,9 @@ var (
 
 func (c *Cache) openRegular(label, name string) (*os.File, fs.FileInfo, error) {
 	path := c.path(name)
+	if c.root == nil {
+		return nil, nil, notFound(label, path)
+	}
 
 	info, err := c.root.Lstat(name)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -178,6 +181,10 @@ type staged struct {
 }
 
 func (c *Cache) stage(kind string, limit int64) (*staged, error) {
+	if err := c.requireWritable(); err != nil {
+		return nil, err
+	}
+
 	var lastErr error
 
 	for range 2 {

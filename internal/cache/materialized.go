@@ -86,6 +86,10 @@ func (c *Cache) ReadMaterialized(manifestDigest, contentDigest string, size int6
 }
 
 func (c *Cache) checkMaterialized(m materialized, size int64, keep bool) ([]byte, error) {
+	if c.root == nil {
+		return nil, notFound(m.label, c.path(m.file))
+	}
+
 	info, err := c.root.Lstat(m.dir)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, notFound(m.label, c.path(m.file))

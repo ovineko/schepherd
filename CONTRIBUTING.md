@@ -80,6 +80,13 @@ update is a reviewed pull request:
   `pnpm dm exec pinact -- run --update` (`.pinact.yaml`; needs GitHub API
   access). `pnpm dm check` does not run pinact.
 - Go modules with `go get` and `go mod tidy`, npm packages with `pnpm`.
+- The datamitsu wrapper has a pnpm patch under `patches/` that replaces
+  its Pulumi state discovery's `fast-glob` with `glob` and `minimatch`,
+  avoiding the vulnerable `braces` dependency. When updating the wrapper,
+  migrate the patch, its scoped override and package extension in
+  `pnpm-workspace.yaml` together. Check root and nested `.pulumi` directories,
+  exclusions, brace patterns, absolute paths and symlinks: state discovery
+  must not omit files or process workspace aliases more than once.
 - Pins that are updated by editing the file:
   - `tools/pins/jsonschema.json` (version and SHA-256 of every asset,
     installed by `tools/install-jsonschema`); a new `jsonschema` version also
@@ -125,6 +132,10 @@ update is a reviewed pull request:
   - `GOVULNCHECK_VERSION` in `Taskfile.yaml`.
 - The Go toolchain is the `go` line of `go.mod` (there is no `toolchain`
   line); Node.js is pinned in `.node-version` and pnpm in `package.json`.
+- The project-specific `golangci-lint` binary pin is in
+  `datamitsu.config.js`: a Go update can introduce export data that the
+  wrapper's linter cannot read. Update the release version and published
+  SHA-256 hashes for every platform together, then run `pnpm dm init`.
 - After any Go dependency or toolchain change, run
   `go run ./tools/release licenses generate` and
   `go run ./tools/release notices generate` (never edit

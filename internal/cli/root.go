@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -42,6 +43,11 @@ type app struct {
 	root   *cobra.Command
 	cfg    *config.Config
 	flags  globalFlags
+
+	// logMu serializes logf writes: concurrent workers (materialize's pool,
+	// the store's fetch paths) share one stderr writer, and fmt.Fprintf on
+	// a shared buffer is not safe for parallel whole-line writes.
+	logMu sync.Mutex
 }
 
 // Main runs the command line and returns the process exit code.
@@ -91,6 +97,9 @@ func (a *app) logf(format string, args ...any) {
 		return
 	}
 
+	a.logMu.Lock()
+	defer a.logMu.Unlock()
+
 	_, _ = fmt.Fprintf(a.stderr, "schepherd: "+format+"\n", args...)
 }
 
@@ -130,6 +139,7 @@ func (a *app) newRoot() *cobra.Command {
 		a.newResolveCmd(),
 		a.newPinCmd(),
 		a.newMirrorCmd(),
+		a.newMaterializeCmd(),
 		a.newRunCmd(),
 		a.newConfigCmd(),
 	)
@@ -312,12 +322,24 @@ func cacheDirPath(cfg *config.Config) (string, error) {
 }
 
 func (a *app) openCache(cfg *config.Config) (*cache.Cache, error) {
+	return a.openCacheWith(cfg, cache.Open)
+}
+
+func (a *app) openCompletenessCache(cfg *config.Config) (*cache.Cache, error) {
+	if cfg.Offline {
+		return a.openCacheWith(cfg, cache.OpenReadOnly)
+	}
+
+	return a.openCache(cfg)
+}
+
+func (a *app) openCacheWith(cfg *config.Config, open func(string) (*cache.Cache, error)) (*cache.Cache, error) {
 	dir, err := cacheDirPath(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	c, err := cache.Open(dir)
+	c, err := open(dir)
 	if err != nil {
 		return nil, fault.Wrap(fault.Usage, err, "open cache %s", dir)
 	}
@@ -325,7 +347,6 @@ func (a *app) openCache(cfg *config.Config) (*cache.Cache, error) {
 	return c, nil
 }
 
-// session bundles what schema commands need: a verified catalog and a store.
 type session struct {
 	cfg     *config.Config
 	cache   *cache.Cache
@@ -334,7 +355,21 @@ type session struct {
 	repo    registry.Repository
 }
 
+type catalogLoader func(*store.Store, context.Context, string) (*store.LoadedCatalog, error)
+
 func (a *app) openSession(ctx context.Context) (*session, error) {
+	return a.openCatalogSession(ctx, (*store.Store).Catalog)
+}
+
+func (a *app) openCatalogSession(ctx context.Context, load catalogLoader) (*session, error) {
+	return a.openCatalogSessionWithCache(ctx, load, a.openCache)
+}
+
+func (a *app) openCompletenessSession(ctx context.Context) (*session, error) {
+	return a.openCatalogSessionWithCache(ctx, (*store.Store).CatalogForCompleteness, a.openCompletenessCache)
+}
+
+func (a *app) openCatalogSessionWithCache(ctx context.Context, load catalogLoader, open func(*config.Config) (*cache.Cache, error)) (*session, error) {
 	cfg, err := a.config()
 	if err != nil {
 		return nil, err
@@ -353,7 +388,7 @@ func (a *app) openSession(ctx context.Context) (*session, error) {
 		return nil, fault.Wrap(fault.Usage, err, "catalog.repository")
 	}
 
-	c, err := a.openCache(cfg)
+	c, err := open(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +407,7 @@ func (a *app) openSession(ctx context.Context) (*session, error) {
 		},
 	})
 
-	loaded, err := st.Catalog(ctx, cfg.Catalog)
+	loaded, err := load(st, ctx, cfg.Catalog)
 	if err != nil {
 		_ = c.Close()
 
