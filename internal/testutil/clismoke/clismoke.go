@@ -14,6 +14,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -95,10 +96,11 @@ func Build(t *testing.T, name, pkg string) string {
 }
 
 type published struct {
-	schemas       map[string][]byte
-	manifests     map[string]string
-	catalogDigest string
-	catalogRaw    []byte
+	schemas          map[string][]byte
+	manifests        map[string]string
+	catalogDigest    string
+	catalogRaw       []byte
+	catalogArtifacts []artifact.Blob
 }
 
 type scenario struct {
@@ -200,6 +202,12 @@ func publish(t *testing.T, host string) *published {
 
 	set.catalogRaw = raw
 	set.catalogDigest = cat.Index.Descriptor.Digest.String()
+	set.catalogArtifacts = []artifact.Blob{cat.Index, cat.Metadata.Manifest}
+	for _, b := range cat.Metadata.Blobs {
+		if b.Descriptor.MediaType == artifact.CatalogMediaType {
+			set.catalogArtifacts = append(set.catalogArtifacts, b)
+		}
+	}
 
 	name, err := registry.ParseRepository(host + "/" + repoPath)
 	if err != nil {
@@ -669,10 +677,8 @@ func (s *scenario) mirror() {
 	s.expectStdout(string(s.set.schemas["gamma"]), append(fresh, "cat", "gamma")...)
 }
 
-// materializeCatalog exercises "materialize" end to end: a cold run fills a
-// separate cache directory with the whole catalog (notices included), a
-// repeated run verifies without fetching, --offline reports completeness,
-// and a deleted notice shows up as the one missing entry.
+// materializeCatalog checks that a whole snapshot remains usable without
+// its registry, and that verification reports a deleted file without repair.
 func (s *scenario) materializeCatalog() {
 	dir := filepath.Join(s.root, "materialized-cache")
 
@@ -697,12 +703,16 @@ func (s *scenario) materializeCatalog() {
 		s.t.Errorf("cold materialize = %+v, want complete with no missing entries", cold)
 	}
 
-	if cold.Entries != len(s.set.schemas) || cold.WrittenSchemaFiles < 1 {
-		s.t.Errorf("cold materialize entries=%d writtenSchemaFiles=%d, want %d entries and written schema files", cold.Entries, cold.WrittenSchemaFiles, len(s.set.schemas))
+	if cold.Entries != len(s.set.schemas) || cold.Schemas != len(s.set.manifests) || cold.WrittenSchemaFiles != cold.Schemas {
+		s.t.Errorf("cold materialize entries=%d schemas=%d writtenSchemaFiles=%d, want every distinct schema written", cold.Entries, cold.Schemas, cold.WrittenSchemaFiles)
 	}
 
 	if cold.CachedManifests != 0 {
 		s.t.Errorf("cold materialize had cached manifests: %+v", cold)
+	}
+
+	if cold.FetchedManifests != 2+len(s.set.manifests) || cold.FetchedBlobs != 2+len(s.set.manifests) {
+		s.t.Errorf("cold materialize fetchedManifests=%d fetchedBlobs=%d, want catalog manifests, schema manifests, catalog JSON, payloads and one notice", cold.FetchedManifests, cold.FetchedBlobs)
 	}
 
 	var warm struct {
@@ -720,7 +730,7 @@ func (s *scenario) materializeCatalog() {
 
 	s.reg.Close()
 
-	offline := []string{"--config", s.config, "--cache-dir", dir, "--offline"}
+	offline := []string{"--config", "", "--repository", s.repo, "--catalog", s.set.catalogDigest, "--cache-dir", dir, "--offline"}
 
 	var verify struct {
 		Complete bool `json:"complete"`
@@ -733,8 +743,115 @@ func (s *scenario) materializeCatalog() {
 	}
 
 	// The catalog commands work from the materialized directory offline.
-	s.checkSchemaFile(strings.TrimSuffix(s.ok(append(offline, "path", "alpha")...).Stdout, "\n"), "alpha")
+	alphaPath := strings.TrimSuffix(s.ok(append(offline, "path", "alpha")...).Stdout, "\n")
+	s.checkSchemaFile(alphaPath, "alpha")
 	s.expectStdout(string(s.set.schemas["gamma"]), append(offline, "cat", "gamma")...)
+
+	s.verifyMissingCatalogArtifacts(dir, offline)
+	s.verifyMissingMaterializedSchema(alphaPath, offline)
+}
+
+func (s *scenario) verifyMissingMaterializedSchema(alphaPath string, offline []string) {
+	if err := os.Chmod(alphaPath, 0o600); err != nil {
+		s.t.Fatal(err)
+	}
+	if err := os.Remove(alphaPath); err != nil {
+		s.t.Fatal(err)
+	}
+
+	incomplete := s.exec(append(offline, "--quiet", "materialize", "--json")...)
+	if incomplete.Code != 6 {
+		s.t.Fatalf("incomplete materialize exited %d, want 6: %s", incomplete.Code, incomplete.Stderr)
+	}
+	var missing struct {
+		Complete           bool `json:"complete"`
+		WrittenSchemaFiles int  `json:"writtenSchemaFiles"`
+		Missing            []struct {
+			Kind   string   `json:"kind"`
+			Digest string   `json:"digest"`
+			State  string   `json:"state"`
+			IDs    []string `json:"ids"`
+		} `json:"missing"`
+	}
+	s.decode(incomplete, &missing)
+	if missing.Complete || missing.WrittenSchemaFiles != 0 || len(missing.Missing) != 1 {
+		s.t.Fatalf("offline missing schema summary = %+v, want one missing entry and no writes", missing)
+	}
+	m := missing.Missing[0]
+	if m.Kind != "schemaFile" || m.Digest != s.set.manifests["alpha"] || m.State != "absent" || !slices.Equal(m.IDs, []string{"alpha"}) {
+		s.t.Errorf("missing schema entry = %+v", m)
+	}
+	if _, err := os.Stat(alphaPath); !errors.Is(err, os.ErrNotExist) {
+		s.t.Errorf("offline verification recreated the missing schema: %v", err)
+	}
+}
+
+func (s *scenario) verifyMissingCatalogArtifacts(dir string, offline []string) {
+	kinds := []string{"catalogIndex", "catalogMetadata", "catalogPayload"}
+	for i, b := range s.set.catalogArtifacts {
+		path := filepath.Join(dir, "v1", "blobs", "sha256", b.Descriptor.Digest.Encoded())
+		for _, corrupt := range []bool{false, true} {
+			if err := os.Chmod(path, 0o600); err != nil {
+				s.t.Fatal(err)
+			}
+			if corrupt {
+				if err := os.WriteFile(path, []byte("corrupt"), 0o600); err != nil {
+					s.t.Fatal(err)
+				}
+			} else if err := os.Remove(path); err != nil {
+				s.t.Fatal(err)
+			}
+
+			s.verifyIncompleteCatalogSummary(offline, kinds[i], b.Descriptor.Digest.String(), corrupt)
+			if corrupt {
+				s.fileEquals(path, []byte("corrupt"))
+			} else if _, err := os.Stat(path); !errors.Is(err, os.ErrNotExist) {
+				s.t.Errorf("offline verification recreated catalog %s: %v", kinds[i], err)
+			}
+			if err := os.WriteFile(path, b.Data, 0o600); err != nil {
+				s.t.Fatal(err)
+			}
+		}
+	}
+}
+
+func (s *scenario) verifyIncompleteCatalogSummary(offline []string, kind, dgst string, corrupt bool) {
+	incomplete := s.exec(append(offline, "--quiet", "materialize", "--json")...)
+	if incomplete.Code != 6 {
+		s.t.Fatalf("incomplete catalog %s: exit %d, want 6: %s", kind, incomplete.Code, incomplete.Stderr)
+	}
+	var result struct {
+		Complete           bool   `json:"complete"`
+		Revision           string `json:"revision"`
+		Entries            int    `json:"entries"`
+		Schemas            int    `json:"schemas"`
+		WrittenSchemaFiles int    `json:"writtenSchemaFiles"`
+		Missing            []struct {
+			Kind   string   `json:"kind"`
+			Digest string   `json:"digest"`
+			State  string   `json:"state"`
+			IDs    []string `json:"ids"`
+		} `json:"missing"`
+	}
+	s.decode(incomplete, &result)
+	if result.Complete || result.Revision != "" || result.Entries != 0 || result.WrittenSchemaFiles != 0 || len(result.Missing) != 1 {
+		s.t.Fatalf("incomplete catalog %s summary = %+v", kind, result)
+	}
+	wantSchemas := len(s.set.manifests)
+	if kind == "catalogIndex" {
+		wantSchemas = 0
+	}
+	if result.Schemas != wantSchemas {
+		s.t.Errorf("incomplete catalog %s schemas = %d, want %d", kind, result.Schemas, wantSchemas)
+	}
+	state := "absent"
+	if corrupt {
+		state = "corrupt"
+	}
+	m := result.Missing[0]
+	if m.Kind != kind || m.Digest != dgst || m.State != state || m.IDs == nil || len(m.IDs) != 0 {
+		s.t.Errorf("incomplete catalog entry = %+v, want %s %s %s with unknown IDs", m, kind, dgst, state)
+	}
 }
 
 // warmCache checks that a populated cache serves every command without the

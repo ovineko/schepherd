@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"sync/atomic"
 
 	godigest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -44,18 +43,13 @@ type Options struct {
 
 // Store resolves catalogs and schemas.
 type Store struct {
-	remote         Remote
-	remoteErr      error
-	opts           Options
-	opened         bool
-	openMu         sync.Mutex
-	logMu          sync.Mutex
-	catalogFetched atomic.Bool
+	remote    Remote
+	remoteErr error
+	opts      Options
+	opened    bool
+	openMu    sync.Mutex
+	logMu     sync.Mutex
 }
-
-// CatalogFetched reports whether the last Catalog call went to the network
-// (false: served from the cache).
-func (s *Store) CatalogFetched() bool { return s.catalogFetched.Load() }
 
 // New returns a store. The log callback is wrapped so concurrent workers
 // never interleave lines: every Store method may be called in parallel once
@@ -78,11 +72,34 @@ func New(opts Options) *Store {
 	return st
 }
 
-// LoadedCatalog is a verified catalog.
+// LoadedCatalog carries verified catalog data. CatalogForCompleteness may leave
+// Catalog unset while retaining schema descriptors from a verified index.
 type LoadedCatalog struct {
-	Catalog *catalog.Catalog
-	Digest  string
-	Raw     []byte
+	Catalog           *catalog.Catalog
+	Digest            string
+	Raw               []byte
+	Stats             CatalogStats
+	SchemaDescriptors []ocispec.Descriptor
+	CatalogProblems   []CatalogProblem
+}
+
+// CatalogProblem is a recognized absent or corrupt catalog artifact; unexpected
+// faults are returned instead of being recorded here.
+type CatalogProblem struct {
+	Kind   string
+	Digest string
+	Err    error
+}
+
+// CatalogStats counts verified catalog artifacts per load, even when a
+// descendant is unavailable and the loaded graph remains incomplete.
+type CatalogStats struct {
+	FetchedManifests int
+	CachedManifests  int
+	FetchedBlobs     int
+	CachedBlobs      int
+	RepairedEntries  int
+	FetchedBytes     int64
 }
 
 // Schema is a materialized, verified schema. Notice describes the notice
@@ -128,6 +145,10 @@ func readLocal(dgst string, err error) error {
 
 // Catalog returns the verified catalog whose index has the given digest.
 func (s *Store) Catalog(ctx context.Context, catalogDigest string) (*LoadedCatalog, error) {
+	if err := checkContext(ctx); err != nil {
+		return nil, err
+	}
+
 	if err := digest.Validate(catalogDigest); err != nil {
 		return nil, fault.Wrap(fault.Usage, err, "invalid catalog digest")
 	}
@@ -136,38 +157,18 @@ func (s *Store) Catalog(ctx context.Context, catalogDigest string) (*LoadedCatal
 
 	loaded, err := s.localCatalog(catalogDigest)
 	if err == nil {
-		s.catalogFetched.Store(false)
-		return loaded, nil
+		return loaded, checkContext(ctx)
 	}
-
-	s.catalogFetched.Store(true)
 
 	if err := s.recoverable(err, what, false); err != nil {
 		return nil, err
 	}
 
-	release, err := s.opts.Cache.Lock(ctx, digest.Hex(catalogDigest))
+	loaded, err = s.fetchCatalog(ctx, catalogDigest)
 	if err != nil {
-		return nil, lockError(err)
+		return nil, contextError(ctx, err)
 	}
-	defer release()
-
-	for range 3 {
-		loaded, err = s.localCatalog(catalogDigest)
-		if err == nil {
-			return loaded, nil
-		}
-
-		if err := s.recoverable(err, what, true); err != nil {
-			return nil, err
-		}
-
-		if _, corrupted := errors.AsType[*corruptError](err); !corrupted {
-			break
-		}
-	}
-
-	return s.fetchCatalog(ctx, catalogDigest)
+	return loaded, checkContext(ctx)
 }
 
 // Materialize returns the verified schema.json of a catalog entry, fetching

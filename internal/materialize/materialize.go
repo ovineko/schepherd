@@ -24,7 +24,6 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/ovineko/schepherd/internal/artifact"
 	"github.com/ovineko/schepherd/internal/cache"
 	"github.com/ovineko/schepherd/internal/catalog"
 	"github.com/ovineko/schepherd/internal/fault"
@@ -36,17 +35,15 @@ const DefaultConcurrency = 4
 
 // Options configures a materialize run.
 type Options struct {
-	Log            func(format string, args ...any)
-	ArtifactLimits artifact.Limits
-	CatalogLimits  catalog.Limits
-	Concurrency    int
+	Log         func(format string, args ...any)
+	Concurrency int
 }
 
 // MissingEntry names one absent or corrupt cache entry of the completeness
 // definition. IDs lists the catalog entries that reference it (a manifest or
 // notice can be shared by many).
 type MissingEntry struct {
-	Kind   string   `json:"kind"`   // manifest | payload | schemaFile | notice
+	Kind   string   `json:"kind"`   // catalogIndex | catalogMetadata | catalogPayload | manifest | payload | schemaFile | notice
 	Digest string   `json:"digest"` // the manifest digest for schemaFile
 	State  string   `json:"state"`  // absent | corrupt
 	IDs    []string `json:"ids"`
@@ -74,15 +71,11 @@ type Result struct {
 	Missing            []MissingEntry `json:"missing"`
 }
 
-// schemaGroup is one distinct schema manifest and every catalog ID that
-// shares it. entry holds its own copy of the catalog entry.
 type schemaGroup struct {
 	entry catalog.Entry
 	ids   []string
 }
 
-// counters are the mutable side of a run: workers increment them in
-// parallel, Run folds them into the Result before returning.
 type counters struct {
 	fetchedManifests   atomic.Int64
 	cachedManifests    atomic.Int64
@@ -90,12 +83,18 @@ type counters struct {
 	cachedBlobs        atomic.Int64
 	writtenSchemaFiles atomic.Int64
 	cachedSchemaFiles  atomic.Int64
+	repairedEntries    atomic.Int64
+	fetchedBytes       atomic.Int64
 }
 
 // Run makes the cache behind st complete for the loaded catalog lc. In
 // offline mode it only verifies and collects missing entries; the returned
 // Result carries Complete and Missing either way.
 func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Options) (*Result, error) {
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+
 	if opts.Concurrency <= 0 {
 		opts.Concurrency = DefaultConcurrency
 	}
@@ -104,9 +103,6 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		opts.Log = func(string, ...any) {}
 	}
 
-	// The progress lines share the caller's Log with the store's own fetch
-	// lines: serialize both writers through one mutex so lines never
-	// interleave when workers run in parallel.
 	logMu := &sync.Mutex{}
 	innerLog := opts.Log
 	opts.Log = func(format string, args ...any) {
@@ -116,26 +112,28 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		innerLog(format, args...)
 	}
 
-	groups := groupSchemas(lc.Catalog)
+	groups := groupSchemas(lc)
 
 	res := &Result{
-		Entries:       len(lc.Catalog.Schemas),
 		Schemas:       len(groups),
 		CatalogDigest: lc.Digest,
-		Revision:      lc.Catalog.Revision,
+	}
+	if lc.Catalog != nil {
+		res.Entries = len(lc.Catalog.Schemas)
+		res.Revision = lc.Catalog.Revision
 	}
 
 	cnt := &counters{}
+	countCatalog(cnt, lc.Stats)
 
-	// The catalog itself (index, metadata manifest, catalog.json) counts as
-	// manifests and blobs: Catalog() has already verified or fetched them.
-	countCatalog(cnt, st.Offline(), st.CatalogFetched())
-
-	// Notice digests are shared across many schema manifests; the first
-	// group that claims a digest does the work, the rest only count it.
-	notices := &noticeTracker{}
-
+	blobs := &blobTracker{}
 	var missing missingList
+	for _, problem := range lc.CatalogProblems {
+		if !st.Offline() || !offlineProblem(problem.Err) {
+			return nil, fmt.Errorf("materialize %s %s: %w", problem.Kind, problem.Digest, problem.Err)
+		}
+		missing.add(problem.Kind, problem.Digest, nil, problem.Err)
+	}
 
 	progress := newProgress(len(groups), opts.Log)
 
@@ -143,16 +141,14 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 	group.SetLimit(opts.Concurrency)
 
 	for i := range groups {
+		if gctx.Err() != nil {
+			break
+		}
+
 		g := groups[i]
 
 		group.Go(func() error {
-			if err := completeSchema(gctx, st, g, cnt, notices); err != nil {
-				if st.Offline() {
-					// Offline collects problems; the run itself keeps going.
-					missing.add(err)
-					return nil
-				}
-
+			if err := completeSchema(gctx, st, g, cnt, blobs, &missing); err != nil {
 				return err
 			}
 
@@ -166,30 +162,45 @@ func Run(ctx context.Context, st *store.Store, lc *store.LoadedCatalog, opts Opt
 		return nil, fmt.Errorf("materialize schemas: %w", err)
 	}
 
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+
 	res.FetchedManifests = int(cnt.fetchedManifests.Load())
 	res.CachedManifests = int(cnt.cachedManifests.Load())
 	res.FetchedBlobs = int(cnt.fetchedBlobs.Load())
 	res.CachedBlobs = int(cnt.cachedBlobs.Load())
 	res.WrittenSchemaFiles = int(cnt.writtenSchemaFiles.Load())
 	res.CachedSchemaFiles = int(cnt.cachedSchemaFiles.Load())
-	res.FetchedBytes = 0
-	res.Notices = notices.count()
+	res.RepairedEntries = int(cnt.repairedEntries.Load())
+	res.FetchedBytes = cnt.fetchedBytes.Load()
+	res.Notices = blobs.noticeCount()
 	res.Offline = st.Offline()
 	res.Missing = missing.entries()
-	res.Complete = len(res.Missing) == 0
+	res.Complete = lc.Catalog != nil && len(res.Missing) == 0
 
 	return res, nil
 }
 
-// groupSchemas collapses catalog entries into distinct schema manifests.
-// Entries arrive in catalog order; the first ID of a group is its
-// representative and names it in messages.
-func groupSchemas(c *catalog.Catalog) []schemaGroup {
+func groupSchemas(lc *store.LoadedCatalog) []schemaGroup {
 	var groups []schemaGroup
 
 	byDigest := map[string]int{}
+	if lc.Catalog == nil {
+		for _, desc := range lc.SchemaDescriptors {
+			dgst := desc.Digest.String()
+			if _, ok := byDigest[dgst]; ok {
+				continue
+			}
+			byDigest[dgst] = len(groups)
+			groups = append(groups, schemaGroup{entry: catalog.Entry{
+				Artifact: catalog.Descriptor{MediaType: desc.MediaType, Digest: dgst, Size: desc.Size},
+			}})
+		}
+		return groups
+	}
 
-	for _, e := range c.Schemas {
+	for _, e := range lc.Catalog.Schemas {
 		i, ok := byDigest[e.Artifact.Digest]
 		if !ok {
 			byDigest[e.Artifact.Digest] = len(groups)
@@ -204,137 +215,165 @@ func groupSchemas(c *catalog.Catalog) []schemaGroup {
 	return groups
 }
 
-// countCatalog adds the catalog's own artifacts to the run counters: the
-// index and the metadata manifest (two manifests) and the catalog.json blob.
-func countCatalog(cnt *counters, offline, fetched bool) {
-	if fetched && !offline {
-		cnt.fetchedManifests.Add(2)
-		cnt.cachedBlobs.Add(1)
-	} else {
-		cnt.cachedManifests.Add(2)
-		cnt.cachedBlobs.Add(1)
-	}
+func countCatalog(cnt *counters, stats store.CatalogStats) {
+	cnt.fetchedManifests.Add(int64(stats.FetchedManifests))
+	cnt.cachedManifests.Add(int64(stats.CachedManifests))
+	cnt.fetchedBlobs.Add(int64(stats.FetchedBlobs))
+	cnt.cachedBlobs.Add(int64(stats.CachedBlobs))
+	cnt.repairedEntries.Add(int64(stats.RepairedEntries))
+	cnt.fetchedBytes.Add(stats.FetchedBytes)
 }
 
-// completeSchema verifies or fetches every artifact one schema needs:
-// manifest, payload (even when schema.json is already whole — the
-// completeness definition differs from Store.Materialize here), schema.json
-// and the notice layer.
-func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, cnt *counters, notices *noticeTracker) error {
+func completeSchema(ctx context.Context, st *store.Store, g schemaGroup, cnt *counters, blobs *blobTracker, missing *missingList) error {
+	if err := contextError(ctx); err != nil {
+		return err
+	}
+
 	entry := &g.entry
+	desc := ocispec.Descriptor{MediaType: entry.Artifact.MediaType, Digest: godigest.Digest(entry.Artifact.Digest), Size: entry.Artifact.Size}
+	what := "schema manifest " + entry.Artifact.Digest
+	if len(g.ids) > 0 {
+		what = fmt.Sprintf("schema %q (manifest %s)", g.ids[0], entry.Artifact.Digest)
+	}
 
-	desc := ocispec.Descriptor{MediaType: entry.Artifact.MediaType, Digest: digestOf(entry.Artifact.Digest), Size: entry.Artifact.Size}
+	handle := func(kind, dgst string, err error) error {
+		err = fmt.Errorf("%s: %w", what, err)
+		if st.Offline() && offlineProblem(err) {
+			missing.add(kind, dgst, g.ids, err)
 
-	what := fmt.Sprintf("schema %q (manifest %s)", g.ids[0], entry.Artifact.Digest)
+			return nil
+		}
 
-	sm, fetched, err := st.EnsureManifest(ctx, entry, desc)
+		return err
+	}
+
+	sm, outcome, err := st.EnsureManifest(ctx, entry, desc)
 	if err != nil {
-		err = fmt.Errorf("schema %q: %w", g.ids[0], err)
-		if offlineProblem(err) {
-			return &missingEntryError{kind: "manifest", digest: entry.Artifact.Digest, ids: g.ids, err: err}
-		}
+		return handle("manifest", entry.Artifact.Digest, err)
+	}
 
+	countManifest(cnt, outcome)
+
+	if err := contextError(ctx); err != nil {
 		return err
 	}
 
-	countManifest(cnt, fetched)
-
-	if err := st.EnsurePayload(ctx, what, sm); err != nil {
-		err = fmt.Errorf("schema %q: %w", g.ids[0], err)
-		if offlineProblem(err) {
-			return &missingEntryError{kind: "payload", digest: sm.Payload.Digest.String(), ids: g.ids, err: err}
-		}
-
-		return err
-	}
-
-	written, err := st.EnsureSchemaFile(&g.entry, sm)
+	err = blobs.ensure(ctx, what, sm.Payload, false, cnt, func() (store.EnsureOutcome, error) {
+		return st.EnsurePayload(ctx, what, sm)
+	})
 	if err != nil {
-		err = fmt.Errorf("schema %q: %w", g.ids[0], err)
-		if offlineProblem(err) {
-			return &missingEntryError{kind: "schemaFile", digest: entry.Artifact.Digest, ids: g.ids, err: err}
-		}
-
-		return err
-	}
-
-	if written {
-		cnt.writtenSchemaFiles.Add(1)
-	} else {
-		cnt.cachedSchemaFiles.Add(1)
-	}
-
-	if sm.Notice != nil {
-		if err := notices.ensure(ctx, st, what, *sm.Notice, cnt); err != nil {
-			err = fmt.Errorf("schema %q: %w", g.ids[0], err)
-			if offlineProblem(err) {
-				return &missingEntryError{kind: "notice", digest: sm.Notice.Digest.String(), ids: g.ids, err: err}
-			}
-
+		if err := handle("payload", sm.Payload.Digest.String(), err); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	if err := contextError(ctx); err != nil {
+		return err
+	}
+
+	outcome, err = st.EnsureSchemaFile(ctx, entry, sm)
+	if err != nil {
+		if err := handle("schemaFile", entry.Artifact.Digest, err); err != nil {
+			return err
+		}
+	} else {
+		if outcome.Written {
+			cnt.writtenSchemaFiles.Add(1)
+		} else {
+			cnt.cachedSchemaFiles.Add(1)
+		}
+
+		countTransfer(cnt, outcome)
+	}
+
+	if err := contextError(ctx); err != nil {
+		return err
+	}
+
+	if sm.Notice != nil {
+		err := blobs.ensure(ctx, what, *sm.Notice, true, cnt, func() (store.EnsureOutcome, error) {
+			return st.EnsureNotice(ctx, what, *sm.Notice)
+		})
+		if err != nil {
+			return handle("notice", sm.Notice.Digest.String(), err)
+		}
+	}
+
+	return contextError(ctx)
 }
 
-func countManifest(cnt *counters, fetched bool) {
-	if fetched {
+func countManifest(cnt *counters, outcome store.EnsureOutcome) {
+	if outcome.Fetched {
 		cnt.fetchedManifests.Add(1)
-	} else {
+	} else if !outcome.Written {
 		cnt.cachedManifests.Add(1)
 	}
+
+	countTransfer(cnt, outcome)
 }
 
-// offlineProblem reports whether err is the offline refusal (fault.Offline):
-// in the verification mode every such problem is collected, not fatal.
+func countTransfer(cnt *counters, outcome store.EnsureOutcome) {
+	if outcome.Repaired {
+		cnt.repairedEntries.Add(1)
+	}
+
+	cnt.fetchedBytes.Add(outcome.FetchedBytes)
+}
+
 func offlineProblem(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+
 	var f *fault.Error
 
-	return errors.As(err, &f) && f.Kind == fault.Offline
+	return errors.As(err, &f) && f.Kind == fault.Offline &&
+		(errors.Is(err, cache.ErrNotFound) || errors.Is(err, cache.ErrCorrupt))
 }
 
-// missingEntryError is an offline completeness problem converted into a
-// MissingEntry by missingList.
-type missingEntryError struct {
+type missingKey struct {
 	kind   string
 	digest string
-	ids    []string
-	err    error
 }
-
-func (e *missingEntryError) Error() string { return e.err.Error() }
-
-func (e *missingEntryError) Unwrap() error { return e.err }
 
 type missingList struct {
 	mu   sync.Mutex
-	list []MissingEntry
+	list map[missingKey]MissingEntry
 }
 
-func (l *missingList) add(err error) {
-	var me *missingEntryError
-	if !errors.As(err, &me) {
-		return
-	}
-
-	state := "absent"
-	if errors.Is(me.err, cache.ErrCorrupt) {
-		state = "corrupt"
-	}
-
+func (l *missingList) add(kind, dgst string, ids []string, err error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	l.list = append(l.list, MissingEntry{Kind: me.kind, Digest: me.digest, State: state, IDs: me.ids})
+	if l.list == nil {
+		l.list = map[missingKey]MissingEntry{}
+	}
+
+	key := missingKey{kind: kind, digest: dgst}
+	entry, ok := l.list[key]
+	if !ok {
+		entry = MissingEntry{Kind: kind, Digest: dgst, State: "absent"}
+	}
+
+	if errors.Is(err, cache.ErrCorrupt) {
+		entry.State = "corrupt"
+	}
+
+	entry.IDs = append(entry.IDs, ids...)
+	l.list[key] = entry
 }
 
 func (l *missingList) entries() []MissingEntry {
-	if len(l.list) == 0 {
-		return []MissingEntry{}
-	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	out := slices.Clone(l.list)
+	out := make([]MissingEntry, 0, len(l.list))
+	for _, entry := range l.list {
+		entry.IDs = append([]string{}, entry.IDs...)
+		slices.Sort(entry.IDs)
+		entry.IDs = slices.Compact(entry.IDs)
+		out = append(out, entry)
+	}
 
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Kind != out[j].Kind {
@@ -347,54 +386,101 @@ func (l *missingList) entries() []MissingEntry {
 	return out
 }
 
-// noticeTracker deduplicates notice digests within the run: the first group
-// that claims a digest verifies or fetches the blob; the others only count
-// it as cached.
-type noticeTracker struct {
-	mu   sync.Mutex
-	seen map[string]struct{}
+type blobResult struct {
+	done   chan struct{}
+	err    error
+	size   int64
+	notice bool
 }
 
-func (t *noticeTracker) ensure(ctx context.Context, st *store.Store, what string, desc ocispec.Descriptor, cnt *counters) error {
-	t.mu.Lock()
-	if t.seen == nil {
-		t.seen = map[string]struct{}{}
-	}
+type blobTracker struct {
+	mu   sync.Mutex
+	seen map[string]*blobResult
+}
 
-	_, claimed := t.seen[desc.Digest.String()]
-	if !claimed {
-		t.seen[desc.Digest.String()] = struct{}{}
-	}
-	t.mu.Unlock()
-
-	if claimed {
-		cnt.cachedBlobs.Add(1)
-
-		return nil
-	}
-
-	fetched, err := st.EnsureNotice(ctx, what, desc)
-	if err != nil {
-		err = fmt.Errorf("%s: %w", what, err)
-		// Release the claim so a later group can retry (harmless online;
-		// offline every group reports the same missing digest).
-		t.mu.Lock()
-		delete(t.seen, desc.Digest.String())
-		t.mu.Unlock()
-
+func (t *blobTracker) ensure(ctx context.Context, what string, desc ocispec.Descriptor, notice bool, cnt *counters, ensure func() (store.EnsureOutcome, error)) error {
+	if err := contextError(ctx); err != nil {
 		return err
 	}
 
-	if fetched {
-		cnt.fetchedBlobs.Add(1)
-	} else {
-		cnt.cachedBlobs.Add(1)
+	t.mu.Lock()
+	if t.seen == nil {
+		t.seen = map[string]*blobResult{}
 	}
 
-	return nil
+	result, claimed := t.seen[desc.Digest.String()]
+	if claimed {
+		if result.size != desc.Size {
+			t.mu.Unlock()
+
+			return fault.New(fault.Integrity, "%s: shared blob %s declares size %d, previously %d", what, desc.Digest, desc.Size, result.size)
+		}
+
+		result.notice = result.notice || notice
+		t.mu.Unlock()
+
+		select {
+		case <-ctx.Done():
+			return contextError(ctx)
+		case <-result.done:
+			if err := contextError(ctx); err != nil {
+				return err
+			}
+
+			return result.err
+		}
+	}
+
+	result = &blobResult{done: make(chan struct{}), size: desc.Size, notice: notice}
+	t.seen[desc.Digest.String()] = result
+	t.mu.Unlock()
+
+	outcome, err := ensure()
+	if err == nil {
+		if outcome.Fetched {
+			cnt.fetchedBlobs.Add(1)
+		} else if !outcome.Written {
+			cnt.cachedBlobs.Add(1)
+		}
+
+		countTransfer(cnt, outcome)
+	}
+
+	t.mu.Lock()
+	result.err = err
+	close(result.done)
+	t.mu.Unlock()
+
+	return err
 }
 
-func (t *noticeTracker) count() int { return len(t.seen) }
+func (t *blobTracker) noticeCount() int {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	count := 0
+	for _, result := range t.seen {
+		if result.notice && result.err == nil {
+			count++
+		}
+	}
+
+	return count
+}
+
+func contextError(ctx context.Context) error {
+	err := ctx.Err()
+	if err == nil {
+		return nil
+	}
+
+	kind := fault.Registry
+	if errors.Is(err, context.Canceled) {
+		kind = fault.Canceled
+	}
+
+	return fault.Wrap(kind, err, "materialize canceled")
+}
 
 // progress prints a line at every decile of processed schemas, in the
 // spirit of mirror's one-line summaries instead of per-fetch noise.
@@ -420,8 +506,4 @@ func (p *progress) done() {
 			p.log("materialize: %d/%d schemas done", n, p.total)
 		}
 	}
-}
-
-func digestOf(s string) godigest.Digest {
-	return godigest.Digest(s)
 }

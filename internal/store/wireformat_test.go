@@ -261,6 +261,9 @@ func TestIndexAndCatalogMustAgree(t *testing.T) {
 			if _, err := offline.Catalog(ctx, index); fault.KindOf(err) != fault.Integrity || !strings.Contains(err.Error(), tc.msg) || *opened != 0 {
 				t.Fatalf("cached: error = %v (kind %s, opened %d), want an integrity error containing %q", err, fault.KindOf(err), *opened, tc.msg)
 			}
+			if loaded, err := offline.CatalogForCompleteness(ctx, index); loaded != nil || fault.KindOf(err) != fault.Integrity || !strings.Contains(err.Error(), tc.msg) || *opened != 0 {
+				t.Fatalf("completeness: catalog = %+v, error = %v (kind %s, opened %d), want an integrity error containing %q", loaded, err, fault.KindOf(err), *opened, tc.msg)
+			}
 
 			if names := quarantined(t, dir); len(names) != 0 {
 				t.Errorf("quarantine holds %v, want nothing", names)

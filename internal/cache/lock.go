@@ -36,6 +36,10 @@ var (
 // create or lock a file outside the cache. Removing or replacing a lock file
 // that is held breaks the exclusion for later callers, as with any lock file.
 func (c *Cache) Lock(ctx context.Context, key string) (release func(), err error) {
+	if err := c.requireWritable(); err != nil {
+		return nil, err
+	}
+
 	if !lockKeyPattern.MatchString(key) {
 		return nil, fault.New(fault.Internal, "invalid cache lock key %q", key)
 	}

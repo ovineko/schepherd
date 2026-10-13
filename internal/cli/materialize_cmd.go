@@ -31,39 +31,47 @@ func (a *app) newMaterializeCmd() *cobra.Command {
 			}
 			defer cancel()
 
-			return a.withCatalog(cmd, func(s *session) error {
-				result, err := materialize.Run(ctx, s.store, s.catalog, materialize.Options{
-					Concurrency: concurrency,
-					Log:         a.logf,
-				})
-				if err != nil {
-					return fault.Wrap(fault.Internal, err, "materialize")
-				}
+			s, err := a.openCompletenessSession(ctx)
+			if err != nil {
+				return err
+			}
+			defer s.close()
 
-				result.Repository = s.repo.String()
-				result.CacheDir = s.cache.Dir()
-
-				if !result.Complete {
-					for _, m := range result.Missing {
-						a.logf("materialize: missing %s %s (%s): %s", m.Kind, m.Digest, m.State, firstIDs(m.IDs))
-					}
-				}
-
-				a.logf("materialize: %s in %s: fetched %d manifests and %d blobs, %d schema files verified",
-					completeWord(result.Complete), result.CacheDir,
-					result.FetchedManifests, result.FetchedBlobs,
-					result.CachedSchemaFiles)
-
-				if !result.Complete {
-					return fault.New(fault.Offline, "the cache is not complete for catalog %s (%d missing entries)", result.CatalogDigest, len(result.Missing))
-				}
-
-				if asJSON {
-					return a.writeJSON(result)
-				}
-
-				return a.write(textSummary(result))
+			result, err := materialize.Run(ctx, s.store, s.catalog, materialize.Options{
+				Concurrency: concurrency,
+				Log:         a.logf,
 			})
+			if err != nil {
+				return fault.Wrap(fault.Internal, err, "materialize")
+			}
+
+			result.Repository = s.repo.String()
+			result.CacheDir = s.cache.Dir()
+
+			if !result.Complete {
+				for _, m := range result.Missing {
+					a.logf("materialize: missing %s %s (%s): %s", m.Kind, m.Digest, m.State, firstIDs(m.IDs))
+				}
+			}
+
+			a.logf("materialize: %s in %s: fetched %d manifests and %d blobs, %d schema files verified",
+				completeWord(result.Complete), result.CacheDir,
+				result.FetchedManifests, result.FetchedBlobs,
+				result.CachedSchemaFiles)
+
+			if asJSON {
+				if err := a.writeJSON(result); err != nil {
+					return err
+				}
+			} else if err := a.write(textSummary(result)); err != nil {
+				return err
+			}
+
+			if !result.Complete {
+				return fault.New(fault.Offline, "the cache is not complete for catalog %s (%d missing entries)", result.CatalogDigest, len(result.Missing))
+			}
+
+			return nil
 		},
 	}
 

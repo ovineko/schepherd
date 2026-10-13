@@ -17,9 +17,9 @@
 // partial content. There is no automatic garbage collection of verified
 // entries; only leftovers in v1/tmp and v1/quarantine expire.
 //
-// Error classes: Open reports unusable directories as fault.Usage, digest
-// and size mismatches of incoming data are fault.Integrity, and local I/O
-// failures are fault.Internal. ErrNotFound and ErrCorrupt are deliberately
+// Error classes: Open and OpenReadOnly report unusable directories as
+// fault.Usage, digest and size mismatches of incoming data are fault.Integrity,
+// and local I/O failures are fault.Internal. ErrNotFound and ErrCorrupt are deliberately
 // left unclassified because their exit class depends on whether the caller
 // may refetch. Errors returned by caller-supplied readers and fill functions
 // are passed through with context but without adding a class.
@@ -56,6 +56,8 @@ var (
 	ErrDigestMismatch = errors.New("digest mismatch")
 	// ErrTooLarge reports incoming data that exceeds the caller's size limit.
 	ErrTooLarge = errors.New("size limit exceeded")
+	// ErrReadOnly reports a mutation attempted through a read-only cache.
+	ErrReadOnly = errors.New("cache is read-only")
 )
 
 const (
@@ -87,12 +89,13 @@ var (
 	}
 )
 
-// Cache is an open cache directory.
+// Cache holds a rooted directory handle, or an absent root opened read-only.
 type Cache struct {
 	root *os.Root
 	// lockBusy is set by tests to learn that a Lock found its key held.
 	lockBusy func()
 	dir      string
+	readOnly bool
 }
 
 // DefaultDir returns the per-user default cache root: the OS user cache
@@ -146,6 +149,36 @@ func Open(dir string) (*Cache, error) {
 	return c, nil
 }
 
+// OpenReadOnly opens existing cache content without creating the layout or
+// expiring temporary and quarantined entries. A missing root remains absent;
+// reads return ErrNotFound and mutations return ErrReadOnly.
+func OpenReadOnly(dir string) (*Cache, error) {
+	if dir == "" {
+		return nil, fault.New(fault.Usage, "cache directory is empty")
+	}
+
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, fault.Wrap(fault.Usage, err, "cache directory %q", dir)
+	}
+
+	var root *os.Root
+	err = retryTransient(func() error {
+		var openErr error
+		root, openErr = os.OpenRoot(abs)
+
+		if openErr != nil {
+			return fmt.Errorf("open cache root: %w", openErr)
+		}
+		return nil
+	})
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, fault.Wrap(fault.Usage, err, "open cache directory %s", abs)
+	}
+
+	return &Cache{root: root, dir: abs, readOnly: true}, nil
+}
+
 // Dir returns the absolute cache root, the value of the {cache} placeholder.
 func (c *Cache) Dir() string {
 	return c.dir
@@ -154,6 +187,10 @@ func (c *Cache) Dir() string {
 // Close releases the directory handle. Locks already acquired stay valid
 // until released.
 func (c *Cache) Close() error {
+	if c.root == nil {
+		return nil
+	}
+
 	if err := c.root.Close(); err != nil {
 		return fault.Wrap(fault.Internal, err, "close cache %s", c.dir)
 	}
@@ -163,6 +200,14 @@ func (c *Cache) Close() error {
 
 func (c *Cache) path(name string) string {
 	return filepath.Join(c.dir, name)
+}
+
+func (c *Cache) requireWritable() error {
+	if c.readOnly {
+		return fault.Wrap(fault.Internal, ErrReadOnly, "modify cache %s", c.dir)
+	}
+
+	return nil
 }
 
 func (c *Cache) ensureDir(name string) error {
@@ -222,6 +267,10 @@ func (c *Cache) removeFile(name string) {
 }
 
 func (c *Cache) quarantine(name, label, prefix string, expect fs.FileInfo) error {
+	if err := c.requireWritable(); err != nil {
+		return err
+	}
+
 	current, err := c.root.Lstat(name)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -274,12 +323,12 @@ func quarantineName(prefix string, now time.Time) string {
 // quarantinedAt returns the time recorded by quarantineName, or false for a
 // name without one.
 func quarantinedAt(name string) (time.Time, bool) {
-	rest, _, ok := cutLast(name, ".")
+	rest, _, ok := strings.CutLast(name, ".")
 	if !ok {
 		return time.Time{}, false
 	}
 
-	_, stamp, ok := cutLast(rest, ".q")
+	_, stamp, ok := strings.CutLast(rest, ".q")
 	if !ok {
 		return time.Time{}, false
 	}
@@ -290,15 +339,6 @@ func quarantinedAt(name string) (time.Time, bool) {
 	}
 
 	return time.Unix(sec, 0), true
-}
-
-func cutLast(s, sep string) (before, after string, ok bool) {
-	i := strings.LastIndex(s, sep)
-	if i < 0 {
-		return s, "", false
-	}
-
-	return s[:i], s[i+len(sep):], true
 }
 
 // removeOldQuarantine deletes entries quarantined more than quarantineAge

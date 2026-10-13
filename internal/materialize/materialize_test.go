@@ -18,7 +18,6 @@ import (
 	"github.com/ovineko/schepherd/internal/store"
 )
 
-// remote serves the packed artifacts from memory and counts requests.
 type remote struct {
 	blobs    map[string][]byte
 	requests atomic.Int64
@@ -48,19 +47,11 @@ func (r *remote) FetchTo(_ context.Context, desc ocispec.Descriptor, w io.Writer
 	return err
 }
 
-// fixture is a small published catalog: two schemas, one shared manifest
-// (two entries point at it), one notice.
 type fixture struct {
-	rem       *remote
-	digest    string
-	entries   int
-	schemas   int // distinct manifests
-	notices   int // distinct notice blobs
-	content   map[string][]byte
-	manifests map[string]*catalog.Entry // manifest digest -> representative
+	rem    *remote
+	digest string
 }
 
-// packedItem is one published schema.
 type packedItem struct {
 	p *artifact.Packed
 	e catalog.Entry
@@ -69,28 +60,16 @@ type packedItem struct {
 func newFixture(t *testing.T, sharedManifest bool) *fixture {
 	t.Helper()
 
-	f := &fixture{
-		rem:       &remote{blobs: map[string][]byte{}},
-		content:   map[string][]byte{},
-		manifests: map[string]*catalog.Entry{},
-	}
-
 	var all []packedItem
 
 	add := func(id string, notice []byte) {
 		t.Helper()
 
 		body := []byte(`{"type":"object","title":"` + id + `"}`)
-		f.content[id] = body
 
 		p, err := artifact.PackSchema(body, notice)
 		if err != nil {
 			t.Fatal(err)
-		}
-
-		f.rem.blobs[p.Manifest.Descriptor.Digest.String()] = p.Manifest.Data
-		for _, b := range p.Blobs {
-			f.rem.blobs[b.Descriptor.Digest.String()] = b.Data
 		}
 
 		all = append(all, packedItem{p: p, e: catalog.Entry{
@@ -100,36 +79,37 @@ func newFixture(t *testing.T, sharedManifest bool) *fixture {
 		}})
 	}
 
-	notices := 0
 	if sharedManifest {
-		// delta and echo share one manifest: pack once from delta's body and
-		// let echo's entry point at the same descriptor.
 		add("delta", []byte("Delta notice. MIT License.\n"))
-		notices++
 
 		echo := all[0].e
 		echo.ID = "echo"
 		all = append(all, packedItem{p: all[0].p, e: echo})
-		// The catalog index lists each manifest once; the shared manifest is
-		// deduplicated when packing the catalog (descriptors are compacted).
 	} else {
 		add("alpha", nil)
 		add("gamma", []byte("Gamma notice. MIT License.\n"))
-		notices++
 	}
 
-	f.entries = len(all)
-	f.schemas = len(distinctManifests(all))
-	f.notices = notices
+	return fixtureFromItems(t, all)
+}
+
+func fixtureFromItems(t *testing.T, all []packedItem) *fixture {
+	t.Helper()
+
+	f := &fixture{rem: &remote{blobs: map[string][]byte{}}}
 
 	entries := make([]catalog.Entry, 0, len(all))
 	seen := map[string]struct{}{}
 	var descs []ocispec.Descriptor
 	for _, p := range all {
 		entries = append(entries, p.e)
-		f.manifests[p.e.Artifact.Digest] = &entries[len(entries)-1]
 		if _, dup := seen[p.e.Artifact.Digest]; dup {
 			continue
+		}
+
+		f.rem.blobs[p.p.Manifest.Descriptor.Digest.String()] = p.p.Manifest.Data
+		for _, b := range p.p.Blobs {
+			f.rem.blobs[b.Descriptor.Digest.String()] = b.Data
 		}
 		seen[p.e.Artifact.Digest] = struct{}{}
 		descs = append(descs, p.p.Manifest.Descriptor)
@@ -156,7 +136,6 @@ func newFixture(t *testing.T, sharedManifest bool) *fixture {
 	return f
 }
 
-// store opens a store over a fresh cache dir.
 func (f *fixture) store(t *testing.T, dir string, offline bool) *store.Store {
 	t.Helper()
 
@@ -209,15 +188,6 @@ func TestColdRunCompletesAndFetchesEverything(t *testing.T) {
 	if res.WrittenSchemaFiles != 1 {
 		t.Fatalf("writtenSchemaFiles=%d, want 1", res.WrittenSchemaFiles)
 	}
-}
-
-// distinctManifests counts the distinct schema manifests of the packed set.
-func distinctManifests(all []packedItem) map[string]struct{} {
-	seen := map[string]struct{}{}
-	for _, p := range all {
-		seen[p.e.Artifact.Digest] = struct{}{}
-	}
-	return seen
 }
 
 func TestWarmRunFetchesNothing(t *testing.T) {
