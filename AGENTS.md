@@ -146,6 +146,13 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   of the Go toolchain in `go.mod`, including after patch updates.
 - When inherited Go launcher paths confuse the linter's toolchain detection, run checks with
   `GOROOT="$(go env GOROOT)"`; never suppress its export-data errors or disable its rules.
+- Oversized compiler-output fixtures write raw bytes directly. Transforming tens of MiB with a
+  locale-aware `tr` can exhaust the real probe timeout under race-enabled Intel macOS CI; assert
+  the output-limit error rather than accepting timeout or malformed-output errors.
+- E2E preparation installs the parser toolchain and locked Cargo dependencies into
+  `.tools/e2e-rust/{rustup,cargo}`. Keep host Rustup proxies on PATH and repeat preparation after
+  `parsers/rust-toolchain.toml` or `parsers/Cargo.lock` changes. Snapshot scenarios bind these homes
+  with Cargo offline and Rustup auto-install disabled; consumer HOME remains isolated.
 - Source security checks exclude nested worktrees and installed build/dependency trees.
   Keep project source and dependency manifests covered.
 - Structured output is the versioned run envelope from `internal/runner`, including captured streams

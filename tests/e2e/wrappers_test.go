@@ -58,7 +58,7 @@ func TestE41_Wrappers(t *testing.T) {
 	releaseCopyWorktree(t, src)
 	commit := releaseCommitSnapshot(t, src)
 
-	hostTool(t, runOpts{Dir: src, Env: releaseGitEnv(), Timeout: 30 * time.Minute},
+	hostTool(t, runOpts{Dir: src, Env: releaseBuildEnv(), Timeout: 30 * time.Minute},
 		".tools/bin/goreleaser", "build", "--snapshot", "--clean").ok(t)
 
 	version := releaseSnapshotVersion(t, src, commit)

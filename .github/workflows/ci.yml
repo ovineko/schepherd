@@ -34,7 +34,7 @@ jobs:
         run: docker compose -f tests/e2e/compose.yaml --profile auth --profile npm config --quiet
       # Scenarios never download anything: the suite refuses to start while an
       # image is missing, and host Go commands run with GOPROXY=off.
-      - name: End-to-end preparation (images, validators image, wheel build backend, Go modules)
+      - name: End-to-end preparation (images, wheel backend, Go modules, pinned Rust and locked Cargo dependencies)
         run: |
           go mod download
           E2E_PREPARE=1 go test -tags e2e -count=1 -timeout 30m -run '^$' -v ./tests/e2e

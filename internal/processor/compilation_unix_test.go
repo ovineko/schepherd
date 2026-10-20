@@ -93,7 +93,7 @@ compile|probe)
   if [ -n "${FAKE_OVERSIZE_ONCE:-}" ] && [ ! -e "$FAKE_OVERSIZE_ONCE" ]; then
     : > "$FAKE_OVERSIZE_ONCE"
     printf '{"const":7,"padding":"'
-    dd if=/dev/zero bs=1048576 count=64 2>/dev/null | tr '\000' ' '
+    dd if=/dev/zero bs=1048576 count=64 2>/dev/null
     printf '"}'
     exit 0
   fi
@@ -497,7 +497,7 @@ func TestCompilationOversizedArtifactIsRejectedWithoutCaching(t *testing.T) {
 	f := newCompilationFixture(t)
 	f.task.Env = append(f.task.Env, "FAKE_OVERSIZE_ONCE="+filepath.Join(f.dir, "oversized-once"))
 	c := openCompilationCache(t, f.cacheDir, false)
-	if prepared, err := f.prepare(t, c, false); err == nil || fault.KindOf(err) != fault.Integrity || prepared.Path != "" {
+	if prepared, err := f.prepare(t, c, false); err == nil || fault.KindOf(err) != fault.Integrity || !strings.Contains(err.Error(), "compilation output exceeds limit") || prepared.Path != "" {
 		t.Fatalf("oversized compiled artifact must be rejected: %+v %v", prepared, err)
 	}
 	for range 2 {

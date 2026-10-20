@@ -81,7 +81,7 @@ tasks:
       - E2E_PREPARE=1 go test -tags e2e -count=1 -timeout 30m -run '^$' -v ./tests/e2e
     deps:
       - tools
-    desc: Pull and build everything the end-to-end scenarios use (pinned images, the validators image, Go modules)
+    desc: Prepare pinned images, validators, wheel backend, Go modules and the pinned Rust toolchain with locked Cargo dependencies
   test:frontends:
     cmds:
       - pnpm --filter @ovineko/schepherd-ajv test
