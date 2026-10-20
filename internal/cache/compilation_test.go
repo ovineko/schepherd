@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ovineko/schepherd/internal/digest"
 	"github.com/ovineko/schepherd/internal/fault"
@@ -50,7 +52,7 @@ func TestCompilationRecords(t *testing.T) {
 			_, err := c.LoadCompilation(key)
 			assertIs(t, err, ErrNotFound)
 			assertUnclassified(t, err)
-			saved, err := c.SaveCompilation(key, tt.reason, tt.artifact)
+			saved, err := c.SaveCompilation(t.Context(), key, tt.reason, tt.artifact)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -80,7 +82,7 @@ func TestCompilationRecords(t *testing.T) {
 				t.Fatalf("probe has an artifact path: %q", loaded.Path)
 			}
 			before := readOnlySnapshot(t, c.Dir())
-			if _, err := c.SaveCompilation(key, tt.reason, tt.artifact); err != nil {
+			if _, err := c.SaveCompilation(t.Context(), key, tt.reason, tt.artifact); err != nil {
 				t.Fatal(err)
 			}
 			if after := readOnlySnapshot(t, c.Dir()); !reflect.DeepEqual(before, after) {
@@ -120,7 +122,7 @@ func TestCompilationCorruptMetadata(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			c := openTestCache(t)
-			if _, err := c.SaveCompilation(key, "", nil); err != nil {
+			if _, err := c.SaveCompilation(t.Context(), key, "", nil); err != nil {
 				t.Fatal(err)
 			}
 			replaceCompilationFile(t, compilationMetadataPath(t, c, key), []byte(tt.data))
@@ -134,7 +136,7 @@ func TestCompilationCorruptMetadata(t *testing.T) {
 			if after := readOnlySnapshot(t, c.Dir()); !reflect.DeepEqual(before, after) {
 				t.Fatal("load changed corrupt metadata")
 			}
-			result, err = c.SaveCompilation(key, "rejected", nil)
+			result, err = c.SaveCompilation(t.Context(), key, "rejected", nil)
 			if err != nil || result != (Compilation{Reason: "rejected"}) {
 				t.Fatalf("repair=%+v, err=%v", result, err)
 			}
@@ -149,7 +151,7 @@ func TestCompilationArtifactRefusalAndRepair(t *testing.T) {
 	for _, mode := range []string{"missing", "digest mismatch", "truncated", "size mismatch", "directory"} {
 		t.Run(mode, func(t *testing.T) {
 			c := openTestCache(t)
-			saved, err := c.SaveCompilation(key, "", artifact)
+			saved, err := c.SaveCompilation(t.Context(), key, "", artifact)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -182,9 +184,61 @@ func TestCompilationArtifactRefusalAndRepair(t *testing.T) {
 			if after := readOnlySnapshot(t, c.Dir()); !reflect.DeepEqual(before, after) {
 				t.Fatal("load changed corrupt artifact")
 			}
-			repaired, err := c.SaveCompilation(key, "", artifact)
+			repaired, err := c.SaveCompilation(t.Context(), key, "", artifact)
 			if err != nil || repaired != saved {
 				t.Fatalf("repair=%+v, want=%+v, err=%v", repaired, saved, err)
+			}
+			assertNoTmp(t, c)
+		})
+	}
+}
+
+func TestCompilationReplacesRecordWithMissingArtifact(t *testing.T) {
+	for _, capabilityOnly := range []bool{false, true} {
+		name := "new artifact"
+		if capabilityOnly {
+			name = "capability decision"
+		}
+		t.Run(name, func(t *testing.T) {
+			c := openTestCache(t)
+			key := digest.FromBytes([]byte("recipe"))
+			original, err := c.SaveCompilation(t.Context(), key, "", []byte("old compiler output"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			missing := original.Path
+			reason, artifact := "", []byte("new compiler output")
+			if capabilityOnly {
+				missing = filepath.Dir(original.Path)
+				reason, artifact = "unsupported dialect", nil
+			}
+			makeWritable(t, original.Path)
+			if err := os.RemoveAll(missing); err != nil {
+				t.Fatal(err)
+			}
+			before := readOnlySnapshot(t, c.Dir())
+			_, err = c.LoadCompilation(key)
+			assertIs(t, err, ErrNotFound)
+			if after := readOnlySnapshot(t, c.Dir()); !reflect.DeepEqual(before, after) {
+				t.Fatal("loading missing content changed the cache")
+			}
+			repaired, err := c.SaveCompilation(t.Context(), key, reason, artifact)
+			want := Compilation{Reason: reason}
+			if artifact != nil {
+				want.Path = blobPath(c, digest.FromBytes(artifact))
+			}
+			if err != nil || repaired != want {
+				t.Fatalf("repair=%+v, want=%+v, err=%v", repaired, want, err)
+			}
+			loaded, err := c.LoadCompilation(key)
+			if err != nil || loaded != want {
+				t.Fatalf("load=%+v, want=%+v, err=%v", loaded, want, err)
+			}
+			if artifact != nil {
+				data, err := os.ReadFile(loaded.Path)
+				if err != nil || !bytes.Equal(data, artifact) {
+					t.Fatalf("replacement artifact=%q, err=%v", data, err)
+				}
 			}
 			assertNoTmp(t, c)
 		})
@@ -202,7 +256,7 @@ func TestCompilationConcurrentPublication(t *testing.T) {
 	for range writers {
 		wg.Go(func() {
 			<-start
-			_, err := c.SaveCompilation(key, "", artifact)
+			_, err := c.SaveCompilation(t.Context(), key, "", artifact)
 			results <- err
 		})
 	}
@@ -244,7 +298,7 @@ func TestCompilationFailedPublication(t *testing.T) {
 	if err := os.WriteFile(c.path(tmpDir), []byte("blocked"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	_, err := c.SaveCompilation(key, "", []byte("compiler output"))
+	_, err := c.SaveCompilation(t.Context(), key, "", []byte("compiler output"))
 	assertKind(t, err, fault.Internal)
 	_, err = c.LoadCompilation(key)
 	assertIs(t, err, ErrNotFound)
@@ -267,7 +321,7 @@ func TestCompilationRelocatedReadOnly(t *testing.T) {
 		{key: negativeKey, reason: "not supported"},
 		{key: probeKey},
 	} {
-		if _, err := c.SaveCompilation(entry.key, entry.reason, entry.artifact); err != nil {
+		if _, err := c.SaveCompilation(t.Context(), entry.key, entry.reason, entry.artifact); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -279,7 +333,7 @@ func TestCompilationRelocatedReadOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, rel := range []string{locksDir, tmpDir, quarantineDir} {
-		if err := os.Remove(filepath.Join(destination, rel)); err != nil {
+		if err := os.RemoveAll(filepath.Join(destination, rel)); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -298,7 +352,7 @@ func TestCompilationRelocatedReadOnly(t *testing.T) {
 		t.Fatalf("probe load=%+v, err=%v", probe, err)
 	}
 	for _, data := range [][]byte{nil, artifact} {
-		result, err := ro.SaveCompilation(key, "", data)
+		result, err := ro.SaveCompilation(t.Context(), key, "", data)
 		assertReadOnlyError(t, err)
 		if result != (Compilation{}) {
 			t.Fatalf("read-only save returned %+v", result)
@@ -315,7 +369,7 @@ func TestCompilationAbsentReadOnly(t *testing.T) {
 	key := digest.FromBytes([]byte("recipe"))
 	_, err := c.LoadCompilation(key)
 	assertIs(t, err, ErrNotFound)
-	_, err = c.SaveCompilation(key, "", nil)
+	_, err = c.SaveCompilation(t.Context(), key, "", nil)
 	assertReadOnlyError(t, err)
 	assertAbsent(t, dir)
 }
@@ -325,14 +379,14 @@ func TestCompilationInvalidRequests(t *testing.T) {
 	before := readOnlySnapshot(t, c.Dir())
 	_, err := c.LoadCompilation("../../outside")
 	assertKind(t, err, fault.Internal)
-	_, err = c.SaveCompilation("../../outside", "", nil)
+	_, err = c.SaveCompilation(t.Context(), "../../outside", "", nil)
 	assertKind(t, err, fault.Internal)
-	_, err = c.SaveCompilation(digest.FromBytes([]byte("recipe")), "unsupported", []byte{})
+	_, err = c.SaveCompilation(t.Context(), digest.FromBytes([]byte("recipe")), "unsupported", []byte{})
 	assertKind(t, err, fault.Internal)
-	_, err = c.SaveCompilation(digest.FromBytes([]byte("recipe")), strings.Repeat("x", maxCompilationMetadata), nil)
+	_, err = c.SaveCompilation(t.Context(), digest.FromBytes([]byte("recipe")), strings.Repeat("x", maxCompilationMetadata), nil)
 	assertIs(t, err, ErrTooLarge)
 	assertKind(t, err, fault.Integrity)
-	_, err = c.SaveCompilation(digest.FromBytes([]byte("recipe")), "", make([]byte, MaxCompiledBytes+1))
+	_, err = c.SaveCompilation(t.Context(), digest.FromBytes([]byte("recipe")), "", make([]byte, MaxCompiledBytes+1))
 	assertIs(t, err, ErrTooLarge)
 	assertKind(t, err, fault.Integrity)
 	if after := readOnlySnapshot(t, c.Dir()); !reflect.DeepEqual(before, after) {
@@ -350,7 +404,7 @@ func TestCompilationSymlinkContainment(t *testing.T) {
 		for _, outside := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/outside=%t", target, outside), func(t *testing.T) {
 				c := openTestCache(t)
-				loaded, err := c.SaveCompilation(key, "", artifact)
+				loaded, err := c.SaveCompilation(t.Context(), key, "", artifact)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -392,7 +446,7 @@ func TestCompilationSymlinkContainment(t *testing.T) {
 				if result != (Compilation{}) {
 					t.Fatalf("linked entry returned %+v", result)
 				}
-				_, saveErr := c.SaveCompilation(key, "", artifact)
+				_, saveErr := c.SaveCompilation(t.Context(), key, "", artifact)
 				if target == "compiled" || target == "algorithm" || target == "blobs" {
 					assertIs(t, saveErr, ErrCorrupt)
 				} else if saveErr != nil {
@@ -405,4 +459,132 @@ func TestCompilationSymlinkContainment(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestCompilationPublicationRechecksAfterWaiting(t *testing.T) {
+	for _, sharedRecipe := range []bool{true, false} {
+		name := "shared artifact"
+		if sharedRecipe {
+			name = "shared recipe"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+			defer cancel()
+			dir := filepath.Join(t.TempDir(), "cache")
+			owner := openCacheAt(t, dir)
+			first := openCacheAt(t, dir)
+			second := openCacheAt(t, dir)
+			artifact := []byte("compiler output is immutable")
+			release, err := owner.Lock(t.Context(), digest.Hex(digest.FromBytes(artifact)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer release()
+			waiting := []chan struct{}{make(chan struct{}, 1), make(chan struct{}, 1)}
+			for index, handle := range []*Cache{first, second} {
+				handle.lockBusy = func() {
+					select {
+					case waiting[index] <- struct{}{}:
+					default:
+					}
+				}
+			}
+			type publication struct {
+				result Compilation
+				err    error
+			}
+			results := []chan publication{make(chan publication, 1), make(chan publication, 1)}
+			key := digest.FromBytes([]byte("first recipe"))
+			go func() {
+				result, err := first.SaveCompilation(ctx, key, "", artifact)
+				results[0] <- publication{result, err}
+			}()
+			select {
+			case <-waiting[0]:
+			case published := <-results[0]:
+				t.Fatalf("first publication did not wait for the artifact: %+v", published)
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			}
+			secondKey, secondReason, secondArtifact := key, "", artifact
+			if sharedRecipe {
+				secondReason, secondArtifact = "a competing capability decision", nil
+			} else {
+				secondKey = digest.FromBytes([]byte("second recipe"))
+			}
+			go func() {
+				result, err := second.SaveCompilation(ctx, secondKey, secondReason, secondArtifact)
+				results[1] <- publication{result, err}
+			}()
+			select {
+			case <-waiting[1]:
+			case published := <-results[1]:
+				t.Fatalf("competing publication did not wait: %+v", published)
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			}
+			release()
+			for _, result := range results {
+				published := <-result
+				if published.err != nil || published.result.Reason != "" || published.result.Path != blobPath(owner, digest.FromBytes(artifact)) {
+					t.Fatalf("competing publication replaced a verified artifact: %+v %v", published.result, published.err)
+				}
+			}
+			recipes := []string{key}
+			if !sharedRecipe {
+				recipes = append(recipes, secondKey)
+			}
+			for _, recipe := range recipes {
+				loaded, err := owner.LoadCompilation(recipe)
+				if err != nil || loaded.Reason != "" {
+					t.Fatalf("published recipe is unusable: %+v %v", loaded, err)
+				}
+				data, err := os.ReadFile(loaded.Path)
+				if err != nil || !bytes.Equal(data, artifact) {
+					t.Fatalf("published artifact changed: %q %v", data, err)
+				}
+			}
+			assertNoTmp(t, owner)
+			assertEmptyDir(t, owner.path(quarantineDir))
+		})
+	}
+}
+
+func TestCompilationPublicationHonorsCancellation(t *testing.T) {
+	c := openTestCache(t)
+	artifact := []byte("compiler output")
+	release, err := c.Lock(t.Context(), digest.Hex(digest.FromBytes(artifact)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer release()
+	writer := openCacheAt(t, c.Dir())
+	waiting := make(chan struct{}, 1)
+	writer.lockBusy = func() {
+		select {
+		case waiting <- struct{}{}:
+		default:
+		}
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+	defer cancel()
+	key := digest.FromBytes([]byte("recipe"))
+	done := make(chan error, 1)
+	go func() {
+		_, err := writer.SaveCompilation(ctx, key, "", artifact)
+		done <- err
+	}()
+	select {
+	case <-waiting:
+	case err := <-done:
+		t.Fatalf("publication did not wait for the artifact: %v", err)
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+	cancel()
+	assertIs(t, <-done, context.Canceled)
+	_, err = c.LoadCompilation(key)
+	assertIs(t, err, ErrNotFound)
+	assertNoTmp(t, c)
+	assertEmptyDir(t, c.path(quarantineDir))
 }

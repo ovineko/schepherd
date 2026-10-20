@@ -129,7 +129,7 @@ func (c *Compiler) prepareCached(ctx context.Context, definition Definition, tas
 	result.Reason = strings.ReplaceAll(result.Reason, snapshot, "{schema}")
 	result.Reason = strings.ReplaceAll(result.Reason, schema, "{schema}")
 	result.Reason = strings.ReplaceAll(result.Reason, task.Path, "{processor}")
-	result, err = c.Cache.SaveCompilation(key, result.Reason, artifact)
+	result, err = c.Cache.SaveCompilation(ctx, key, result.Reason, artifact)
 	if err != nil {
 		return Prepared{}, fault.Wrap(fault.Internal, err, "save processor compilation")
 	}
@@ -179,7 +179,7 @@ func (c *Compiler) configuration(ctx context.Context) (string, error) {
 			return "", fault.Wrap(fault.Internal, lockErr, "lock compiler configuration")
 		}
 		defer release()
-		entry, err = c.Cache.SaveCompilation(key, "", []byte("{}"))
+		entry, err = c.Cache.SaveCompilation(ctx, key, "", []byte("{}"))
 	}
 	if err != nil {
 		return "", fault.Wrap(fault.Offline, err, "isolated compiler configuration is not prepared")

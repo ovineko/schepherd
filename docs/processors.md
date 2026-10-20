@@ -125,6 +125,9 @@ identity, explicit processor settings, the compiler recipe version and platform.
 Changing any of them creates a new entry. Artifact size and SHA-256 are verified
 before use; writes are atomic and locked across processes. Known incompatibilities
 are cached, but a compiler crash, timeout or unavailable executable never becomes one.
+Publication rechecks a recipe after acquiring its lock and serializes shared artifact
+bytes by their digest before installing metadata. Waiting writers keep the first
+verified result; cancellation never leaves a partial compilation record.
 Sourcemeta's generated file URI for an anonymous schema snapshot is replaced with
 a content-derived `urn:schepherd:schema:<sha256>` diagnostic base. This preserves
 instance locations and messages without embedding temporary or installation paths

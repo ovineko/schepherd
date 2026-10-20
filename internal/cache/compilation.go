@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -67,6 +68,10 @@ func newCompilationEntry(key string) (compilationEntry, error) {
 // artifact. Missing data returns ErrNotFound; damaged data returns ErrCorrupt.
 // Loading never repairs, quarantines or writes an entry.
 func (c *Cache) LoadCompilation(key string) (Compilation, error) {
+	return c.loadCompilation(key, false)
+}
+
+func (c *Cache) loadCompilation(key string, installing bool) (Compilation, error) {
 	e, err := newCompilationEntry(key)
 	if err != nil {
 		return Compilation{}, err
@@ -89,10 +94,14 @@ func (c *Cache) LoadCompilation(key string) (Compilation, error) {
 	if result.Reason != "" || digest.Validate(artifact.Digest) != nil || artifact.Size == nil || *artifact.Size < 0 || *artifact.Size > MaxCompiledBytes {
 		return Compilation{}, corruptf(e.label, c.path(e.name), "invalid artifact descriptor")
 	}
-	if err := c.compilationDirectories(e.label, false, "v1", filepath.Dir(blobsDir), blobsDir); err != nil {
-		return Compilation{}, err
+	err = c.compilationDirectories(e.label, false, "v1", filepath.Dir(blobsDir), blobsDir)
+	if err == nil {
+		err = c.VerifyBlob(artifact.Digest, *artifact.Size)
 	}
-	if err := c.VerifyBlob(artifact.Digest, *artifact.Size); err != nil {
+	if err != nil {
+		if installing && errors.Is(err, ErrNotFound) {
+			return Compilation{}, corruptf(e.label, c.path(e.name), "referenced content is missing")
+		}
 		return Compilation{}, err
 	}
 	name, err := blobName(artifact.Digest)
@@ -143,7 +152,7 @@ func (c *Cache) readCompilationRecord(key string, e compilationEntry) (compilati
 // recipe digest. A nil artifact records only a probe; a non-nil artifact records
 // serialized compiler output and cannot accompany an incompatibility reason.
 // Existing healthy records are retained, including during concurrent writes.
-func (c *Cache) SaveCompilation(key, reason string, artifact []byte) (Compilation, error) {
+func (c *Cache) SaveCompilation(ctx context.Context, key, reason string, artifact []byte) (Compilation, error) {
 	e, err := newCompilationEntry(key)
 	if err != nil {
 		return Compilation{}, err
@@ -175,16 +184,25 @@ func (c *Cache) SaveCompilation(key, reason string, artifact []byte) (Compilatio
 	} else if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrCorrupt) {
 		return Compilation{}, err
 	}
+	release, err := c.Lock(ctx, "publication-"+e.hex)
+	if err != nil {
+		return Compilation{}, err
+	}
+	defer release()
+	if existing, err := c.LoadCompilation(key); err == nil {
+		return existing, nil
+	} else if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrCorrupt) {
+		return Compilation{}, err
+	}
 	if err := c.compilationDirectories(e.label, true, "v1", filepath.Dir(compiledDir), compiledDir); err != nil {
 		return Compilation{}, err
 	}
 	if record.Artifact != nil {
-		if err := c.compilationDirectories(e.label, true, "v1", filepath.Dir(blobsDir), blobsDir); err != nil {
+		releaseArtifact, err := c.prepareCompilationArtifact(ctx, *record.Artifact, artifact)
+		if err != nil {
 			return Compilation{}, err
 		}
-		if err := c.WriteBlob(record.Artifact.Digest, *record.Artifact.Size, *record.Artifact.Size, bytes.NewReader(artifact)); err != nil {
-			return Compilation{}, err
-		}
+		defer releaseArtifact()
 	}
 
 	if err := c.installCompilation(key, e, data); err != nil {
@@ -192,6 +210,27 @@ func (c *Cache) SaveCompilation(key, reason string, artifact []byte) (Compilatio
 	}
 
 	return c.LoadCompilation(key)
+}
+
+func (c *Cache) prepareCompilationArtifact(ctx context.Context, artifact compilationArtifact, data []byte) (func(), error) {
+	if err := c.compilationDirectories("compilation artifact", true, "v1", filepath.Dir(blobsDir), blobsDir); err != nil {
+		return nil, err
+	}
+	release, err := c.Lock(ctx, digest.Hex(artifact.Digest))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.VerifyBlob(artifact.Digest, *artifact.Size); err == nil {
+		return release, nil
+	} else if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrCorrupt) {
+		release()
+		return nil, err
+	}
+	if err := c.WriteBlob(artifact.Digest, *artifact.Size, *artifact.Size, bytes.NewReader(data)); err != nil {
+		release()
+		return nil, err
+	}
+	return release, nil
 }
 
 func (c *Cache) installCompilation(key string, e compilationEntry, data []byte) error {
@@ -218,12 +257,7 @@ func (c *Cache) installCompilation(key string, e compilationEntry, data []byte) 
 			return e.dir, e.hex + ".compilation"
 		},
 		verify: func() error {
-			_, err := c.LoadCompilation(key)
-			if errors.Is(err, ErrNotFound) {
-				if _, statErr := c.root.Lstat(e.name); statErr == nil {
-					return corruptf(e.label, c.path(e.name), "referenced content is missing")
-				}
-			}
+			_, err := c.loadCompilation(key, true)
 			return err
 		},
 	})

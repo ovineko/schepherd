@@ -167,6 +167,10 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   with external references or nonstandard root/nested `$schema` remain invocation-local until their
   dependency graph is part of the key. `internal/metaschema` owns the standard dialect allowlist
   shared by compilation safety and publisher license decisions; never import publisher code into the client.
+- Compilation publication uses a separate per-recipe lock, then the artifact's raw digest lock,
+  and rechecks after waiting. Keep both until metadata is installed; replacing an identical blob
+  during another writer's verification can otherwise quarantine healthy metadata. `LoadCompilation`
+  remains read-only and never takes write locks; writes must retain their caller's cancellation.
 - Sourcemeta compilation and validation use an explicit empty tool configuration. Do not let an
   ambient `jsonschema.json` change the meaning of cached managed artifacts.
 - Conversion changes the validator's input path, not the identity of per-file settings: `{file}` in
