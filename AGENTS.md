@@ -95,12 +95,48 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   do this automatically).
 - `internal/cache` implements its own inter-process lock instead of gofrs/flock, which reopens the lock file by path on
   every retry and so cannot stay inside the cache's `os.Root`.
-- Only `export` fetches a schema's notice layer (`store.Notice`); `path`, `cat` and `run` never do, and a verified
-  `schema.json` never reads its payload blob. A test of an offline `export` must warm the cache with an online `export`
-  first (`offlineWarmNotice` in `tests/e2e/offline_test.go`), not only with `path`.
+- `materialize` fetches every notice layer; among per-schema commands, only
+  `export` fetches one (`store.Notice`). `path`, `cat` and `run` never do, and a
+  verified `schema.json` never reads its payload blob. Warm an offline `export`
+  with an online `export` first (`offlineWarmNotice` in `tests/e2e/offline_test.go`),
+  not only with `path`.
+- `materialize --offline` verifies only and must report missing `schema.json`
+  files without rebuilding them. Do not reuse `Store.Materialize` for this
+  check: path, cat and run deliberately keep their lazy offline reconstruction.
+- Offline materialize opens `cache.OpenReadOnly`, never `cache.Open`: the
+  writable opener initializes layout and removes old temporary/quarantine
+  entries before verification. An absent read-only root is an empty cache
+  for that opened handle and must remain absent.
+- Other offline catalog commands use `cache.OpenExisting`: opening must not
+  create layout or expire entries, while a missing `schema.json` can still be
+  rebuilt from cached payloads in a writable cache. Complete read-only copies
+  need no locks, temporary or quarantine directories.
+- Cache snapshot tests must read metadata through `os.Open` and `File.Stat`,
+  not `DirEntry.Info` or `os.Stat`: Windows directory-enumeration metadata can
+  retain stale NTFS modification times until a handle is opened and closed.
+- Only `materialize` uses `Store.CatalogForCompleteness`: recognized offline
+  catalog gaps must reach the JSON summary and exit 6, while schema descriptors
+  from a verified index still drive independent checks. Other catalog commands
+  retain `Store.Catalog`'s eager contract. Never invent IDs or a catalog to fill
+  unavailable metadata.
+- A digest-valid index or manifest that fails parsing, or a child descriptor
+  whose size disagrees with verified bytes, is an invalid pinned graph, not
+  physical cache corruption. Both online and offline loads preserve fatal
+  integrity/unsupported classifications: refetching immutable bytes cannot
+  repair graph semantics. Bound reads by the artifact role's configured limit,
+  not the claimed descriptor size; compare that size after digest verification.
+- Every catalog artifact and completeness repair rechecks under its own digest
+  lock. Never quarantine from a failed lookup made before that lock: another
+  command may already have repaired the entry. Fetched catalog artifacts stay
+  locked until the whole graph passes validation, including `CheckSchemas`,
+  before the guarded cache writer publishes them. Release on every error.
 - archive/tar stops at the end-of-archive marker; the gzip trailer (CRC, size) is only verified if the gzip stream is
   read to EOF, which `internal/publisher/upstream` does explicitly.
 - golangci-lint refuses concurrent runs; pass `--allow-parallel-runners` when several agents lint at once.
+- `datamitsu.config.js` pins the Go linter independently of the shared wrapper: keep it able to read the export data
+  of the Go toolchain in `go.mod`, including after patch updates.
+- Keep the datamitsu wrapper's pnpm security patch and scoped dependency replacement together when changing its pin
+  (`CONTRIBUTING.md`, "Dependency and pin updates"); a normal version bump does not migrate the patch.
 - go-toml/v2 matches keys case-insensitively; `internal/config` adds its own case-sensitive unknown-key check.
 - `[schemas."<id>"]` merges key by key across `extends`, so `path` is required only after merging: the config builder
   checks it, not the per-file decoder, and `api/config.schema.json` does not require it.

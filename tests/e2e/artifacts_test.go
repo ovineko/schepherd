@@ -179,8 +179,8 @@ func artifactsRequests(recs []regproxy.Record) []artifactsRequest {
 
 		if rest, ok := strings.CutPrefix(rec.Path, "/v2/"); ok {
 			for _, sep := range []string{"/manifests/", "/blobs/"} {
-				if i := strings.LastIndex(rest, sep); i >= 0 {
-					req.Repo, req.Ref = rest[:i], rest[i+len(sep):]
+				if repo, ref, ok := strings.CutLast(rest, sep); ok {
+					req.Repo, req.Ref = repo, ref
 
 					break
 				}

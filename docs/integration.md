@@ -20,8 +20,11 @@ Inputs:
   `catalog.digest` in the configuration) pin the snapshot.
 - `SCHEPHERD_CONFIG` or `--config` points at the configuration file that holds
   the `[runner]` section.
-- The validator's absolute path is passed through the environment, for example
-  `CHECK_JSONSCHEMA_BIN`, and referenced as `command = "${CHECK_JSONSCHEMA_BIN}"`.
+- The validator's executable is passed through the environment, for example
+  `CHECK_JSONSCHEMA_BIN`, and referenced as
+  `command = "${CHECK_JSONSCHEMA_BIN}"`. An orchestrator that manages
+  tools, like datamitsu below, resolves the binding itself — never hardcode
+  an absolute path of one particular machine.
 - Schemas that live in the repository are declared in `[schemas]` with a path
   relative to the configuration and need no registry
   ([Local schemas](configuration.md#local-schemas)).
@@ -108,51 +111,152 @@ that, and the two ways to handle it behave differently:
 
 ## Datamitsu
 
-The wiring below follows the `Tool` and `App` types that datamitsu publishes
-for its configuration file. It is a template: fill in the values in angle
-brackets.
+Datamitsu discovers files by globs and installs the pinned tools; Schepherd
+gives each file a schema and runs the validator over it. There are two ways
+to connect them.
+
+### Through datamitsu-config
+
+The [`@shibanet0/datamitsu-config`](https://www.npmjs.com/package/@shibanet0/datamitsu-config)
+package wires Schepherd in for you: its `schepherd` tool runs as part of
+every `pnpm dm check` over the JSON and YAML files of your repository.
+
+- **One catalog per release.** A release of the package pins the Schepherd
+  client, one catalog digest and the validator together. A new catalog
+  arrives only with a new release of the package, never in the middle of a
+  run, and your project never sees or commits `schepherd.toml` for this.
+- **What is skipped.** Files no schema matches, files whose schema no
+  configured validator supports, formats nobody reads, and files several
+  catalog schemas match (a bare `manifest.json`, for example) are skipped
+  rather than failing the check; the report's `skipped` array names each
+  file with its reason. A file that several of your own `[schemas]` or
+  `[[mappings]]` match is still an error, not a skip.
+- **Your own schemas.** Eject the tool's managed configuration into the
+  repository and declare schemas there; the package keeps rewriting
+  `config_version` and `catalog.digest`, everything else is yours:
 
 ```js
-// datamitsu.config.js (excerpt)
-export default (input) => ({
-  ...input,
-  apps: {
-    ...input.apps,
-    schepherd: {
-      description: "Pinned JSON Schemas from OCI registries",
-      binary: {
-        version: "<X.Y.Z>", // the client release, for example 0.1.0
-        binaries: {
-          // one entry per OS/arch with the release asset URL and its SHA-256
+// datamitsu.config.js
+function getConfig(config) {
+  return { ...config, ejectConfigs: ["schepherd"] };
+}
+globalThis.getConfig = getConfig;
+```
+
+```bash
+pnpm dm config reconcile --tools schepherd
+```
+
+```toml
+# schepherd.toml (now owned by your repository)
+[schemas."company-config"]
+path = "schemas/company-config.schema.json"
+file_match = ["config/company.json"]
+```
+
+Files named `.json`, `.yaml` and `.yml` reach Schepherd already; for other
+names add a glob under `tools.schepherd.operations.lint.globs` in your own
+`getConfig`. Turn the tool off with `skip: true`.
+
+### In your own datamitsu configuration
+
+The wiring follows the `Tool` and `App` types datamitsu publishes for its
+configuration file. The configuration entry points are the global
+`getConfig` and `getMinVersion` functions (an `export default` function is
+not one). It is a template: fill in the values in angle brackets.
+
+```js
+// datamitsu.config.js
+const REPOSITORY = "ghcr.io/ovineko/schepherd-schemas";
+const CATALOG = "sha256:<catalog digest>"; // schepherd pin <repo>:catalog-latest --json
+
+function getMinVersion() {
+  return "<X.Y.Z>"; // the datamitsu release you need
+}
+
+function getConfig(config) {
+  return {
+    ...config,
+    apps: {
+      ...config.apps,
+      jsonschema: {
+        binary: {
+          version: "<validator version>",
+          binaries: {
+            // one entry per OS/arch: the release asset URL and its SHA-256
+          },
         },
       },
+      schepherd: {
+        binary: {
+          version: "<X.Y.Z>", // the Schepherd client release
+          binaries: {
+            // one entry per OS/arch: the release asset URL and its SHA-256
+          },
+        },
+        dependsOn: ["jsonschema"],
+        runtimeEnv: {
+          JSONSCHEMA_BIN: "${APP_BIN:jsonschema}",
+          SCHEPHERD_REPOSITORY: REPOSITORY,
+          SCHEPHERD_CATALOG: CATALOG,
+        },
+        versionCheck: { args: ["version"] },
+      },
     },
-  },
-  tools: {
-    ...input.tools,
-    "json-schema": {
-      name: "JSON Schema validation through Schepherd",
-      operations: {
-        lint: {
-          app: "schepherd",
-          scope: "repository",
-          granularity: "file",
-          args: ["--config", "{root}/schepherd.toml", "run", "--ignore-unmatched", "--", "{files}"],
-          // positive patterns of `schepherd patterns --json` and of the local
-          // [[mappings]], translated as described above; negatives are left out
-          globs: ["**/package.json", "**/.github/workflows/*.yml"],
-          env: {
-            CHECK_JSONSCHEMA_BIN: "<absolute path of the validator>",
+    tools: {
+      ...config.tools,
+      schepherd: {
+        name: "JSON Schema validation through Schepherd",
+        operations: {
+          lint: {
+            app: "schepherd",
+            scope: "repository",
+            granularity: "file",
+            args: [
+              "--config",
+              "{root}/schepherd.toml",
+              "--workspace",
+              "{root}",
+              "--quiet",
+              "run",
+              "--ignore-unmatched",
+              "--",
+              "{files}",
+            ],
+            // positive patterns of `schepherd patterns --json` and of the
+            // local [[mappings]], translated as described above; negatives
+            // are left out
+            globs: ["**/package.json", "**/.github/workflows/*.yml"],
           },
         },
       },
     },
-  },
-});
+  };
+}
+
+globalThis.getConfig = getConfig;
+globalThis.getMinVersion = getMinVersion;
+```
+
+```toml
+# schepherd.toml at the repository root; the catalog arrives through the
+# environment above, so it is not duplicated here
+config_version = 1
+
+[runner]
+command = "${JSONSCHEMA_BIN}"
+args = ["validate", "{schema}", "{files...}"]
 ```
 
 Notes:
 
+- The validator is bound with `dependsOn` and referenced as
+  `${APP_BIN:jsonschema}` in `runtimeEnv` — never through an absolute path
+  of the machine that wrote the configuration. Datamitsu expands the
+  binding to the validator's exact executable at run time.
+- `SCHEPHERD_REPOSITORY` and `SCHEPHERD_CATALOG` in `runtimeEnv` pin the
+  snapshot for every run, overriding anything `schepherd.toml` says; the
+  digest lives in one place, the `CATALOG` constant.
 - Datamitsu expands `{files}` into one argument per file, which matches
   `run -- <files...>`.
 - Datamitsu `globs` do not support `!` negation, and `excludeGlobs` applies
@@ -161,6 +265,21 @@ Notes:
   [Translating patterns](#translating-patterns-into-plain-globs). For exact
   per-schema exclusions, define one operation per schema with
   `run --schema <id>` and that schema's negatives in its `excludeGlobs`.
-- Set `workspace = "."` in `schepherd.toml` at the repository root, so
-  Schepherd matches paths relative to the same root as the globs.
+- `--workspace {root}` makes Schepherd match paths against the same root
+  the globs are relative to; there is no need to set `workspace = "."` in
+  `schepherd.toml`.
 - Keep `schepherd.toml` explicit (`--config`): Schepherd never discovers it.
+
+#### Offline after one preparation (upcoming)
+
+The datamitsu `prepare` step (one-time, per catalog digest) and the
+`schepherd materialize` command are planned integrations. Once the
+Schepherd release you pin provides them, the app gains
+`prepare: { args: ["--config", "", "--offline=false", "--timeout", "20m",
+"--repository", REPOSITORY, "--catalog", CATALOG, "--cache-dir",
+"${APP_PREPARED}", "--quiet", "materialize"], network: true }`,
+`SCHEPHERD_CACHE_DIR: "${APP_PREPARED}"` joins `runtimeEnv`, and
+`env: { SCHEPHERD_OFFLINE: "1" }` joins the operation: one download of the
+whole pinned catalog per machine, offline checks afterwards, and an OCI
+bundle that carries the materialized catalog for air-gapped hosts. Offline
+cache misses then fail with exit code 6 instead of reaching the network.

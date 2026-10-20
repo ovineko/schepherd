@@ -194,6 +194,72 @@ copied from the source is verified by digest and size on the way (a mismatch
 exits with code 5 before any catalog tag is created), and an interrupted
 mirror exits with code 130 and can be re-run. See [Mirroring](mirroring.md).
 
+## `materialize [--concurrency <n>] [--json]`
+
+Fills the cache directory with the whole pinned catalog: every schema
+manifest, its payload blob, its unpacked `schema.json` and every notice
+layer. After a successful run, every catalog command works with `--offline`
+from that directory — and from a byte copy of it on another machine, or
+from a read-only copy. Empty service directories (`v1/locks`, `v1/tmp`,
+`v1/quarantine`) need not be copied: offline catalog commands do not create
+them or expire old entries while opening the cache. `path`, `cat`, `export`
+and `run` can still rebuild a missing `schema.json` from a verified cached
+payload when the cache is writable; `materialize --offline` never rebuilds
+it. The catalog is pinned the usual way (`--repository`/`--catalog`, the
+environment, or `[catalog]`); no project configuration file is required,
+and local `[schemas]` are project files, so they are not copied.
+
+Repeated runs download nothing: they re-verify every entry and report the
+counts. An interrupted run can simply be re-run; only what is missing is
+fetched. With `--offline` the command opens the cache read-only: it never
+creates its root or layout, expires temporary or quarantined entries, opens
+the registry or repairs content. A missing cache directory stays absent.
+It verifies completeness and exits with code 6 listing every
+identifiable absent or corrupt entry (`missing` in the `--json` summary,
+which is written before the error). An absent or corrupt catalog index,
+metadata manifest or `catalog.json` also produces this summary. A verified
+index still identifies the schema manifests when the catalog metadata or
+payload is unavailable; those schemas and their known layers are checked.
+Without `catalog.json`, the revision and entry count are unknown (an empty
+revision and zero `entries`), and missing rows carry an empty `ids` array.
+Without a verified index, no schema descendants can be identified. If a
+schema manifest is missing, its layers cannot be identified yet; otherwise
+the payload, unpacked file and notice are checked independently. A
+digest-valid artifact with invalid graph semantics, including a child size
+that disagrees with its verified bytes, is a fatal pinned-graph error both
+online and offline: it exits 5 without refetching the same immutable content
+or turning it into a missing row. Unsupported formats exit 2. Unexpected
+I/O failures and interrupted runs keep their normal error codes.
+`--concurrency` sets how many schemas are processed at once (default 4,
+1–64). Online, the first failure stops the run; everything already verified
+stays.
+
+Online repairs recheck shared artifacts under each artifact's digest lock,
+so concurrent commands reuse an already repaired copy. Download or graph
+validation failures do not remove an existing copy; the guarded cache writer
+replaces damaged content only after verification.
+
+Without `--json`, the summary is `key<TAB>value` lines (`repository`,
+`catalog`, `revision`, `cacheDir`, `entries`, `schemas`, `notices`,
+`fetched`, `cached`).
+
+JSON counters count distinct artifacts, not references to them. Manifest
+counts include the catalog index and metadata manifest; blob counts include
+`catalog.json`, schema payloads and notices. `fetchedBytes` is the sum of
+successfully transferred and verified artifact bytes, excluding failed
+attempts. `repairedEntries` counts corrupt artifacts successfully replaced,
+not absent ones populated for the first time. The unpacked files have their
+own `writtenSchemaFiles` and `cachedSchemaFiles` counters.
+
+```bash
+schepherd --repository ghcr.io/ovineko/schepherd-schemas \
+  --catalog sha256:<digest> --cache-dir ./cache materialize --json
+
+# verify a restored copy without touching the network
+schepherd --repository ghcr.io/ovineko/schepherd-schemas \
+  --catalog sha256:<digest> --cache-dir ./cache --offline materialize --json
+```
+
 ## `run [--schema <id>] [--ignore-unmatched] [--report <file>] -- <files...>`
 
 Runs the configured consumer for the given files. Files are paths you pass;

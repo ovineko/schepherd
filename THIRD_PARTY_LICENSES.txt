@@ -14,7 +14,7 @@ matches the dependencies of the client.
 
 Components:
 
-  Go standard library go1.27.1
+  Go standard library go1.27.2
   github.com/bmatcuk/doublestar/v4 v4.10.2
   github.com/inconshreveable/mousetrap v1.1.0 (windows/amd64, windows/arm64 only)
   github.com/opencontainers/go-digest v1.0.0
@@ -28,7 +28,7 @@ Components:
   oras.land/oras-go/v2 v2.6.2
 
 ================================================================================
-Go standard library go1.27.1
+Go standard library go1.27.2
 Linked into: all release targets
 File: LICENSE
 ================================================================================
@@ -62,7 +62,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ================================================================================
-Go standard library go1.27.1
+Go standard library go1.27.2
 Linked into: all release targets
 File: PATENTS
 ================================================================================
