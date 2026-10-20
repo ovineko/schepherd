@@ -343,22 +343,52 @@ func compilerCommand(ctx context.Context, task runner.Task, args []string) ([]by
 	if stdout.exceeded || stderr.exceeded {
 		return nil, nil, fault.New(fault.Integrity, "processor compilation output exceeds limit")
 	}
-	return stdout.buffer.Bytes(), stderr.data, err
+	if err != nil {
+		return stdout.data, stderr.data, fmt.Errorf("execute processor compilation: %w", err)
+	}
+	return stdout.data, stderr.data, nil
 }
 
 type compiledOutput struct {
-	buffer   bytes.Buffer
+	data     []byte
 	exceeded bool
 }
 
 func (w *compiledOutput) Write(data []byte) (int, error) {
 	n := len(data)
-	if len(data) > cache.MaxCompiledBytes-w.buffer.Len() {
+	if len(data) > cache.MaxCompiledBytes-len(w.data) {
 		w.exceeded = true
-		data = data[:cache.MaxCompiledBytes-w.buffer.Len()]
+		data = data[:cache.MaxCompiledBytes-len(w.data)]
 	}
-	_, _ = w.buffer.Write(data)
+	w.data = append(w.data, data...)
 	return n, nil
+}
+
+func (w *compiledOutput) ReadFrom(r io.Reader) (int64, error) {
+	var total int64
+	for len(w.data) < cache.MaxCompiledBytes {
+		if len(w.data) == cap(w.data) {
+			capacity := min(cache.MaxCompiledBytes, max(32<<10, 2*cap(w.data)))
+			data := make([]byte, len(w.data), capacity)
+			copy(data, w.data)
+			w.data = data
+		}
+		n, err := r.Read(w.data[len(w.data):min(cap(w.data), cache.MaxCompiledBytes)])
+		w.data = w.data[:len(w.data)+n]
+		total += int64(n)
+		if errors.Is(err, io.EOF) {
+			return total, nil
+		}
+		if err != nil {
+			return total, fmt.Errorf("read processor compilation output: %w", err)
+		}
+	}
+	n, err := io.Copy(io.Discard, r)
+	w.exceeded = w.exceeded || n != 0
+	if err != nil {
+		return total + n, fmt.Errorf("drain processor compilation output: %w", err)
+	}
+	return total + n, nil
 }
 
 func cacheableSchema(data []byte, bundled bool) bool {

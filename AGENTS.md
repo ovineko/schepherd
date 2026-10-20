@@ -149,6 +149,10 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
 - Oversized compiler-output fixtures write raw bytes directly. Transforming tens of MiB with a
   locale-aware `tr` can exhaust the real probe timeout under race-enabled Intel macOS CI; assert
   the output-limit error rather than accepting timeout or malformed-output errors.
+  Compiler stdout is read directly into bounded capture storage through `io.ReaderFrom`; do not
+  restore a pipe-chunk copy into `bytes.Buffer`, whose extra copies and growth amplify race-detector
+  memory costs. Keep exact-limit acceptance and over-limit refusal covered without filling 64 MiB
+  for each boundary case.
 - E2E preparation installs the parser toolchain and locked Cargo dependencies into
   `.tools/e2e-rust/{rustup,cargo}`. Keep host Rustup proxies on PATH and repeat preparation after
   `parsers/rust-toolchain.toml` or `parsers/Cargo.lock` changes. Snapshot scenarios bind these homes
