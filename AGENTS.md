@@ -40,6 +40,7 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
 - Third-party notices: `go run ./tools/release notices generate` (check: `go run ./tools/release notices check`)
 - Parser module: `pnpm parsers:test`, `pnpm parsers:build`, `pnpm parsers:check`, `pnpm parsers:host`.
   The Go build remains independent of Rust; release preparation builds and verifies the parser separately.
+  Keep `rustfmt` in the toolchain's components even with the minimal profile: clean CI runs formatters too.
 - Owned validator frontends: `pnpm dm exec task -- test:frontends` (AJV plus locked Python environment).
   This task runs in mandatory CI and in `task verify`; Go and Rust tests do not cover the frontend packages.
   CI installs the pinned Python with uv, not `actions/setup-python`: older Python patches may have

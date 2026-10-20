@@ -3,7 +3,8 @@
 Schepherd owns its Rust/WASM parser in `parsers/`. It is separate from the Go
 client: `pnpm build`, `pnpm test` and ordinary Go tests do not require Rust.
 Parser builds require the toolchain pinned in `parsers/rust-toolchain.toml`, its
-`wasm32-unknown-unknown` target, Cargo and Node.js. Cargo installs the selected
+`wasm32-unknown-unknown` target, declared `rustfmt` component, Cargo and Node.js.
+Cargo installs the selected
 Rust toolchain through rustup when needed; dependency downloads follow the
 committed `Cargo.lock`, never an unlocked resolution.
 
