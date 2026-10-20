@@ -89,6 +89,12 @@ CI runs `go test ./...` on windows-2025 and windows-11-arm, and a release is
 gated on it; tests that need POSIX file modes, symlinks or shell fakes live
 in `*_unix_test.go` files with `//go:build !windows`.
 
+Compiler-output boundary tests exercise partial reads, exact-limit acceptance,
+over-limit refusal and source errors with storage already at the 64 MiB boundary.
+The subprocess regression still emits a full oversized artifact, requires the
+output-limit error within the unchanged 30-second timeout, and verifies a later
+successful compilation is cached rather than poisoned by the failed attempt.
+
 Fuzz targets cover every parser of untrusted input: catalog JSON, digests and
 references, interpolation templates, configuration TOML, manifests, gzip
 payload decoding and JSON validation, plus SemVer parsing and the code spans
