@@ -39,9 +39,18 @@ func catalogCacheSnapshot(t *testing.T, dir string) map[string]catalogCacheFile 
 		if err != nil {
 			return err
 		}
-		info, err := entry.Info()
+		// A handle refreshes NTFS timestamps; directory enumeration and os.Stat can be stale.
+		handle, err := os.Open(path)
 		if err != nil {
 			return err
+		}
+		info, statErr := handle.Stat()
+		closeErr := handle.Close()
+		if statErr != nil {
+			return statErr
+		}
+		if closeErr != nil {
+			return closeErr
 		}
 		file := catalogCacheFile{Mode: info.Mode(), ModTime: info.ModTime()}
 		if !entry.IsDir() {

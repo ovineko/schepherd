@@ -17,12 +17,13 @@
 // partial content. There is no automatic garbage collection of verified
 // entries; only leftovers in v1/tmp and v1/quarantine expire.
 //
-// Error classes: Open and OpenReadOnly report unusable directories as
-// fault.Usage, digest and size mismatches of incoming data are fault.Integrity,
-// and local I/O failures are fault.Internal. ErrNotFound and ErrCorrupt are deliberately
-// left unclassified because their exit class depends on whether the caller
-// may refetch. Errors returned by caller-supplied readers and fill functions
-// are passed through with context but without adding a class.
+// Error classes: Open, OpenExisting and OpenReadOnly report unusable
+// directories as fault.Usage, digest and size mismatches of incoming data
+// are fault.Integrity, and local I/O failures are fault.Internal. ErrNotFound
+// and ErrCorrupt are deliberately left unclassified because their exit class
+// depends on whether the caller may refetch. Errors returned by caller-supplied
+// readers and fill functions are passed through with context but without
+// adding a class.
 //
 // A Cache is safe for concurrent use by multiple goroutines and processes.
 // Writers of the same entry need not hold its Lock: all of them succeed and
@@ -149,10 +150,10 @@ func Open(dir string) (*Cache, error) {
 	return c, nil
 }
 
-// OpenReadOnly opens existing cache content without creating the layout or
-// expiring temporary and quarantined entries. A missing root remains absent;
-// reads return ErrNotFound and mutations return ErrReadOnly.
-func OpenReadOnly(dir string) (*Cache, error) {
+// OpenExisting opens cached content without initializing layout or expiring
+// entries. Writes create their directories on demand. A missing root stays
+// absent, and reads and writes return ErrNotFound for that opened handle.
+func OpenExisting(dir string) (*Cache, error) {
 	if dir == "" {
 		return nil, fault.New(fault.Usage, "cache directory is empty")
 	}
@@ -176,7 +177,19 @@ func OpenReadOnly(dir string) (*Cache, error) {
 		return nil, fault.Wrap(fault.Usage, err, "open cache directory %s", abs)
 	}
 
-	return &Cache{root: root, dir: abs, readOnly: true}, nil
+	return &Cache{root: root, dir: abs}, nil
+}
+
+// OpenReadOnly opens existing cache content without creating the layout or
+// expiring temporary and quarantined entries. A missing root remains absent;
+// reads return ErrNotFound and mutations return ErrReadOnly.
+func OpenReadOnly(dir string) (*Cache, error) {
+	c, err := OpenExisting(dir)
+	if err != nil {
+		return nil, err
+	}
+	c.readOnly = true
+	return c, nil
 }
 
 // Dir returns the absolute cache root, the value of the {cache} placeholder.
@@ -205,6 +218,10 @@ func (c *Cache) path(name string) string {
 func (c *Cache) requireWritable() error {
 	if c.readOnly {
 		return fault.Wrap(fault.Internal, ErrReadOnly, "modify cache %s", c.dir)
+	}
+
+	if c.root == nil {
+		return notFound("cache root", c.dir)
 	}
 
 	return nil

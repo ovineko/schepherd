@@ -264,13 +264,22 @@ func readOnlySnapshot(t *testing.T, dir string) map[string]readOnlyEntry {
 	t.Helper()
 
 	entries := make(map[string]readOnlyEntry)
-	if err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(dir, func(path string, _ fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		info, err := entry.Info()
+		// A handle refreshes NTFS timestamps; directory enumeration and os.Stat can be stale.
+		handle, err := os.Open(path)
 		if err != nil {
 			return err
+		}
+		info, statErr := handle.Stat()
+		closeErr := handle.Close()
+		if statErr != nil {
+			return statErr
+		}
+		if closeErr != nil {
+			return closeErr
 		}
 		rel, err := filepath.Rel(dir, path)
 		if err != nil {

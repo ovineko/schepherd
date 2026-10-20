@@ -52,4 +52,5 @@ func TestMaterializeOfflineRestoredReadOnlyCache(t *testing.T) {
 	}
 
 	assertCompleteReadOnlyMaterialize(t, restored, pinned)
+	assertOfflineCatalogCommands(t, restored, pinned)
 }

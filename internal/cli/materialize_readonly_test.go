@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -105,6 +106,96 @@ func TestMaterializeOfflinePopulatedCacheWithoutUnusedLayout(t *testing.T) {
 	assertCompleteReadOnlyMaterialize(t, dir, pinned)
 }
 
+func TestOfflineCatalogCommandsWithoutUnusedLayout(t *testing.T) {
+	dir, pinned := seedOfflineMaterializeCache(t)
+	assertOfflineCatalogCommands(t, dir, pinned)
+}
+
+func TestOfflinePathRebuildsSchemaWithoutUnusedLayout(t *testing.T) {
+	dir, pinned := seedOfflineMaterializeCache(t)
+	files, err := filepath.Glob(filepath.Join(dir, "v1", "materialized", "sha256", "*", "schema.json"))
+	if err != nil || len(files) != 1 {
+		t.Fatalf("schema fixture paths = %v, error = %v", files, err)
+	}
+	if err := os.Chmod(files[0], 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(files[0]); err != nil {
+		t.Fatal(err)
+	}
+
+	stdout, stderr, code := run(t, "--quiet", "--offline", "--repository", "registry.example/org/schemas", "--catalog", pinned, "--cache-dir", dir, "path", "fixture")
+	if code != 0 || stdout != files[0]+"\n" || stderr != "" {
+		t.Fatalf("offline reconstruction: code=%d, stdout=%q, stderr=%q", code, stdout, stderr)
+	}
+	wantFile(t, files[0], `{"type":"object"}`)
+}
+
+func assertOfflineCatalogCommands(t *testing.T, dir, pinned string) {
+	t.Helper()
+
+	workspace := t.TempDir()
+	configPath := filepath.Join(workspace, "schepherd.toml")
+	marker := filepath.Join(workspace, "consumer.args")
+	if err := os.WriteFile(configPath, []byte("config_version = 1\n\n"+consumerRunner(t, marker, 0)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	input := filepath.Join(workspace, "fixture.json")
+	if err := os.WriteFile(input, []byte("{}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	base := []string{
+		"--quiet", "--offline", "--config", configPath, "--workspace", workspace,
+		"--repository", "registry.example/org/schemas", "--catalog", pinned, "--cache-dir", dir,
+	}
+	invoke := func(args ...string) string {
+		t.Helper()
+		all := append(append([]string{}, base...), args...)
+		stdout, stderr, code := run(t, all...)
+		if code != 0 {
+			t.Fatalf("offline %v: code=%d, stdout=%q, stderr=%q", args, code, stdout, stderr)
+		}
+		return stdout
+	}
+
+	before := offlineCacheSnapshot(t, dir)
+	schemaPath := strings.TrimSuffix(invoke("path", "fixture"), "\n")
+	wantFile(t, schemaPath, `{"type":"object"}`)
+	if got := invoke("cat", "fixture"); got != `{"type":"object"}` {
+		t.Fatalf("offline cat = %q", got)
+	}
+	var doc catalog.Catalog
+	if err := json.Unmarshal([]byte(invoke("catalog", "--json")), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.Schemas) != 1 || doc.Schemas[0].ID != "fixture" {
+		t.Fatalf("offline catalog = %+v", doc)
+	}
+	for _, check := range []struct {
+		args []string
+		want string
+	}{
+		{[]string{"list"}, "fixture\tfixture.json\n"},
+		{[]string{"patterns"}, "fixture\tfixture.json\n"},
+		{[]string{"resolve", "--file", input}, "fixture\n"},
+	} {
+		if got := invoke(check.args...); got != check.want {
+			t.Fatalf("offline %v = %q, want %q", check.args, got, check.want)
+		}
+	}
+	dest := filepath.Join(workspace, "exported.json")
+	invoke("export", "fixture", dest)
+	wantFile(t, dest, `{"type":"object"}`)
+	wantFile(t, dest+".NOTICE", "NOTICE\n")
+	if got := invoke("run", "--", input); got != "consumer stdout\n" {
+		t.Fatalf("offline run stdout = %q", got)
+	}
+	wantFile(t, marker, schemaPath+"\n"+input)
+	if after := offlineCacheSnapshot(t, dir); !reflect.DeepEqual(before, after) {
+		t.Fatalf("offline catalog commands changed cache: before=%v, after=%v", before, after)
+	}
+}
+
 func assertAbsentCatalogSummary(t *testing.T, stdout, stderr string, code int, dir, pinned string) {
 	t.Helper()
 
@@ -152,7 +243,7 @@ func seedOfflineMaterializeCache(t *testing.T) (dir, pinned string) {
 		t.Fatal(err)
 	}
 	entry := catalog.Entry{
-		ID: "fixture", Name: "fixture.json",
+		ID: "fixture", Name: "fixture.json", FileMatch: []string{"fixture.json"},
 		Artifact: catalog.Descriptor{
 			MediaType: packed.Manifest.Descriptor.MediaType,
 			Digest:    packed.Manifest.Descriptor.Digest.String(),
@@ -211,13 +302,22 @@ func offlineCacheSnapshot(t *testing.T, dir string) map[string]offlineCacheEntry
 	t.Helper()
 
 	entries := make(map[string]offlineCacheEntry)
-	if err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+	if err := filepath.WalkDir(dir, func(path string, _ fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		info, err := entry.Info()
+		// A handle refreshes NTFS timestamps; directory enumeration and os.Stat can be stale.
+		handle, err := os.Open(path)
 		if err != nil {
 			return err
+		}
+		info, statErr := handle.Stat()
+		closeErr := handle.Close()
+		if statErr != nil {
+			return statErr
+		}
+		if closeErr != nil {
+			return closeErr
 		}
 		rel, err := filepath.Rel(dir, path)
 		if err != nil {

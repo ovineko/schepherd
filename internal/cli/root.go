@@ -322,6 +322,10 @@ func cacheDirPath(cfg *config.Config) (string, error) {
 }
 
 func (a *app) openCache(cfg *config.Config) (*cache.Cache, error) {
+	if cfg.Offline {
+		return a.openCacheWith(cfg, cache.OpenExisting)
+	}
+
 	return a.openCacheWith(cfg, cache.Open)
 }
 

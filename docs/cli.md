@@ -200,10 +200,14 @@ Fills the cache directory with the whole pinned catalog: every schema
 manifest, its payload blob, its unpacked `schema.json` and every notice
 layer. After a successful run, every catalog command works with `--offline`
 from that directory — and from a byte copy of it on another machine, or
-from a read-only copy. The catalog is pinned the usual way
-(`--repository`/`--catalog`, the environment, or `[catalog]`); no project
-configuration file is required, and local `[schemas]` are project files,
-so they are not copied.
+from a read-only copy. Empty service directories (`v1/locks`, `v1/tmp`,
+`v1/quarantine`) need not be copied: offline catalog commands do not create
+them or expire old entries while opening the cache. `path`, `cat`, `export`
+and `run` can still rebuild a missing `schema.json` from a verified cached
+payload when the cache is writable; `materialize --offline` never rebuilds
+it. The catalog is pinned the usual way (`--repository`/`--catalog`, the
+environment, or `[catalog]`); no project configuration file is required,
+and local `[schemas]` are project files, so they are not copied.
 
 Repeated runs download nothing: they re-verify every entry and report the
 counts. An interrupted run can simply be re-run; only what is missing is

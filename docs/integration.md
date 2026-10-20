@@ -245,6 +245,7 @@ config_version = 1
 
 [runner]
 command = "${JSONSCHEMA_BIN}"
+args = ["validate", "{schema}", "{files...}"]
 ```
 
 Notes:

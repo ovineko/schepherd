@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -60,6 +61,54 @@ func TestOpenCreatesLayout(t *testing.T) {
 	again := openCacheAt(t, c.Dir())
 	if again.Dir() != c.Dir() {
 		t.Fatalf("reopen: Dir() = %q, want %q", again.Dir(), c.Dir())
+	}
+}
+
+func TestOpenExistingCreatesLayoutOnlyForWrites(t *testing.T) {
+	for _, existing := range []bool{false, true} {
+		name := "missing root"
+		if existing {
+			name = "empty root"
+		}
+		t.Run(name, func(t *testing.T) {
+			dir := filepath.Join(t.TempDir(), "cache")
+			if existing {
+				if err := os.Mkdir(dir, 0o755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			c, err := OpenExisting(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = c.Close() })
+			assertIs(t, c.VerifyBlob(testContent, -1), ErrNotFound)
+			size := int64(len(testSchema))
+			err = c.WriteBlob(testContent, size, size, bytes.NewReader(testSchema))
+			if !existing {
+				assertIs(t, err, ErrNotFound)
+				_, err := c.WriteMaterialized(testManifest, testContent, size, writeAll(testSchema))
+				assertIs(t, err, ErrNotFound)
+				_, err = c.Lock(t.Context(), "absent")
+				assertIs(t, err, ErrNotFound)
+				assertAbsent(t, dir)
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := c.VerifyBlob(testContent, size); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := c.WriteMaterialized(testManifest, testContent, size, writeAll(testSchema)); err != nil {
+				t.Fatal(err)
+			}
+			if err := c.VerifyMaterialized(testManifest, testContent, size); err != nil {
+				t.Fatal(err)
+			}
+			assertAbsent(t, filepath.Join(dir, locksDir))
+			assertAbsent(t, filepath.Join(dir, quarantineDir))
+		})
 	}
 }
 

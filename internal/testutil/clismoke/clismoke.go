@@ -730,6 +730,12 @@ func (s *scenario) materializeCatalog() {
 
 	s.reg.Close()
 
+	for _, rel := range []string{"v1/locks", "v1/tmp", "v1/quarantine"} {
+		if err := os.RemoveAll(filepath.Join(dir, filepath.FromSlash(rel))); err != nil {
+			s.t.Fatal(err)
+		}
+	}
+
 	offline := []string{"--config", "", "--repository", s.repo, "--catalog", s.set.catalogDigest, "--cache-dir", dir, "--offline"}
 
 	var verify struct {

@@ -107,6 +107,13 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   writable opener initializes layout and removes old temporary/quarantine
   entries before verification. An absent read-only root is an empty cache
   for that opened handle and must remain absent.
+- Other offline catalog commands use `cache.OpenExisting`: opening must not
+  create layout or expire entries, while a missing `schema.json` can still be
+  rebuilt from cached payloads in a writable cache. Complete read-only copies
+  need no locks, temporary or quarantine directories.
+- Cache snapshot tests must read metadata through `os.Open` and `File.Stat`,
+  not `DirEntry.Info` or `os.Stat`: Windows directory-enumeration metadata can
+  retain stale NTFS modification times until a handle is opened and closed.
 - Only `materialize` uses `Store.CatalogForCompleteness`: recognized offline
   catalog gaps must reach the JSON summary and exit 6, while schema descriptors
   from a verified index still drive independent checks. Other catalog commands
