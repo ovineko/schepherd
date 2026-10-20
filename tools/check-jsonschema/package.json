@@ -1,0 +1,9 @@
+{
+  "name": "@schepherd/check-jsonschema",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --dir ../.. dm exec uv -- build tools/check-jsonschema --out-dir dist/local-tools/python-wheel",
+    "test": "pnpm --dir ../.. dm exec uv -- run --directory tools/check-jsonschema --locked python -m unittest discover -s tests"
+  }
+}

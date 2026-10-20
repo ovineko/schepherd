@@ -5,8 +5,6 @@ tasks:
     desc: Build schepherd and schepherd-publisher into dist/bin
     env:
       CGO_ENABLED: "0"
-  # Formatting, go vet and golangci-lint (with the e2e build tag, see
-  # .golangci.yaml) run in `pnpm dm check`.
   lint:
     cmds:
       - go mod verify
@@ -27,6 +25,25 @@ tasks:
     cmds:
       - go run golang.org/x/vuln/cmd/govulncheck@{{.GOVULNCHECK_VERSION}} ./...
     desc: Known-vulnerability scan (needs network for the vulnerability database)
+  # Formatting, go vet and golangci-lint (with the e2e build tag, see
+  # .golangci.yaml) run in `pnpm dm check`.
+  parsers:build:
+    cmds:
+      - go run ./tools/release parsers build
+    desc: Build locked release WASM, exercise its ABI and write digest-pinned metadata
+  parsers:check:
+    cmds:
+      - go run ./tools/release parsers check
+    desc: Verify parser metadata, checksums and actual WASM execution
+  parsers:host:
+    cmds:
+      - go run ./tools/release parsers host
+    desc: Load the local module with the actual Datamitsu parser host
+  parsers:test:
+    cmds:
+      - cargo test --locked
+    desc: Native Rust parser behavior tests (requires the pinned Rust toolchain)
+    dir: parsers
   test:
     cmds:
       - go test ./...
@@ -65,6 +82,11 @@ tasks:
     deps:
       - tools
     desc: Pull and build everything the end-to-end scenarios use (pinned images, the validators image, Go modules)
+  test:frontends:
+    cmds:
+      - pnpm --filter @ovineko/schepherd-ajv test
+      - uv run --directory tools/check-jsonschema --locked python -m unittest discover -s tests
+    desc: Owned validator frontend tests (locked dependencies; pinned Python from .python-version; requires uv 0.12.19)
   test:fuzz:
     cmds:
       - |
@@ -102,6 +124,11 @@ tasks:
       - task: lint
       - task: lint:vuln
       - task: test:race
+      - task: test:frontends
+      - task: parsers:test
+      - task: parsers:build
+      - task: parsers:check
+      - task: parsers:host
       - task: test:fuzz
         vars:
           FUZZTIME: 10s

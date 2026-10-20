@@ -1,0 +1,241 @@
+{
+  "$defs": {
+    "error": {
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "files": {
+          "$ref": "#/$defs/paths"
+        },
+        "kind": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "message"
+      ],
+      "type": "object"
+    },
+    "mode": {
+      "enum": [
+        "batch",
+        "per-file",
+        "stdin"
+      ]
+    },
+    "paths": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "processor": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/mode"
+        },
+        "name": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "output",
+        "mode"
+      ],
+      "type": "object"
+    },
+    "skipped": {
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "file",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "stream": {
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "text"
+          ]
+        },
+        {
+          "required": [
+            "base64"
+          ]
+        }
+      ],
+      "properties": {
+        "base64": {
+          "contentEncoding": "base64",
+          "description": "Retained bytes encoded losslessly when the stream or retained prefix is not valid UTF-8.",
+          "type": "string"
+        },
+        "bytes": {
+          "description": "Total original stream length, including discarded bytes.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "text": {
+          "description": "Retained prefix when both the complete stream and retained prefix are valid UTF-8.",
+          "type": "string"
+        },
+        "truncated": {
+          "description": "True when any stream bytes were discarded by capture limits.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "bytes",
+        "truncated"
+      ],
+      "type": "object"
+    },
+    "task": {
+      "additionalProperties": false,
+      "properties": {
+        "cwd": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "durationMs": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "exitCode": {
+          "minimum": -1,
+          "type": "integer"
+        },
+        "files": {
+          "$ref": "#/$defs/paths",
+          "description": "Absolute original user inputs, before explicit conversion."
+        },
+        "origin": {
+          "enum": [
+            "catalog",
+            "local"
+          ]
+        },
+        "paths": {
+          "$ref": "#/$defs/paths",
+          "description": "Absolute input paths actually passed or streamed to the consumer."
+        },
+        "processor": {
+          "$ref": "#/$defs/processor"
+        },
+        "schemaId": {
+          "type": "string"
+        },
+        "schemaRef": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "failed",
+            "timeout",
+            "start-error",
+            "canceled",
+            "not-started"
+          ]
+        },
+        "stderr": {
+          "$ref": "#/$defs/stream"
+        },
+        "stdout": {
+          "$ref": "#/$defs/stream"
+        }
+      },
+      "required": [
+        "schemaId",
+        "schemaRef",
+        "origin",
+        "files",
+        "paths",
+        "cwd",
+        "processor",
+        "status",
+        "exitCode",
+        "durationMs",
+        "stdout",
+        "stderr"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/report.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The reportVersion 2 document emitted by schepherd run --json. Consumer output is retained as bounded, lossless prefixes; paths identify actual invocations, not inferred diagnostic locations.",
+  "properties": {
+    "error": {
+      "$ref": "#/$defs/error"
+    },
+    "exitCode": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "mode": {
+      "$ref": "#/$defs/mode"
+    },
+    "reportVersion": {
+      "const": 2
+    },
+    "skipped": {
+      "items": {
+        "$ref": "#/$defs/skipped"
+      },
+      "type": "array"
+    },
+    "tasks": {
+      "items": {
+        "$ref": "#/$defs/task"
+      },
+      "type": "array"
+    },
+    "workspace": {
+      "description": "Absolute workspace, or empty when configuration could not be loaded.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reportVersion",
+    "workspace",
+    "mode",
+    "exitCode",
+    "tasks",
+    "skipped"
+  ],
+  "title": "Schepherd attributed execution report",
+  "type": "object"
+}

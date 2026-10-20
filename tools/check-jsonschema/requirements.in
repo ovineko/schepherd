@@ -1,0 +1,6 @@
+-c ../../tests/e2e/validators/requirements.txt
+check-jsonschema==0.38.2
+jsonschema==4.26.0
+referencing==0.37.0
+ruamel-yaml==0.19.1
+json5==0.17.3

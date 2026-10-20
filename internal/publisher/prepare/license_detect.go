@@ -6,6 +6,7 @@ import (
 
 	"github.com/ovineko/schepherd/internal/env"
 	"github.com/ovineko/schepherd/internal/fault"
+	"github.com/ovineko/schepherd/internal/metaschema"
 	"github.com/ovineko/schepherd/internal/publisher/licensedetect"
 	"github.com/ovineko/schepherd/internal/publisher/policy"
 )
@@ -70,7 +71,7 @@ func (d *decider) detectLicenses(ctx context.Context, uris ...string) error {
 	for _, uri := range uris {
 		canonical := d.canon(uri)
 
-		if policy.IsWellKnownMetaschema(uri) || d.policy.HasRule(canonical) {
+		if metaschema.IsStandard(uri) || d.policy.HasRule(canonical) {
 			continue
 		}
 

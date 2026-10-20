@@ -22,6 +22,7 @@ import (
 	"github.com/ovineko/schepherd/internal/env"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/registry"
+	"github.com/ovineko/schepherd/internal/runner"
 	"github.com/ovineko/schepherd/internal/store"
 )
 
@@ -37,12 +38,14 @@ type globalFlags struct {
 }
 
 type app struct {
-	stdin  io.Reader
-	stdout io.Writer
-	stderr io.Writer
-	root   *cobra.Command
-	cfg    *config.Config
-	flags  globalFlags
+	stdin     io.Reader
+	stdout    io.Writer
+	stderr    io.Writer
+	root      *cobra.Command
+	cfg       *config.Config
+	flags     globalFlags
+	machine   bool
+	runReport *runner.Report
 
 	// logMu serializes logf writes: concurrent workers (materialize's pool,
 	// the store's fetch paths) share one stderr writer, and fmt.Fprintf on
@@ -58,19 +61,27 @@ func Main(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io
 	a.root.SetIn(stdin)
 	a.root.SetOut(stdout)
 	a.root.SetErr(stderr)
-
-	err := a.root.ExecuteContext(ctx)
-	if err == nil {
-		return 0
+	a.machine = a.wantsRunJSON(args)
+	if a.machine {
+		a.root.SetOut(io.Discard)
+		a.root.SetErr(io.Discard)
 	}
 
-	if _, classified := errors.AsType[*fault.Error](err); !classified {
-		if _, consumer := errors.AsType[*fault.ConsumerExitError](err); !consumer {
-			err = fault.Wrap(fault.Usage, err, "invalid command line")
+	err := a.root.ExecuteContext(ctx)
+	if err != nil {
+		if _, classified := errors.AsType[*fault.Error](err); !classified {
+			if _, consumer := errors.AsType[*fault.ConsumerExitError](err); !consumer {
+				err = fault.Wrap(fault.Usage, err, "invalid command line")
+			}
 		}
 	}
 
-	a.report(err)
+	if a.machine {
+		return a.finishRunJSON(err)
+	}
+	if err != nil {
+		a.report(err)
+	}
 
 	return fault.ExitCodeOf(err)
 }
@@ -93,7 +104,7 @@ func (a *app) report(err error) {
 }
 
 func (a *app) logf(format string, args ...any) {
-	if a.flags.quiet {
+	if a.flags.quiet || a.machine {
 		return
 	}
 

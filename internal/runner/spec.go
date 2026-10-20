@@ -48,6 +48,9 @@ func DefaultMaxArgsBytes() int {
 type Spec struct {
 	Env          map[string]string
 	Mode         Mode
+	Name         string
+	Type         string
+	Output       string
 	Command      string
 	Cwd          string
 	CwdBase      string

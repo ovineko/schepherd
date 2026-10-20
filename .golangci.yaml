@@ -165,6 +165,10 @@ linters:
         - name: unreachable-code
         - name: var-declaration
         - name: var-naming
+    wrapcheck:
+      extra-ignore-sigs:
+        - github.com/ovineko/schepherd/internal/fault.New(
+        - github.com/ovineko/schepherd/internal/fault.Reclassify(
 run:
   build-tags:
     - e2e

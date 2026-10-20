@@ -412,7 +412,9 @@ func TestConsumerHang(t *testing.T) {
 	t.Cleanup(func() {
 		if !reaped {
 			_ = cmd.Process.Kill()
-			<-done
+			if err := <-done; err == nil {
+				t.Log("consumer exited before cleanup killed it")
+			}
 		}
 	})
 

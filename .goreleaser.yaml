@@ -72,6 +72,7 @@ before:
   hooks:
     - go run ./tools/release licenses check
     - go run ./tools/release notices check
+    - "go run ./tools/release parsers build --dir .tools/parsers --version {{ .Version }}"
 builds:
   - binary: schepherd
     env:
@@ -118,6 +119,10 @@ changelog:
   use: git
 checksum:
   algorithm: sha256
+  extra_files:
+    - glob: .tools/parsers/schepherd-parsers.wasm
+    - glob: .tools/parsers/schepherd-parsers.json
+    - glob: .tools/parsers/schepherd-parsers.oci.json
 git:
   ignore_tags:
     - "catalog-*"
@@ -161,6 +166,10 @@ release:
   # releases forbid adding assets after publication, so everything must be
   # attached inside the GoReleaser run.
   draft: false
+  extra_files:
+    - glob: .tools/parsers/schepherd-parsers.wasm
+    - glob: .tools/parsers/schepherd-parsers.json
+    - glob: .tools/parsers/schepherd-parsers.oci.json
   github:
     name: schepherd
     owner: ovineko

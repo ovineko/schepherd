@@ -3,8 +3,9 @@
 `schepherd run` is a thin adapter: it resolves schemas for the files you pass,
 materializes them (or checks [local schemas](configuration.md#local-schemas)
 in place), and starts the configured consumer with a direct argument
-vector. It never starts a shell, never reads or converts your documents and
-knows nothing about the consumer's output format.
+vector, without a shell. Legacy runners forward the consumer's output unchanged;
+[processors](processors.md) declare an output format and may use an explicitly
+configured converter. Schepherd does not parse validator findings in Go.
 
 ## Planning (before anything starts)
 
@@ -27,10 +28,11 @@ knows nothing about the consumer's output format.
 
 Any error in these steps is reported before the first consumer starts.
 
-A run whose files all use local schemas contacts no registry and does not
-create the cache. `{cache}` still expands to its path; when no cache
-directory can be determined at all, such a run fails only if the runner uses
-`{cache}`.
+A run whose files all use local schemas contacts no registry and creates no cache
+by default. Typed processors store compiler artifacts only when a cache directory
+was explicitly configured; legacy runners do not open it. `{cache}` still expands
+to its path; when no cache directory can be determined at all, such a run fails
+only if the runner uses `{cache}`.
 
 ## Modes
 
@@ -141,3 +143,80 @@ directory, exit code 7) and `not-started` otherwise. Failures in steps 1–3
 materialization, an unusable local schema file with exit code 2) exit before
 a report is written. The report never contains environment values or
 credentials.
+
+## Attributed JSON output
+
+`--json` replaces consumer stdout and stderr with exactly one `reportVersion: 2`
+document on stdout, on success and on failure. Schepherd's own logs are suppressed
+in this mode. The process still returns the real run exit code. The schema is
+[`api/report.schema.json`](https://github.com/ovineko/schepherd/blob/main/api/report.schema.json).
+Without this flag, execution and the version 1 file report are unchanged.
+Combining it with `--report <file>` writes version 1 to that file and version 2
+to stdout.
+
+```json
+{
+  "reportVersion": 2,
+  "workspace": "/abs/project",
+  "mode": "per-file",
+  "exitCode": 1,
+  "tasks": [
+    {
+      "schemaId": "package",
+      "schemaRef": "local:schemas/package.json",
+      "origin": "local",
+      "files": ["/abs/project/package.json"],
+      "paths": ["/abs/project/package.json"],
+      "cwd": "/abs/project",
+      "processor": {
+        "name": "primary",
+        "type": "sourcemeta",
+        "output": "sourcemeta-json",
+        "mode": "per-file"
+      },
+      "status": "failed",
+      "exitCode": 1,
+      "durationMs": 42,
+      "stdout": { "bytes": 0, "text": "", "truncated": false },
+      "stderr": { "bytes": 18, "text": "validation failed\n", "truncated": false }
+    }
+  ],
+  "skipped": []
+}
+```
+
+Machine mode starts one consumer task per original input. A batch runner's
+single `{files...}` argument becomes `{file}` and the actual reported mode is
+`per-file`; stdin mode remains stdin. This gives anonymous validator findings
+one known input, rather than guessing that the first returned document belongs
+to the first filename. A multi-document YAML input is still one input.
+
+`files` contains absolute original inputs; `paths` contains the actual paths
+passed or streamed to the consumer. They differ after explicit conversion.
+`cwd` is the resolved working directory, and `processor` names the declaration,
+type, output format and actual task mode. Legacy commands are described as
+`runner` / `custom` / `raw`, never guessed from their executable name. No
+executable arguments or environment values are serialized.
+
+Each stream retains at most 256 KiB and all streams share a 4 MiB retention
+budget. Consumers are still drained after those limits: `bytes` counts every
+original byte read, including discarded bytes, and `truncated` marks discarded
+bytes. If a pipe cannot finish within the cleanup grace, the task fails and
+both streams are marked truncated; bytes the pipe never delivered cannot be counted.
+Valid UTF-8 is stored in `text`; otherwise the retained bytes use `base64`,
+including when the retention boundary splits a character or an invalid byte
+occurs in the discarded suffix. Exactly one encoding is present. A nonzero,
+timed-out or interrupted task never becomes successful because its output was
+unrecognized or truncated. The shared budget is divided equally across the two
+streams of every planned task, capped at 256 KiB per stream, before execution.
+Unused reservations are not reassigned, so retention is independent of parallel
+completion order and task order stays stable.
+
+Argument, configuration, input, matching, materialization and planning failures
+also produce a document, with a classified `error` (`kind`, `message`, and a
+file or files only when known). Tasks are empty when there is no complete
+execution plan; no working directory or invocation is invented. `workspace`
+is empty if configuration could not be loaded. Execution uses the same status
+names as version 1, with empty streams for tasks that could not start. A
+`not-started` task has exit code -1; timeout and cancellation remain 124 and 130. Skipped inputs are always listed with their reason, including an explicitly
+configured unsupported-format skip.

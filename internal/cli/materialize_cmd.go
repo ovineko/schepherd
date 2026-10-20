@@ -12,8 +12,10 @@ import (
 
 func (a *app) newMaterializeCmd() *cobra.Command {
 	var (
-		asJSON      bool
-		concurrency int
+		asJSON         bool
+		concurrency    int
+		compile        bool
+		compileSchemas []string
 	)
 
 	cmd := &cobra.Command{
@@ -23,6 +25,9 @@ func (a *app) newMaterializeCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if concurrency < 1 || concurrency > 64 {
 				return fault.New(fault.Usage, "--concurrency must be between 1 and 64")
+			}
+			if len(compileSchemas) > 0 && !compile {
+				return fault.New(fault.Usage, "--compile-schema requires --compile")
 			}
 
 			ctx, cancel, err := a.withTimeout(cmd.Context())
@@ -47,6 +52,15 @@ func (a *app) newMaterializeCmd() *cobra.Command {
 
 			result.Repository = s.repo.String()
 			result.CacheDir = s.cache.Dir()
+			var compilation *compilationSummary
+			if compile && result.Complete {
+				prepared, compileErr := a.compileCatalog(ctx, s, concurrency, compileSchemas)
+				if compileErr != nil {
+					return compileErr
+				}
+				compilation = &prepared
+				result.Complete = prepared.Missing == 0
+			}
 
 			if !result.Complete {
 				for _, m := range result.Missing {
@@ -60,15 +74,28 @@ func (a *app) newMaterializeCmd() *cobra.Command {
 				result.CachedSchemaFiles)
 
 			if asJSON {
-				if err := a.writeJSON(result); err != nil {
+				output := struct {
+					*materialize.Result
+
+					Compilation *compilationSummary `json:"compilation,omitempty"`
+				}{result, compilation}
+				if err := a.writeJSON(output); err != nil {
 					return err
 				}
 			} else if err := a.write(textSummary(result)); err != nil {
 				return err
+			} else if compilation != nil {
+				if err := a.write("compiled\t" + strconv.FormatInt(compilation.Artifacts, 10) + "\ncapabilities\t" + strconv.FormatInt(compilation.Capabilities, 10) + "\nunsupported\t" + strconv.FormatInt(compilation.Unsupported, 10) + "\nmissingCompilations\t" + strconv.FormatInt(compilation.Missing, 10) + "\n"); err != nil {
+					return err
+				}
 			}
 
 			if !result.Complete {
-				return fault.New(fault.Offline, "the cache is not complete for catalog %s (%d missing entries)", result.CatalogDigest, len(result.Missing))
+				missing := int64(len(result.Missing))
+				if compilation != nil {
+					missing += compilation.Missing
+				}
+				return fault.New(fault.Offline, "the cache is not complete for catalog %s (%d missing entries)", result.CatalogDigest, missing)
 			}
 
 			return nil
@@ -77,6 +104,8 @@ func (a *app) newMaterializeCmd() *cobra.Command {
 
 	cmd.Flags().BoolVar(&asJSON, "json", false, "machine-readable summary")
 	cmd.Flags().IntVar(&concurrency, "concurrency", materialize.DefaultConcurrency, "schemas verified or fetched in parallel")
+	cmd.Flags().BoolVar(&compile, "compile", false, "prepare configured processor compilations too (verify only with --offline)")
+	cmd.Flags().StringSliceVar(&compileSchemas, "compile-schema", nil, "compile only these catalog schema IDs (requires --compile)")
 
 	return cmd
 }

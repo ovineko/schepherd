@@ -58,6 +58,7 @@ Guides = [
   { Installation = "installation.md" },
   { Configuration = "configuration.md" },
   { "File matching" = "matching.md" },
+  { "Validation processors" = "processors.md" },
   { Runner = "runner.md" },
   { "Mirroring and retention" = "mirroring.md" },
   { "Integrating with other tools" = "integration.md" },
@@ -66,6 +67,7 @@ Guides = [
 [[project.nav]]
 Reference = [
   { "Command reference" = "cli.md" },
+  { "Parser module" = "parser-module.md" },
   { "OCI wire format" = "oci-format.md" },
   { Versioning = "versioning.md" },
 ]

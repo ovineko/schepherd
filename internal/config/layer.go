@@ -49,6 +49,7 @@ type extendsRef struct {
 type layer struct {
 	registries map[string]*registryLayer
 	schemas    map[string]*localSchemaLayer
+	processors map[string]*processorLayer
 	file       string
 	extends    []extendsRef
 	runner     runnerLayer
@@ -76,6 +77,7 @@ type limitsLayer struct {
 type localSchemaLayer struct {
 	path      opt[string]
 	fileMatch opt[[]string]
+	processor opt[string]
 	decl      origin
 }
 
@@ -96,6 +98,16 @@ type runnerLayer struct {
 	maxArgsBytes opt[int64]
 	failFast     opt[bool]
 	inheritEnv   opt[bool]
+	processors   opt[[]string]
+	unsupported  opt[string]
+}
+
+type processorLayer struct {
+	runner   runnerLayer
+	typeName opt[string]
+	output   opt[string]
+	formats  opt[[]string]
+	convert  opt[string]
 }
 
 func newLayer(file string) *layer {
@@ -103,6 +115,7 @@ func newLayer(file string) *layer {
 		file:       file,
 		registries: map[string]*registryLayer{},
 		schemas:    map[string]*localSchemaLayer{},
+		processors: map[string]*processorLayer{},
 		runner:     runnerLayer{env: map[string]opt[string]{}},
 	}
 }
@@ -124,6 +137,7 @@ func (l *layer) apply(src *layer) {
 
 		dst.path.override(s.path)
 		dst.fileMatch.override(s.fileMatch)
+		dst.processor.override(s.processor)
 		dst.decl = s.decl
 	}
 
@@ -145,7 +159,24 @@ func (l *layer) apply(src *layer) {
 		dst.credentialsFile.override(reg.credentialsFile)
 	}
 
-	r, s := &l.runner, &src.runner
+	for name, p := range src.processors {
+		dst, ok := l.processors[name]
+		if !ok {
+			dst = &processorLayer{runner: runnerLayer{env: map[string]opt[string]{}}}
+			l.processors[name] = dst
+		}
+		dst.typeName.override(p.typeName)
+		dst.output.override(p.output)
+		dst.formats.override(p.formats)
+		dst.convert.override(p.convert)
+		mergeRunner(&dst.runner, &p.runner)
+	}
+	mergeRunner(&l.runner, &src.runner)
+}
+
+func mergeRunner(r, s *runnerLayer) {
+	r.processors.override(s.processors)
+	r.unsupported.override(s.unsupported)
 	r.mode.override(s.mode)
 	r.command.override(s.command)
 	r.args.override(s.args)

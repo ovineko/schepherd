@@ -1,8 +1,8 @@
 # Configuration
 
 Schepherd reads one local TOML file (format `config_version = 1`). The file is
-a **trusted, executable contract**: its `[runner]` section decides which
-program runs with which arguments. Schepherd therefore never discovers a
+a **trusted, executable contract**: its `[runner]` or `[processors]` sections
+decide which program runs with which arguments. Schepherd therefore never discovers a
 configuration file on its own. It loads one only when you pass
 `--config <file>` or set `SCHEPHERD_CONFIG=<file>`. Nothing fetched from a
 registry can add commands, environment variables or configuration.
@@ -70,7 +70,7 @@ set.
 | `registries."<key>".ca_file`          | path             | system roots                              | Extra PEM CA bundle trusted for the repositories this entry applies to.                                                                                           |
 | `registries."<key>".credentials_file` | path             | Docker config discovery                   | Docker-format `config.json` used only for the repositories this entry applies to.                                                                                 |
 | `runner.mode`                         | string           | `batch`                                   | `batch`, `per-file` or `stdin`.                                                                                                                                   |
-| `runner.command`                      | string           | required for `run`                        | Executable; see [Executable resolution](#executable-resolution). Must not expand to an empty string.                                                              |
+| `runner.command`                      | string           | required unless processors are declared   | Legacy executable; mutually exclusive with `[processors]`. See [Executable resolution](#executable-resolution).                                                   |
 | `runner.args`                         | array of strings | `[]`                                      | Argument templates.                                                                                                                                               |
 | `runner.cwd`                          | path             | `{workspace}`                             | Working directory of the consumer. Must not expand to an empty string.                                                                                            |
 | `runner.timeout`                      | duration string  | `5m`                                      | Per consumer process; exceeding it yields exit code 124.                                                                                                          |
@@ -82,6 +82,11 @@ set.
 | `[[mappings]]`                        | array of tables  | `[]`                                      | Local `file_match` overrides, each with `schema = "<id>"` (a catalog or `[schemas]` ID).                                                                          |
 | `schemas."<id>".path`                 | path             | required once the extends chain is merged | JSON Schema file of the project, relative to the file that sets it; only `${NAME}` is expanded. Used in place, never copied. See [Local schemas](#local-schemas). |
 | `schemas."<id>".file_match`           | array of strings | none                                      | Paths the local schema applies to automatically. They take precedence over catalog `fileMatch`; `[[mappings]]` take precedence over them.                         |
+| `runner.processors`                   | array of names   | declared processors in type/name order    | Optional explicit selection order; each name must be declared, without duplicates.                                                                                |
+| `runner.unsupported`                  | string           | `error`                                   | `error` or `skip`; skipped inputs remain visible in output/reports. Never suppresses ambiguous mappings or infrastructure errors.                                 |
+| `processors."<name>"`                 | table            | none                                      | Typed validator or custom consumer. See [Processors](processors.md) for all fields and executable contracts.                                                      |
+| `schemas."<id>".processor`            | string           | automatic selection                       | Explicit declared processor for this local schema.                                                                                                                |
+| `mappings.processor`                  | string           | schema selection                          | Explicit declared processor for inputs matched by this mapping; conflicting selections fail.                                                                      |
 
 Unknown keys are errors in every file.
 
@@ -128,13 +133,16 @@ does not stop `schepherd pin` from running before the digest exists (see
   them, never against the current directory.
 - Bases apply left to right, then the declaring file on top.
 - Scalars override. Tables (`[runner.env]`, `[registries."<key>"]`, `[limits]`,
-  `[catalog]`, `[runner]`, `[schemas."<id>"]`) merge key by key.
+  `[catalog]`, `[runner]`, `[schemas."<id>"]`, `[processors."<name>"]` and their `env` tables) merge key by key.
 - A later file can set only `path` or only `file_match` of a `[schemas]` ID
   declared in a base; IDs it does not mention are kept. Some file of the
   chain must set `path`, otherwise loading fails with "required key is
   missing" at the last declaration of the ID.
 - Arrays replace: `runner.args`, `[[mappings]]` and a `file_match` from a
   later file replace the earlier value entirely. Nothing is concatenated.
+- Processor `type` and `command` are required only after merging; a base can declare them
+  while a child sets `output`, `formats` or `convert`. `runner.processors`, processor
+  `args` and `formats` arrays replace, never append.
 - `extends` is followed in every file, depth first: a base's own bases apply
   before it, so the set of applied files accumulates.
 - Relative path values in any file (the top-level one included) resolve
@@ -190,7 +198,9 @@ file_match = ["config/company.json"]
   That covers `path`, `cat` and `export` of a local ID, and `resolve` and
   `run` when every file resolves to a local schema through `--schema`,
   `[[mappings]]` or `file_match`. They work without `[catalog]` and with
-  `--offline`, and never create the cache directory. `{cache}` still expands
+  `--offline`. They create no cache by default. A typed-processor `run` with an
+  explicitly configured cache directory stores compiler artifacts there, but never
+  copies the local schema or caches validation results. `{cache}` still expands
   to the configured or default path. When no cache directory can be
   determined (no `--cache-dir`, `SCHEPHERD_CACHE_DIR` or `cache_dir`, and no
   home directory), such a run still works unless the runner uses `{cache}`.
@@ -207,6 +217,27 @@ file_match = ["config/company.json"]
 `schemas`: an object keyed by ID with `path` (absolute), `declaredIn` (the
 file that set `path`) and `fileMatch`. [`examples/local.schepherd.toml`](https://github.com/ovineko/schepherd/blob/main/examples/local.schepherd.toml)
 declares a local schema next to the pinned catalog.
+
+## Processor selection
+
+Declare validators explicitly under `[processors."<name>"]` instead of `runner.command`
+to enable capability-aware selection. Schepherd never installs or discovers a processor.
+An omitted `runner.processors` tries only declared processors, sorted by type
+`sourcemeta`, `check-jsonschema`, `ajv`, `custom`, then by name. An explicit list replaces
+that order and may select a subset. Mapping `processor` overrides schema `processor`;
+an explicit selection tries that processor alone. Conflicting matching mappings fail,
+even when `runner.unsupported = "skip"`.
+
+Selection compiles/checks the schema before document validation starts and caches the
+result for each schema/processor within the run. Explicit incompatibility or a classified
+schema compilation rejection permits trying another processor before any document validation.
+Malformed schema JSON, a missing executable, timeout, crash or malformed capability response
+fails the run. An invalid document is never retried under another validator.
+See [Processors](processors.md) for supported formats, adapters and explicit yq conversion.
+
+`config check --json` also includes unexpanded `processors`, `processorOrder`,
+`unsupported` and any schema/mapping `processor`; executable environment values do not
+leak into the summary. `config check` does not start capability probes.
 
 ## Interpolation
 

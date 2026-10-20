@@ -38,6 +38,10 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
 - Install pinned tools (bundler, GoReleaser, syft shim): `pnpm dm exec task -- tools`
 - Third-party license texts: `go run ./tools/release licenses generate` (check: `go run ./tools/release licenses check`)
 - Third-party notices: `go run ./tools/release notices generate` (check: `go run ./tools/release notices check`)
+- Parser module: `pnpm parsers:test`, `pnpm parsers:build`, `pnpm parsers:check`, `pnpm parsers:host`.
+  The Go build remains independent of Rust; release preparation builds and verifies the parser separately.
+- Owned validator frontends: `pnpm dm exec task -- test:frontends` (AJV plus locked Python environment).
+  This task runs in mandatory CI and in `task verify`; Go and Rust tests do not cover the frontend packages.
 
 ### Rules specific to this project
 
@@ -77,8 +81,10 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
 - Local schemas (`[schemas]`) are used in place, never copied into the cache, and read only through
   `config.LocalSchema.Read` (via `sources.readLocal` in `internal/cli`: regular file, `limits.max_schema_bytes`,
   `internal/jsonutil`); every command that uses one, `resolve` included, must check it. A command that uses only local
-  schemas must not open the cache or contact a registry, nor require a cache directory unless the runner uses
-  `{cache}`. `internal/cli/sources.go` opens the catalog session lazily, first only when no `[schemas]` are declared
+  schemas must not contact a registry or require a cache directory unless the runner uses `{cache}`.
+  Such a run opens a compiler cache only when a cache directory was explicitly configured and typed
+  processors are used; without that setting compiler artifacts remain invocation-local.
+  `internal/cli/sources.go` opens the catalog session lazily, first only when no `[schemas]` are declared
   (catalog-only configurations and their tests rely on that error order).
 - A published schema is never dropped automatically and never fails `prepare` or the weekly job: when it cannot be
   refreshed, `internal/publisher/prepare` holds it (a `state.Held*` reason) and the catalog keeps its last entry and
@@ -135,6 +141,31 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
 - golangci-lint refuses concurrent runs; pass `--allow-parallel-runners` when several agents lint at once.
 - `datamitsu.config.js` pins the Go linter independently of the shared wrapper: keep it able to read the export data
   of the Go toolchain in `go.mod`, including after patch updates.
+- When inherited Go launcher paths confuse the linter's toolchain detection, run checks with
+  `GOROOT="$(go env GOROOT)"`; never suppress its export-data errors or disable its rules.
+- Source security checks exclude nested worktrees and installed build/dependency trees.
+  Keep project source and dependency manifests covered.
+- Structured output is the versioned run envelope from `internal/runner`, including captured streams
+  and original versus converted input paths. Validator output parsing belongs only to `parsers/`;
+  Go must not grow a second diagnostic parser. Converted documents never inherit source coordinates.
+- Processor compilation is not a validation-result cache. `materialize --compile` stores Sourcemeta
+  templates, AJV standalone code and Python capability decisions under schema/tool/settings recipe
+  digests; `run` must pass those exact verified artifacts to validators. Keep compiler failures fatal
+  and source validation enabled on every run. `--compile-schema` limits the prepared set explicitly.
+- Compilation metadata uses `internal/cache` rooted I/O, blob digests, atomic staging and per-key locks.
+  Offline materialize verifies compiler artifacts without invoking compilers or writing. Local schemas
+  with external references or nonstandard root/nested `$schema` remain invocation-local until their
+  dependency graph is part of the key. `internal/metaschema` owns the standard dialect allowlist
+  shared by compilation safety and publisher license decisions; never import publisher code into the client.
+- Sourcemeta compilation and validation use an explicit empty tool configuration. Do not let an
+  ambient `jsonschema.json` change the meaning of cached managed artifacts.
+- Conversion changes the validator's input path, not the identity of per-file settings: `{file}` in
+  environment values resolves to the original source for both compilation and validation. Arguments
+  still resolve to the converted input. Keep this distinction in `runner.BuildPlan`.
+- WASM publication must verify the registry manifest, config and payload anonymously before signing
+  the exact `ref@digest` and attesting its registry subject. `parsers verify-published` deliberately
+  uses an empty credential store; reusing a push login would make private packages falsely pass.
+  Signed GitHub release checksums and registry-subject signatures/provenance are separate deliverables.
 - Keep the datamitsu wrapper's pnpm security patch and scoped dependency replacement together when changing its pin
   (`CONTRIBUTING.md`, "Dependency and pin updates"); a normal version bump does not migrate the patch.
 - go-toml/v2 matches keys case-insensitively; `internal/config` adds its own case-sensitive unknown-key check.

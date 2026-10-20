@@ -72,6 +72,7 @@ func newRoot(environ []string) *cobra.Command {
 		newLicensesCommand(environ),
 		newNoticesCommand(environ),
 		newPackagesCommand(environ),
+		newParsersCommand(environ),
 		newE2EReportCommand(),
 		newE2EStreamCommand(),
 		newVersionCommand(environ),
