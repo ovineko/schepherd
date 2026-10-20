@@ -126,8 +126,10 @@ actual host smoke, and compares artifacts built at different checkout paths.
 The packaging job includes parser assets when rehearsing snapshot releases.
 The mandatory frontend job runs AJV tests with frozen pnpm workspace dependencies
 and Python frontend tests with `uv run --locked` and the committed `uv.lock`.
-Python is pinned in `tools/check-jsonschema/.python-version`; CI provisions that
-runtime and uv 0.12.19 without a setup cache. To run both suites locally:
+Python is pinned in `tools/check-jsonschema/.python-version`; CI installs that
+portable runtime through uv 0.12.19 without a setup cache. This does not depend
+on an `actions/setup-python` build being available for the runner's Ubuntu release.
+To run both suites locally:
 
 ```bash
 pnpm install --frozen-lockfile

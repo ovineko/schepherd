@@ -42,6 +42,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   The Go build remains independent of Rust; release preparation builds and verifies the parser separately.
 - Owned validator frontends: `pnpm dm exec task -- test:frontends` (AJV plus locked Python environment).
   This task runs in mandatory CI and in `task verify`; Go and Rust tests do not cover the frontend packages.
+  CI installs the pinned Python with uv, not `actions/setup-python`: older Python patches may have
+  no runner-specific build for the current Ubuntu release.
 
 ### Rules specific to this project
 
