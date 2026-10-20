@@ -1,0 +1,10 @@
+{
+  "name": "@schepherd/parsers",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "cargo build --locked --release --target wasm32-unknown-unknown",
+    "test": "cargo test --locked"
+  }
+}

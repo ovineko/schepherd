@@ -208,6 +208,7 @@ jobs:
       attestations: write # build provenance of every release file and package
       contents: write # the GitHub release
       id-token: write # keyless Sigstore certificates for the signature and attestations
+      packages: write # publish the exact parser OCI manifest recorded in the release
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -243,7 +244,7 @@ jobs:
         name: Binaries of every target (nothing is published)
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
-          args: build --clean
+          args: build --clean --skip=before
           distribution: goreleaser
           version: v2.18.2
       # The packages are built here, once, with npm pack, uv build (the
@@ -298,6 +299,44 @@ jobs:
           (cd dist && sha256sum --strict -c "$RUNNER_TEMP/binaries.sha256")
           test "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)" = false
           echo "published=true" >> "$GITHUB_OUTPUT"
+      - env:
+          DOCKER_CONFIG: ${{ runner.temp }}/parser-auth
+          REGISTRY_TOKEN: ${{ github.token }}
+          REGISTRY_USER: ${{ github.actor }}
+          VERSION: ${{ needs.tag.outputs.version }}
+        if: ${{ !cancelled() && steps.published.outputs.published == 'true' }}
+        name: Publish the checked parser OCI artifact after immutable release publication
+        run: |
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+          go run ./tools/release parsers publish --dir .tools/parsers --version "$VERSION"
+      - env:
+          VERSION: ${{ needs.tag.outputs.version }}
+        id: parser
+        if: ${{ !cancelled() && steps.published.outputs.published == 'true' }}
+        name: Verify published manifest, config and WASM with no push credentials
+        run: |
+          go run ./tools/release parsers verify-published --dir .tools/parsers --version "$VERSION"
+          {
+            echo "ref=$(jq -r .oci.ref .tools/parsers/schepherd-parsers.json)"
+            echo "digest=$(jq -r .oci.digest .tools/parsers/schepherd-parsers.json)"
+          } >> "$GITHUB_OUTPUT"
+      - env:
+          DOCKER_CONFIG: ${{ runner.temp }}/parser-auth
+          PARSER_DIGEST: ${{ steps.parser.outputs.digest }}
+          PARSER_REF: ${{ steps.parser.outputs.ref }}
+        if: ${{ !cancelled() && steps.parser.outcome == 'success' }}
+        name: Keyless cosign signature of the exact parser OCI manifest
+        run: |
+          cosign sign --yes "$PARSER_REF@$PARSER_DIGEST"
+          install -D -m 600 "$DOCKER_CONFIG/config.json" "$HOME/.docker/config.json"
+      - if: ${{ !cancelled() && steps.parser.outcome == 'success' }}
+        name: Parser OCI provenance in GitHub and the registry
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          create-storage-record: false
+          push-to-registry: true
+          subject-digest: ${{ steps.parser.outputs.digest }}
+          subject-name: ${{ steps.parser.outputs.ref }}
       - if: ${{ !cancelled() && steps.published.outputs.published == 'true' }}
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
@@ -309,6 +348,9 @@ jobs:
             ${{ runner.temp }}/packages/npm/*.tgz
             ${{ runner.temp }}/packages/pypi/*.whl
             ${{ runner.temp }}/packages/gem/*.gem
+            .tools/parsers/schepherd-parsers.wasm
+            .tools/parsers/schepherd-parsers.json
+            .tools/parsers/schepherd-parsers.oci.json
             ${{ runner.temp }}/packages/*_checksums.txt
   tag:
     name: Validate SemVer tag
@@ -374,6 +416,9 @@ name: Release
 # and the gem is attested for `gh attestation verify`; npm publishes with
 # provenance, PyPI receives a PEP 740 attestation of every wheel and
 # rubygems.org a Sigstore attestation of the gem.
+# The parser's signed release assets also have file provenance. Its separate
+# OCI subject is pulled and byte-verified without push credentials, signed
+# keylessly by digest and attested in GitHub and the registry.
 #
 # "Re-run failed jobs" finishes an interrupted run: the npm, PyPI and
 # RubyGems jobs skip what a registry already has with the same bytes and fail

@@ -179,7 +179,9 @@ func TestConsumerSkipsFIFOArgument(t *testing.T) {
 		}
 	case <-time.After(10 * time.Second):
 		_ = cmd.Process.Kill()
-		<-done
+		if err := <-done; err == nil {
+			t.Log("consumer exited before it was killed")
+		}
 		t.Fatal("consumer blocked on a FIFO argument")
 	}
 

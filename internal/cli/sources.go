@@ -189,7 +189,7 @@ func (s *sources) cacheDir() (string, error) {
 	}
 
 	dir, err := cacheDirPath(s.cfg)
-	if err != nil && !s.cfg.Runner.Uses(interp.Cache) {
+	if err != nil && !s.cfg.RunnerUses(interp.Cache) {
 		return "", nil
 	}
 

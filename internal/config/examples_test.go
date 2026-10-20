@@ -20,10 +20,13 @@ func TestExamplesLoad(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"SCHEPHERD_REPOSITORY": "registry.example/org/schemas",
-		"SCHEPHERD_CATALOG":    "sha256:" + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		"JSONSCHEMA_BIN":       "/opt/validators/jsonschema",
-		"CHECK_JSONSCHEMA_BIN": "/opt/validators/check-jsonschema",
+		"SCHEPHERD_REPOSITORY":      "registry.example/org/schemas",
+		"SCHEPHERD_CATALOG":         "sha256:" + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		"JSONSCHEMA_BIN":            "/opt/validators/jsonschema",
+		"CHECK_JSONSCHEMA_BIN":      "/opt/validators/check-jsonschema",
+		"CHECK_JSONSCHEMA_FRONTEND": "/opt/validators/check-jsonschema-frontend",
+		"AJV_FRONTEND":              "/opt/validators/ajv-frontend",
+		"YQ_BIN":                    "/opt/validators/yq",
 	}
 	lookup := func(name string) (string, bool) {
 		v, ok := vars[name]
@@ -63,8 +66,16 @@ func TestExamplesLoad(t *testing.T) {
 				t.Fatal("the example configures no runner")
 			}
 
-			if err := runner.ValidateSpec(cfg.Runner); err != nil {
-				t.Errorf("runner: %v", err)
+			if len(cfg.Processors) == 0 {
+				if err := runner.ValidateSpec(cfg.Runner); err != nil {
+					t.Errorf("runner: %v", err)
+				}
+			} else {
+				for name, p := range cfg.Processors {
+					if err := runner.ValidateSpec(p.Spec); err != nil {
+						t.Errorf("processor %s: %v", name, err)
+					}
+				}
 			}
 
 			if err := cfg.CheckRunnerEnv(lookup); err != nil {

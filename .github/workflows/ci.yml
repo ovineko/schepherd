@@ -34,7 +34,7 @@ jobs:
         run: docker compose -f tests/e2e/compose.yaml --profile auth --profile npm config --quiet
       # Scenarios never download anything: the suite refuses to start while an
       # image is missing, and host Go commands run with GOPROXY=off.
-      - name: End-to-end preparation (images, validators image, wheel build backend, Go modules)
+      - name: End-to-end preparation (images, wheel backend, Go modules, pinned Rust and locked Cargo dependencies)
         run: |
           go mod download
           E2E_PREPARE=1 go test -tags e2e -count=1 -timeout 30m -run '^$' -v ./tests/e2e
@@ -62,6 +62,29 @@ jobs:
     # The preparation step (image pulls and the validators build) runs before
     # the suite's own 55-minute limit.
     timeout-minutes: 90
+  frontends:
+    name: Owned AJV and check-jsonschema frontend behavior
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          version: "0.12.19"
+      - name: Install the frontend's pinned portable Python
+        run: uv python install
+        working-directory: tools/check-jsonschema
+      - name: Locked workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Frontend behavior (no validation result cache)
+        run: pnpm dm exec task -- test:frontends
   fuzz:
     name: Fuzz (bounded)
     runs-on: ubuntu-26.04
@@ -166,6 +189,8 @@ jobs:
         run: |
           clone="${RUNNER_TEMP}/reproduce"
           git clone -q --no-local . "$clone"
+          version="$(go run ./tools/release version snapshot --dist dist)"
+          (cd "$clone" && go run ./tools/release parsers build --dir .tools/parsers --version "$version")
           (cd "$clone" && goreleaser release --snapshot --clean --skip=before,sign,sbom)
           diff -u <(grep -v '\.sbom\.json$' dist/*_checksums.txt) "$clone"/dist/*_checksums.txt
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
@@ -195,6 +220,43 @@ jobs:
           ruby -wc dist/homebrew/Casks/schepherd.rb
           jq -e '.architecture["64bit"].hash and .architecture.arm64.hash' dist/scoop/bucket/schepherd.json
           test "$(find dist/winget/manifests/o/ovineko/schepherd -name '*.yaml' | wc -l)" -eq 3
+  parsers:
+    name: Parser native tests, reproducible WASM and actual host
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          cache: false
+          go-version-file: go.mod
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - name: Install actual parser host
+        run: pnpm install --frozen-lockfile
+      - name: Native parser behavior
+        run: cargo test --locked
+        working-directory: parsers
+      - name: Locked release module, metadata and ABI smoke
+        run: |
+          go run ./tools/release parsers build
+          go run ./tools/release parsers check
+          go run ./tools/release parsers host
+      - name: Reproducible module at a different checkout path
+        run: |
+          git clone -q --no-local . "$RUNNER_TEMP/parser-reproduce"
+          go run ./tools/release parsers build --dir "$RUNNER_TEMP/parser-first"
+          (cd "$RUNNER_TEMP/parser-reproduce" && go run ./tools/release parsers build --dir "$RUNNER_TEMP/parser-second")
+          diff "$RUNNER_TEMP/parser-first/SHA256SUMS" "$RUNNER_TEMP/parser-second/SHA256SUMS"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: schepherd-parsers
+          path: dist/parsers/
+          retention-days: 14
   repository-checks:
     name: Repository checks (datamitsu)
     runs-on: ubuntu-26.04
@@ -291,7 +353,7 @@ jobs:
         name: Snapshot binary of this runner (launcher smokes)
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
-          args: build --snapshot --clean --single-target --id schepherd
+          args: build --snapshot --clean --single-target --id schepherd --skip=before
           distribution: goreleaser
           version: v2.18.2
       - if: runner.os != 'Linux' || runner.arch != 'X64'

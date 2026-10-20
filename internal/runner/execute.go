@@ -30,16 +30,19 @@ type outcome struct {
 }
 
 type executor struct {
-	plan     *Plan
-	stdout   io.Writer
-	stderr   io.Writer
-	spoolErr error
-	spoolDir string
-	outcomes []outcome
-	timeout  time.Duration
-	grace    time.Duration
-	jobs     int
-	failFast bool
+	plan      *Plan
+	stdout    io.Writer
+	stderr    io.Writer
+	spoolErr  error
+	spoolDir  string
+	outcomes  []outcome
+	timeout   time.Duration
+	grace     time.Duration
+	jobs      int
+	failFast  bool
+	capture   bool
+	workspace string
+	streams   []taskCapture
 }
 
 // spool holds one consumer's output until it is replayed. The files are named
@@ -88,14 +91,26 @@ func Execute(ctx context.Context, plan *Plan, opts Options) (*Report, error) {
 
 func newExecutor(plan *Plan, opts Options) *executor {
 	x := &executor{
-		plan:     plan,
-		stdout:   opts.Stdout,
-		stderr:   opts.Stderr,
-		outcomes: make([]outcome, len(plan.Tasks)),
-		timeout:  opts.Spec.Timeout,
-		grace:    opts.KillGrace,
-		jobs:     min(max(opts.Spec.Jobs, 1), MaxJobs, max(len(plan.Tasks), 1)),
-		failFast: opts.Spec.FailFast,
+		plan:      plan,
+		stdout:    opts.Stdout,
+		stderr:    opts.Stderr,
+		outcomes:  make([]outcome, len(plan.Tasks)),
+		timeout:   opts.Spec.Timeout,
+		grace:     opts.KillGrace,
+		jobs:      min(max(opts.Spec.Jobs, 1), MaxJobs, max(len(plan.Tasks), 1)),
+		failFast:  opts.Spec.FailFast,
+		capture:   opts.Capture,
+		workspace: opts.Workspace,
+	}
+
+	if x.capture {
+		x.stdout, x.stderr = nil, nil
+		x.streams = make([]taskCapture, len(plan.Tasks))
+		perStream := min(MaxStreamBytes, MaxCaptureBytes/(2*max(len(plan.Tasks), 1)))
+		for i := range x.streams {
+			x.streams[i].stdout.budget = &captureBudget{remaining: perStream}
+			x.streams[i].stderr.budget = &captureBudget{remaining: perStream}
+		}
 	}
 
 	if x.timeout <= 0 {
@@ -207,6 +222,10 @@ func (x *executor) replayInOrder(finished <-chan int, spools []*spool) error {
 }
 
 func (x *executor) runSpooled(ctx context.Context, task *Task) (outcome, *spool) {
+	if x.capture {
+		return x.run(ctx, task, nil, nil), nil
+	}
+
 	if x.spoolErr != nil {
 		return startFailure(fault.Wrap(fault.Internal, x.spoolErr, "spool consumer output")), nil
 	}
@@ -320,6 +339,10 @@ func (x *executor) run(ctx context.Context, task *Task, stdout, stderr io.Writer
 		return interrupted(task, 0)
 	}
 
+	if x.capture {
+		stdout, stderr = &x.streams[task.Index].stdout, &x.streams[task.Index].stderr
+	}
+
 	cmd := &exec.Cmd{
 		Path:      task.Path,
 		Args:      task.Args,
@@ -380,6 +403,11 @@ func (x *executor) run(ctx context.Context, task *Task, stdout, stderr io.Writer
 		group.kill()
 	}
 
+	if x.capture && errors.Is(waitErr, exec.ErrWaitDelay) {
+		x.streams[task.Index].stdout.incomplete = true
+		x.streams[task.Index].stderr.incomplete = true
+	}
+
 	return x.classify(task, cmd.ProcessState, waitErr, reason, time.Since(began))
 }
 
@@ -403,8 +431,13 @@ func (x *executor) classify(task *Task, state *os.ProcessState, waitErr error, r
 	o := outcome{status: StatusOK, duration: elapsed}
 
 	var exitErr *exec.ExitError
-	if waitErr != nil && !errors.As(waitErr, &exitErr) && !errors.Is(waitErr, exec.ErrWaitDelay) {
+	if waitErr != nil && !errors.As(waitErr, &exitErr) && (!errors.Is(waitErr, exec.ErrWaitDelay) || x.capture) {
 		o.outputErr = waitErr
+		if x.capture {
+			o.err = fault.Wrap(fault.Internal, waitErr, "collect consumer output %s", describe(task))
+			o.status = StatusFailed
+			o.exitCode = fault.ExitCodeOf(o.err)
+		}
 	}
 
 	code := state.ExitCode()
@@ -428,6 +461,10 @@ func (x *executor) report(ctx context.Context, replayErr error) (*Report, error)
 		Tasks:         make([]TaskReport, 0, len(x.plan.Tasks)),
 		Skipped:       []Skipped{},
 	}
+	if x.capture {
+		r.ReportVersion = CaptureReportVersion
+		r.Workspace = x.workspace
+	}
 
 	var (
 		result    error
@@ -436,7 +473,7 @@ func (x *executor) report(ctx context.Context, replayErr error) (*Report, error)
 
 	for i, task := range x.plan.Tasks {
 		o := x.outcomes[i]
-		r.Tasks = append(r.Tasks, TaskReport{
+		taskReport := TaskReport{
 			SchemaID:   task.SchemaID,
 			SchemaRef:  task.SchemaRef,
 			Origin:     task.SchemaOrigin,
@@ -444,7 +481,15 @@ func (x *executor) report(ctx context.Context, replayErr error) (*Report, error)
 			Status:     o.status,
 			ExitCode:   o.exitCode,
 			DurationMs: o.duration.Milliseconds(),
-		})
+		}
+		if x.capture {
+			taskReport.Paths = append([]string{}, task.Paths...)
+			taskReport.Cwd = task.Dir
+			taskReport.Processor = &task.Processor
+			stdout, stderr := x.streams[i].stdout.report(), x.streams[i].stderr.report()
+			taskReport.Stdout, taskReport.Stderr = &stdout, &stderr
+		}
+		r.Tasks = append(r.Tasks, taskReport)
 
 		if outputErr == nil {
 			outputErr = o.outputErr

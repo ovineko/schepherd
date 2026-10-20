@@ -22,13 +22,13 @@ import (
 const maxProblems = 20
 
 var (
-	topKeys      = []string{"config_version", "extends", "workspace", "offline", "cache_dir", "catalog", "limits", "registries", "runner", "mappings", "schemas"}
+	topKeys      = []string{"config_version", "extends", "workspace", "offline", "cache_dir", "catalog", "limits", "registries", "runner", "mappings", "schemas", "processors"}
 	catalogKeys  = []string{"repository", "digest"}
 	limitKeys    = []string{"max_manifest_bytes", "max_catalog_bytes", "max_payload_bytes", "max_schema_bytes", "max_catalog_entries"}
 	registryKeys = []string{"plain_http", "ca_file", "credentials_file"}
-	runnerKeys   = []string{"mode", "command", "args", "cwd", "timeout", "jobs", "fail_fast", "inherit_env", "max_args_bytes", "env"}
-	mappingKeys  = []string{"file_match", "schema"}
-	schemaKeys   = []string{"path", "file_match"}
+	runnerKeys   = []string{"mode", "command", "args", "cwd", "timeout", "jobs", "fail_fast", "inherit_env", "max_args_bytes", "env", "processors", "unsupported"}
+	mappingKeys  = []string{"file_match", "schema", "processor"}
+	schemaKeys   = []string{"path", "file_match", "processor"}
 
 	modes = []runner.Mode{runner.ModeBatch, runner.ModePerFile, runner.ModeStdin}
 
@@ -148,6 +148,7 @@ func (d *decoder) document(doc map[string]any) *layer {
 	d.runner(root, doc, &ly.runner)
 	ly.mappings = d.mappings(root, doc)
 	d.schemas(root, doc, ly)
+	d.processors(root, doc, ly)
 
 	return ly
 }
@@ -438,6 +439,11 @@ func (d *decoder) runner(root node, doc map[string]any, r *runnerLayer) {
 	}
 
 	d.known(n, m, runnerKeys)
+	r.processors, _ = d.stringList(n, m, "processors")
+	r.unsupported, _ = d.nonEmpty(n, m, "unsupported")
+	if r.unsupported.set && r.unsupported.val != "error" && r.unsupported.val != "skip" {
+		d.failf(d.child(n, "unsupported"), "must be error or skip")
+	}
 
 	if v, vn := d.nonEmpty(n, m, "mode"); v.set {
 		if slices.Contains(modes, runner.Mode(v.val)) {
@@ -579,6 +585,7 @@ func (d *decoder) mapping(n node, t map[string]any) Mapping {
 	}
 
 	out.FileMatch = d.fileMatch(n, t).val
+	out.Processor = d.processorName(n, t).val
 
 	return out
 }
@@ -625,6 +632,7 @@ func (d *decoder) schemas(root node, doc map[string]any, ly *layer) {
 		ly.schemas[id] = &localSchemaLayer{
 			path:      d.checked(kn, t, "path", checkLocalPath),
 			fileMatch: d.fileMatch(kn, t),
+			processor: d.processorName(kn, t),
 			decl:      d.origin(d.child(kn, "path")),
 		}
 	}

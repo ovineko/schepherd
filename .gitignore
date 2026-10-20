@@ -22,6 +22,9 @@
 **/.parcel-cache/
 **/.temp/
 **/.tmp/
+**/target/
+**/.venv/
+**/__pycache__/
 
 # Claude Code project files
 .claude/*

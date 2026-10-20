@@ -1,0 +1,22 @@
+[project]
+name = "schepherd-check-jsonschema"
+version = "0.0.0"
+description = "Offline, structured check-jsonschema frontend for Schepherd"
+requires-python = ">=3.11"
+dependencies = [
+  "check-jsonschema==0.38.2",
+  "json5==0.17.3",
+  "jsonschema==4.26.0",
+  "referencing==0.37.0",
+  "ruamel-yaml==0.19.1",
+]
+
+[project.scripts]
+schepherd-check-jsonschema = "schepherd_check_jsonschema:main"
+
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/schepherd_check_jsonschema"]

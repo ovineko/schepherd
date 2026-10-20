@@ -1,0 +1,18 @@
+config_version = 1
+extends = ["./base.schepherd.toml"]
+
+[runner]
+processors = ["native", "python", "javascript"]
+unsupported = "error"
+
+[processors.native]
+type = "sourcemeta"
+command = "${JSONSCHEMA_BIN}"
+
+[processors.python]
+type = "check-jsonschema"
+command = "${CHECK_JSONSCHEMA_FRONTEND}"
+
+[processors.javascript]
+type = "ajv"
+command = "${AJV_FRONTEND}"

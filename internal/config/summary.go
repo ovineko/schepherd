@@ -38,6 +38,13 @@ func (c *Config) CheckRunnerEnv(lookup interp.LookupFunc) error {
 		return fault.New(fault.Usage, "runner uses unset environment variables: %s", strings.Join(missing, ", "))
 	}
 
+	for name, p := range c.Processors {
+		for _, f := range processorFields(name, p) {
+			if (strings.HasSuffix(f.name, ".command") || strings.HasSuffix(f.name, ".cwd") || strings.HasSuffix(f.name, ".convert")) && expandsToEmpty(f.raw, lookup) {
+				return fault.New(fault.Usage, "%s expands to an empty string", f.name)
+			}
+		}
+	}
 	for _, f := range []runnerField{{"runner.command", c.Runner.Command}, {"runner.cwd", c.Runner.Cwd}} {
 		if expandsToEmpty(f.raw, lookup) {
 			return fault.New(fault.Usage, "%s expands to an empty string", f.name)
@@ -77,23 +84,29 @@ func (c *Config) runnerFields() []runnerField {
 	for _, name := range slices.Sorted(maps.Keys(spec.Env)) {
 		fields = append(fields, runnerField{joinKey("runner.env", name), spec.Env[name]})
 	}
+	for _, name := range slices.Sorted(maps.Keys(c.Processors)) {
+		fields = append(fields, processorFields(name, c.Processors[name])...)
+	}
 
 	return fields
 }
 
 type summary struct {
-	Registries map[string]registrySummary `json:"registries"`
-	Schemas    map[string]schemaSummary   `json:"schemas"`
-	Repository string                     `json:"repository"`
-	Catalog    string                     `json:"catalog"`
-	Workspace  string                     `json:"workspace"`
-	CacheDir   string                     `json:"cacheDir"`
-	Timeout    string                     `json:"timeout"`
-	Files      []string                   `json:"files"`
-	Mappings   []mappingSummary           `json:"mappings"`
-	Runner     runnerSummary              `json:"runner"`
-	Limits     limitsSummary              `json:"limits"`
-	Offline    bool                       `json:"offline"`
+	Registries     map[string]registrySummary `json:"registries"`
+	Schemas        map[string]schemaSummary   `json:"schemas"`
+	Repository     string                     `json:"repository"`
+	Catalog        string                     `json:"catalog"`
+	Workspace      string                     `json:"workspace"`
+	CacheDir       string                     `json:"cacheDir"`
+	Timeout        string                     `json:"timeout"`
+	Files          []string                   `json:"files"`
+	Mappings       []mappingSummary           `json:"mappings"`
+	Runner         runnerSummary              `json:"runner"`
+	Processors     map[string]any             `json:"processors"`
+	ProcessorOrder []string                   `json:"processorOrder"`
+	Unsupported    string                     `json:"unsupported"`
+	Limits         limitsSummary              `json:"limits"`
+	Offline        bool                       `json:"offline"`
 }
 
 type limitsSummary struct {
@@ -129,11 +142,13 @@ type schemaSummary struct {
 	Path       string   `json:"path"`
 	DeclaredIn string   `json:"declaredIn"`
 	FileMatch  []string `json:"fileMatch"`
+	Processor  string   `json:"processor,omitempty"`
 }
 
 type mappingSummary struct {
 	Schema    string   `json:"schema"`
 	FileMatch []string `json:"fileMatch"`
+	Processor string   `json:"processor,omitempty"`
 }
 
 // Summary returns the effective configuration as a value for encoding/json,
@@ -156,9 +171,12 @@ func (c *Config) Summary() any {
 			MaxPayloadBytes:   c.Limits.MaxPayloadBytes,
 			MaxSchemaBytes:    c.Limits.MaxSchemaBytes,
 		},
-		Registries: make(map[string]registrySummary, len(c.Registries)),
-		Mappings:   make([]mappingSummary, 0, len(c.Mappings)),
-		Schemas:    make(map[string]schemaSummary, len(c.LocalSchemas)),
+		Registries:     make(map[string]registrySummary, len(c.Registries)),
+		Mappings:       make([]mappingSummary, 0, len(c.Mappings)),
+		Schemas:        make(map[string]schemaSummary, len(c.LocalSchemas)),
+		Processors:     processorSummary(c),
+		ProcessorOrder: nonNil(c.ProcessorOrder),
+		Unsupported:    c.Unsupported,
 		Runner: runnerSummary{
 			Configured:   c.RunnerConfigured,
 			Mode:         string(c.Runner.Mode),
@@ -184,11 +202,11 @@ func (c *Config) Summary() any {
 	}
 
 	for _, m := range c.Mappings {
-		s.Mappings = append(s.Mappings, mappingSummary{Schema: m.Schema, FileMatch: nonNil(m.FileMatch)})
+		s.Mappings = append(s.Mappings, mappingSummary{Schema: m.Schema, FileMatch: nonNil(m.FileMatch), Processor: m.Processor})
 	}
 
 	for _, ls := range c.LocalSchemas {
-		s.Schemas[ls.ID] = schemaSummary{Path: ls.Path, DeclaredIn: ls.DeclaredIn, FileMatch: nonNil(ls.FileMatch)}
+		s.Schemas[ls.ID] = schemaSummary{Path: ls.Path, DeclaredIn: ls.DeclaredIn, FileMatch: nonNil(ls.FileMatch), Processor: ls.Processor}
 	}
 
 	return s

@@ -1,0 +1,21 @@
+{
+  "name": "@ovineko/schepherd-ajv",
+  "private": true,
+  "description": "Literal-path, offline AJV processor for Schepherd",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "schepherd-ajv": "index.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-draft-04": "1.0.0",
+    "ajv-formats": "3.0.1"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

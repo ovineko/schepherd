@@ -60,6 +60,16 @@ commands the harness runs on the host (the builds of the binaries,
 they use the module cache `go mod download` filled, and a missing module
 fails the run instead of being downloaded.
 
+The preparation step also installs the parser's pinned Rust toolchain and
+fetches its locked WASM dependencies into dedicated `.tools/e2e-rust/rustup`
+and `.tools/e2e-rust/cargo` homes. It requires `rustup` and its `cargo`/`rustc`
+proxies on the host `PATH`, with network access to Rust distributions and
+crates.io. Repeat preparation after `parsers/rust-toolchain.toml` or
+`parsers/Cargo.lock` changes. Snapshot packaging (E37 and E41) binds those
+homes explicitly with `RUSTUP_AUTO_INSTALL=0` and `CARGO_NET_OFFLINE=true`:
+the real parser before hook builds offline, never from the consumer's HOME
+or an ambient Cargo configuration. No developer credentials are copied.
+
 ## Running
 
 ```bash

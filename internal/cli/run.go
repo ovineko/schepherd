@@ -5,12 +5,15 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovineko/schepherd/internal/env"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/match"
+	"github.com/ovineko/schepherd/internal/processor"
 	"github.com/ovineko/schepherd/internal/runner"
 )
 
@@ -18,13 +21,14 @@ type runFlags struct {
 	schema          string
 	report          string
 	ignoreUnmatched bool
+	json            bool
 }
 
 func (a *app) newRunCmd() *cobra.Command {
 	var f runFlags
 
 	cmd := &cobra.Command{
-		Use:   "run [--schema <id>] [--ignore-unmatched] [--report <file>] -- <files...>",
+		Use:   "run [--schema <id>] [--ignore-unmatched] [--report <file>] [--json] -- <files...>",
 		Short: "Run the configured consumer for the given files",
 		Long: "Resolves a schema for every file (or uses --schema), materializes the catalog schemas,\n" +
 			"checks the local ones in place and starts the consumer from the [runner] section of the\n" +
@@ -37,11 +41,15 @@ func (a *app) newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&f.schema, "schema", "", "use this schema id for every file")
 	cmd.Flags().BoolVar(&f.ignoreUnmatched, "ignore-unmatched", false, "skip files that match no schema (ambiguous files still fail)")
 	cmd.Flags().StringVar(&f.report, "report", "", "write a JSON report to this file")
+	cmd.Flags().BoolVar(&f.json, "json", false, "emit one attributed JSON report instead of consumer output")
 
 	return cmd
 }
 
 func (a *app) run(cmd *cobra.Command, f runFlags, files []string) error {
+	if f.json {
+		a.machine = true
+	}
 	if len(files) == 0 {
 		return fault.New(fault.Usage, "no input files; pass them after --")
 	}
@@ -49,6 +57,9 @@ func (a *app) run(cmd *cobra.Command, f runFlags, files []string) error {
 	cfg, err := a.config()
 	if err != nil {
 		return err
+	}
+	if a.machine {
+		a.runReport = newRunReport(cfg.Workspace, cfg.Runner.Mode)
 	}
 
 	if !cfg.RunnerConfigured {
@@ -77,26 +88,17 @@ func (a *app) run(cmd *cobra.Command, f runFlags, files []string) error {
 	defer src.close()
 
 	inputs, skipped, err := a.assignSchemas(ctx, src, f, paths)
+	if a.runReport != nil {
+		a.runReport.Skipped = append(a.runReport.Skipped, skipped...)
+	}
 	if err != nil {
 		return err
 	}
 
-	schemas := make(map[string]runner.SchemaInfo)
-
-	for _, in := range inputs {
-		if _, done := schemas[in.SchemaID]; done {
-			continue
-		}
-
-		sch, err := src.prepare(ctx, in.SchemaID)
-		if err != nil {
-			return err
-		}
-
-		schemas[in.SchemaID] = sch.info
+	schemas, err := prepareRunSchemas(ctx, src, inputs)
+	if err != nil {
+		return err
 	}
-
-	cancel()
 
 	cacheDir, err := src.cacheDir()
 	if err != nil {
@@ -111,27 +113,21 @@ func (a *app) run(cmd *cobra.Command, f runFlags, files []string) error {
 		Environ:   env.Environ(),
 		Stdout:    a.stdout,
 		Stderr:    a.stderr,
+		Capture:   a.machine,
 	}
 
-	report := &runner.Report{ReportVersion: 1, Mode: cfg.Runner.Mode, Tasks: []runner.TaskReport{}, Skipped: []runner.Skipped{}}
-
-	var runErr error
-
-	if len(inputs) > 0 {
-		plan, err := runner.BuildPlan(inputs, schemas, opts)
-		if err != nil {
-			runErr = fault.Wrap(fault.Usage, err, "runner")
-			report.ExitCode = fault.ExitCodeOf(runErr)
-
-			if failed := runner.PlanFailureReport(inputs, schemas, cfg.Runner.Mode, runErr); failed != nil {
-				report = failed
-			}
-		} else {
-			report, runErr = runner.Execute(cmd.Context(), plan, opts)
-		}
+	compiler, cleanup, err := src.compiler()
+	if err != nil {
+		return err
 	}
-
-	report.Skipped = append(report.Skipped, skipped...)
+	defer cleanup()
+	report, processorSkipped, runErr := a.executeRunPlan(ctx, cmd.Context(), inputs, schemas, opts, compiler)
+	cancel()
+	skipped = append(skipped, processorSkipped...)
+	report.Skipped = append([]runner.Skipped{}, skipped...)
+	if a.machine {
+		a.runReport = report
+	}
 
 	if f.report != "" {
 		if err := runner.WriteReport(f.report, report); err != nil {
@@ -146,6 +142,171 @@ func (a *app) run(cmd *cobra.Command, f runFlags, files []string) error {
 	return nil
 }
 
+func prepareRunSchemas(ctx context.Context, src *sources, inputs []runner.Input) (map[string]runner.SchemaInfo, error) {
+	schemas := make(map[string]runner.SchemaInfo)
+	for _, in := range inputs {
+		if _, done := schemas[in.SchemaID]; done {
+			continue
+		}
+		sch, err := src.prepare(ctx, in.SchemaID)
+		if err != nil {
+			located := &runFilesError{err: err, files: []string{}}
+			for _, input := range inputs {
+				if input.SchemaID == in.SchemaID {
+					located.files = append(located.files, input.Path)
+				}
+			}
+			if local, ok := src.cfg.LocalSchema(in.SchemaID); ok {
+				located.file = local.Path
+			}
+			return nil, located
+		}
+		schemas[in.SchemaID] = sch.info
+	}
+	return schemas, nil
+}
+
+func (a *app) executeRunPlan(planningCtx, executionCtx context.Context, inputs []runner.Input, schemas map[string]runner.SchemaInfo, opts runner.Options, compiler *processor.Compiler) (*runner.Report, []runner.Skipped, error) {
+	report := &runner.Report{ReportVersion: 1, Mode: opts.Spec.Mode, Tasks: []runner.TaskReport{}, Skipped: []runner.Skipped{}}
+	if a.machine {
+		report = a.runReport
+	}
+	if len(inputs) == 0 {
+		return report, nil, nil
+	}
+	plan, skipped, cleanup, err := buildCompiledProcessorPlan(planningCtx, a.cfg, inputs, schemas, opts, compiler)
+	if cleanup != nil {
+		defer cleanup()
+	}
+	for _, skip := range skipped {
+		a.logf("skipping %s: %s", skip.File, skip.Reason)
+	}
+	if err != nil {
+		runErr := fault.Wrap(fault.Usage, err, "runner")
+		report.ExitCode = fault.ExitCodeOf(runErr)
+		if !a.machine {
+			if failed := runner.PlanFailureReport(inputs, schemas, opts.Spec.Mode, runErr); failed != nil {
+				report = failed
+			}
+		}
+		return report, skipped, runErr
+	}
+	report, err = runner.Execute(executionCtx, plan, opts)
+	if err != nil {
+		return report, skipped, fault.Wrap(fault.Internal, err, "execute runner plan")
+	}
+	return report, skipped, nil
+}
+
+func newRunReport(workspace string, mode runner.Mode) *runner.Report {
+	if mode == "" {
+		mode = runner.ModeBatch
+	}
+	if mode == runner.ModeBatch {
+		mode = runner.ModePerFile
+	}
+	return &runner.Report{ReportVersion: runner.CaptureReportVersion, Workspace: workspace, Mode: mode, Tasks: []runner.TaskReport{}, Skipped: []runner.Skipped{}}
+}
+
+func (a *app) finishRunJSON(err error) int {
+	if a.runReport == nil {
+		a.runReport = newRunReport("", runner.ModeBatch)
+	}
+	report := a.runReport
+	report.ExitCode = fault.ExitCodeOf(err)
+	if err != nil {
+		taskFailure := false
+		for _, task := range report.Tasks {
+			if task.Status != runner.StatusOK {
+				taskFailure = true
+				break
+			}
+		}
+		if !taskFailure {
+			report.Error = &runner.ReportError{Kind: fault.KindOf(err).String(), Message: err.Error()}
+			if located, ok := errors.AsType[*runFilesError](err); ok {
+				switch {
+				case located.file != "":
+					report.Error.File = located.file
+					report.Error.Files = located.files
+				case len(located.files) == 1:
+					report.Error.File = located.files[0]
+				default:
+					report.Error.Files = located.files
+				}
+			}
+		}
+	}
+	if writeErr := runner.WriteJSON(a.stdout, report); writeErr != nil {
+		return fault.ExitCodeOf(errors.Join(err, writeErr))
+	}
+	return report.ExitCode
+}
+
+type runFilesError struct {
+	err   error
+	file  string
+	files []string
+}
+
+func (e *runFilesError) Error() string { return e.err.Error() }
+func (e *runFilesError) Unwrap() error { return e.err }
+
+func (a *app) wantsRunJSON(args []string) bool {
+	var run *cobra.Command
+	for _, command := range a.root.Commands() {
+		if command.Name() == "run" {
+			run = command
+			break
+		}
+	}
+	if run == nil {
+		return false
+	}
+	selected, enabled := false, false
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--" {
+			break
+		}
+		if strings.HasPrefix(arg, "--") {
+			name, value, hasValue := strings.Cut(arg[2:], "=")
+			flag := a.root.PersistentFlags().Lookup(name)
+			if selected {
+				if local := run.Flags().Lookup(name); local != nil {
+					flag = local
+				}
+			}
+			if flag == nil {
+				continue
+			}
+			if flag.NoOptDefVal == "" && !hasValue {
+				i++
+				continue
+			}
+			if selected && name == "json" {
+				if !hasValue {
+					value = flag.NoOptDefVal
+				}
+				if parsed, parseErr := strconv.ParseBool(value); parseErr == nil {
+					enabled = parsed
+				}
+			}
+			continue
+		}
+		if strings.HasPrefix(arg, "-") {
+			continue
+		}
+		if !selected {
+			if arg != "run" {
+				return false
+			}
+			selected = true
+		}
+	}
+	return selected && enabled
+}
+
 func inputPaths(files []string) ([]string, error) {
 	paths := make([]string, 0, len(files))
 
@@ -157,18 +318,18 @@ func inputPaths(files []string) ([]string, error) {
 
 		info, err := os.Stat(abs)
 		if err != nil {
-			return nil, fault.Wrap(fault.Usage, err, "input %s", abs)
+			return nil, &runFilesError{err: fault.Wrap(fault.Usage, err, "input %s", abs), files: []string{abs}}
 		}
 
 		if !info.Mode().IsRegular() {
-			return nil, fault.New(fault.Usage, "input %s is not a regular file", abs)
+			return nil, &runFilesError{err: fault.New(fault.Usage, "input %s is not a regular file", abs), files: []string{abs}}
 		}
 
 		// bearer:disable go_gosec_filesystem_filereadtaint
 		// Opening the inputs the user named is the purpose; only readability is checked.
 		fh, err := os.Open(abs) //nolint:gosec // opening the inputs the user named is the purpose; the file is only checked for readability
 		if err != nil {
-			return nil, fault.Wrap(fault.Usage, err, "input %s is not readable", abs)
+			return nil, &runFilesError{err: fault.Wrap(fault.Usage, err, "input %s is not readable", abs), files: []string{abs}}
 		}
 
 		_ = fh.Close()
@@ -184,7 +345,7 @@ func (a *app) assignSchemas(ctx context.Context, src *sources, f runFlags, paths
 
 	if f.schema != "" {
 		if err := src.known(ctx, f.schema); err != nil {
-			return nil, nil, err
+			return nil, nil, &runFilesError{err: err, files: paths}
 		}
 
 		for _, p := range paths {
@@ -221,7 +382,7 @@ func (a *app) assignSchemas(ctx context.Context, src *sources, f runFlags, paths
 				continue
 			}
 
-			return nil, nil, err
+			return nil, skipped, &runFilesError{err: err, files: []string{p}}
 		}
 
 		inputs = append(inputs, runner.Input{Path: p, SchemaID: res.SchemaID})

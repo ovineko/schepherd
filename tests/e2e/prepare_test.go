@@ -15,12 +15,10 @@ import (
 	"time"
 )
 
-// Scenarios download nothing. The preparation step (task test:e2e:prepare,
-// which runs the test binary with E2E_PREPARE=1) pulls every pinned image,
-// builds the validators image and caches the wheel build backend for uv;
-// setUp refuses to start while an image is missing, and compose and
-// dockerRun run with --pull never, so a scenario can neither fetch an image
-// lazily nor hide a missing one behind a download.
+// Scenarios download nothing. Preparation pulls every pinned image, builds
+// the validators image and fills the wheel backend and parser Rust caches.
+// Container runs use --pull never; packaging runs Cargo offline and disables
+// Rustup auto-install so missing prepared tooling fails instead of downloading.
 
 const prepareHint = "run the preparation step first: pnpm dm exec task -- test:e2e:prepare " +
 	"(or E2E_PREPARE=1 go test -tags e2e -count=1 -run '^$' -v ./tests/e2e)"
@@ -202,6 +200,10 @@ func prepare(ctx context.Context) error {
 	}
 
 	fmt.Fprintf(os.Stderr, "e2e prepare: all %d images are present; the scenarios will not download any\n", len(images))
+
+	if err := prepareRust(ctx, b.root); err != nil {
+		return err
+	}
 
 	return cacheWheelBackend(ctx, b.root)
 }

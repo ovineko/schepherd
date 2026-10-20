@@ -23,6 +23,7 @@ import (
 	"github.com/ovineko/schepherd/internal/env"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/interp"
+	"github.com/ovineko/schepherd/internal/processor"
 	"github.com/ovineko/schepherd/internal/registry"
 	"github.com/ovineko/schepherd/internal/runner"
 )
@@ -78,6 +79,7 @@ type Registry struct {
 type Mapping struct {
 	Schema    string
 	FileMatch []string
+	Processor string
 }
 
 // LocalSchema is a [schemas."<id>"] entry: a JSON Schema file of the project
@@ -90,6 +92,7 @@ type LocalSchema struct {
 	Path       string
 	DeclaredIn string
 	FileMatch  []string
+	Processor  string
 	at         string
 }
 
@@ -144,6 +147,9 @@ type Config struct {
 	// Runner keeps its templates unexpanded. It carries the defaults even
 	// when RunnerConfigured is false.
 	Runner           runner.Spec
+	Processors       map[string]processor.Definition
+	ProcessorOrder   []string
+	Unsupported      string
 	Limits           Limits
 	Timeout          time.Duration
 	Offline          bool
@@ -253,6 +259,9 @@ func (b *builder) build(files []string) (*Config, error) {
 	}
 
 	if cfg.Runner, cfg.RunnerConfigured, err = b.runner(); err != nil {
+		return nil, err
+	}
+	if err := b.processors(cfg); err != nil {
 		return nil, err
 	}
 
@@ -376,6 +385,7 @@ func (b *builder) localSchemas() ([]LocalSchema, error) {
 			Path:       absPath(filepath.Dir(s.path.at.file), p),
 			DeclaredIn: s.path.at.file,
 			FileMatch:  slices.Clone(s.fileMatch.val),
+			Processor:  s.processor.val,
 			at:         s.path.at.String(),
 		})
 	}

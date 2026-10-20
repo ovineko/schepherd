@@ -2,14 +2,42 @@ package runner
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/ovineko/schepherd/internal/fault"
 )
 
-// ReportVersion is the format version written into every report.
+// ReportVersion remains the on-disk report format used by --report.
 const ReportVersion = 1
+
+// CaptureReportVersion identifies the attributed stdout envelope used by --json.
+const CaptureReportVersion = 2
+
+// Processor identifies the configured output format without publishing its command or environment.
+type Processor struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Output string `json:"output"`
+	Mode   Mode   `json:"mode"`
+}
+
+// StreamReport retains a bounded prefix while counting every original byte.
+type StreamReport struct {
+	Bytes     int64   `json:"bytes"`
+	Text      *string `json:"text,omitempty"`
+	Base64    *string `json:"base64,omitempty"`
+	Truncated bool    `json:"truncated"`
+}
+
+// ReportError classifies a failure before or outside consumer execution.
+type ReportError struct {
+	Kind    string   `json:"kind"`
+	Message string   `json:"message"`
+	File    string   `json:"file,omitempty"`
+	Files   []string `json:"files,omitempty"`
+}
 
 // Task statuses of a report.
 const (
@@ -26,13 +54,18 @@ const (
 // consumer's exit code, 128+signal, 124 for a timeout, 7 when it could not
 // start, 130 when it was interrupted and -1 when it never started.
 type TaskReport struct {
-	SchemaID   string   `json:"schemaId"`
-	SchemaRef  string   `json:"schemaRef"`
-	Origin     string   `json:"origin"`
-	Files      []string `json:"files"`
-	Status     string   `json:"status"`
-	ExitCode   int      `json:"exitCode"`
-	DurationMs int64    `json:"durationMs"`
+	SchemaID   string        `json:"schemaId"`
+	SchemaRef  string        `json:"schemaRef"`
+	Origin     string        `json:"origin"`
+	Files      []string      `json:"files"`
+	Status     string        `json:"status"`
+	ExitCode   int           `json:"exitCode"`
+	DurationMs int64         `json:"durationMs"`
+	Paths      []string      `json:"paths,omitempty"`
+	Cwd        string        `json:"cwd,omitempty"`
+	Processor  *Processor    `json:"processor,omitempty"`
+	Stdout     *StreamReport `json:"stdout,omitempty"`
+	Stderr     *StreamReport `json:"stderr,omitempty"`
 }
 
 // Skipped is an input that was not handed to any consumer.
@@ -49,6 +82,59 @@ type Report struct {
 	ExitCode      int          `json:"exitCode"`
 	Tasks         []TaskReport `json:"tasks"`
 	Skipped       []Skipped    `json:"skipped"`
+	Workspace     string       `json:"workspace"`
+	Error         *ReportError `json:"error,omitempty"`
+}
+
+// MarshalJSON preserves the exact v1 field set for existing report consumers.
+func (r Report) MarshalJSON() ([]byte, error) {
+	if r.ReportVersion != ReportVersion {
+		type envelope Report
+		data, err := json.Marshal(envelope(r))
+		if err != nil {
+			return nil, fault.Wrap(fault.Internal, err, "encode attributed report")
+		}
+		return data, nil
+	}
+	type legacyTask struct {
+		SchemaID   string   `json:"schemaId"`
+		SchemaRef  string   `json:"schemaRef"`
+		Origin     string   `json:"origin"`
+		Files      []string `json:"files"`
+		Status     string   `json:"status"`
+		ExitCode   int      `json:"exitCode"`
+		DurationMs int64    `json:"durationMs"`
+	}
+	tasks := make([]legacyTask, 0, len(r.Tasks))
+	for _, task := range r.Tasks {
+		tasks = append(tasks, legacyTask{task.SchemaID, task.SchemaRef, task.Origin, task.Files, task.Status, task.ExitCode, task.DurationMs})
+	}
+	data, err := json.Marshal(struct {
+		ReportVersion int          `json:"reportVersion"`
+		Mode          Mode         `json:"mode"`
+		ExitCode      int          `json:"exitCode"`
+		Tasks         []legacyTask `json:"tasks"`
+		Skipped       []Skipped    `json:"skipped"`
+	}{r.ReportVersion, r.Mode, r.ExitCode, tasks, r.Skipped})
+	if err != nil {
+		return nil, fault.Wrap(fault.Internal, err, "encode legacy report")
+	}
+	return data, nil
+}
+
+// WriteJSON emits one newline-terminated envelope and never forwards consumer bytes.
+func WriteJSON(w io.Writer, r *Report) error {
+	if r == nil {
+		return fault.New(fault.Internal, "runner: no report to write")
+	}
+	data, err := marshalReport(r)
+	if err != nil {
+		return err
+	}
+	if _, err := w.Write(data); err != nil {
+		return fault.Wrap(fault.Internal, err, "write JSON report")
+	}
+	return nil
 }
 
 // WriteReport writes r as indented JSON to path atomically: the data goes to
@@ -59,7 +145,9 @@ func WriteReport(path string, r *Report) error {
 		return fault.New(fault.Internal, "runner: no report to write")
 	}
 
-	data, err := marshalReport(r)
+	legacy := *r
+	legacy.ReportVersion = ReportVersion
+	data, err := marshalReport(&legacy)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/ovineko/schepherd/internal/metaschema"
 	"github.com/ovineko/schepherd/internal/publisher/licensedetect"
 	"github.com/ovineko/schepherd/internal/publisher/policy"
 	"github.com/ovineko/schepherd/internal/publisher/state"
@@ -87,7 +88,7 @@ func (d *decider) basis(root string, deps []string, decision *policy.Decision, r
 
 	if d.policy != nil {
 		for _, uri := range append([]string{root}, deps...) {
-			if policy.IsWellKnownMetaschema(uri) {
+			if metaschema.IsStandard(uri) {
 				continue
 			}
 

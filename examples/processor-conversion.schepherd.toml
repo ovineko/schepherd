@@ -1,0 +1,12 @@
+config_version = 1
+extends = ["./base.schepherd.toml"]
+
+[runner]
+processors = ["native"]
+unsupported = "error"
+
+[processors.native]
+type = "sourcemeta"
+command = "${JSONSCHEMA_BIN}"
+convert = "${YQ_BIN}"
+formats = ["toml"]

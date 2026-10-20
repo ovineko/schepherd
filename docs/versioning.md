@@ -182,9 +182,29 @@ The other subcommands:
 
 ### Release workflow
 
+The client release also ships the Schepherd-owned Rust/WASM parser module,
+its byte-derived version metadata and its deterministic OCI manifest. All three
+are covered by the signed release checksums. The protected `release` job pushes
+that exact parser OCI artifact after GitHub release publication, using the
+manifest digest already recorded in the immutable release asset. It then pulls
+and verifies the manifest, empty config and exact WASM layer with no user
+credentials, signs that immutable `ref@digest` keylessly with cosign, and stores
+registry-subject provenance in both GitHub and GHCR. These steps do not replace
+signed checksums or local-file provenance. A private package or an incomplete
+signature/attestation fails the job; an already published GitHub release is not
+evidence that the OCI channel is complete. See [Parser module](parser-module.md)
+for build and verification commands, artifact names and interrupted-publication
+recovery.
+
 `.github/workflows/release.yml` runs on every pushed release tag. Every
 publishing job runs in a protected environment of its own, whose required
-reviewer approves it before it starts:
+reviewer approves it before it starts.
+
+The called CI workflow includes mandatory owned-frontend tests: AJV uses the
+frozen pnpm workspace lock, and check-jsonschema uses its committed `uv.lock`
+with `uv run --locked`, uv 0.12.19 and the Python version in
+`tools/check-jsonschema/.python-version`. `pnpm dm exec task -- test:frontends`
+runs both locally and is part of `task verify`.
 
 | Job                | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -239,7 +259,10 @@ Before the first release, a repository administrator:
    `WINGET_TOKEN` available to this repository: tokens that may write to
    `ovineko/homebrew-tap` (directory `Casks`), `ovineko/scoop-bucket` and the
    fork `ovineko/winget-pkgs` and open pull requests on
-   `microsoft/winget-pkgs`.
+   `microsoft/winget-pkgs`;
+5. makes `ghcr.io/ovineko/schepherd-parsers` public when GHCR first creates it.
+   The release fails its credential-free pull check until consumers can fetch
+   its manifest, config and WASM without a login.
 
 No repository variable switches publication on or off: the environments
 decide. A reviewer who rejects a deployment stops that job alone.

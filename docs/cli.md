@@ -194,7 +194,7 @@ copied from the source is verified by digest and size on the way (a mismatch
 exits with code 5 before any catalog tag is created), and an interrupted
 mirror exits with code 130 and can be re-run. See [Mirroring](mirroring.md).
 
-## `materialize [--concurrency <n>] [--json]`
+## `materialize [--concurrency <n>] [--compile] [--compile-schema <id,...>] [--json]`
 
 Fills the cache directory with the whole pinned catalog: every schema
 manifest, its payload blob, its unpacked `schema.json` and every notice
@@ -208,6 +208,22 @@ payload when the cache is writable; `materialize --offline` never rebuilds
 it. The catalog is pinned the usual way (`--repository`/`--catalog`, the
 environment, or `[catalog]`); no project configuration file is required,
 and local `[schemas]` are project files, so they are not copied.
+
+`--compile` also prepares each configured typed processor for every catalog schema.
+Sourcemeta templates and AJV standalone validators are stored with verified hashes;
+check-jsonschema retains its capability decision because it has no portable compiled
+validator format. Known incompatibilities are recorded, not treated as installation
+failures. Missing tools, crashes and malformed compiler output still fail preparation.
+With `--offline`, compilation is verification-only: no compiler runs and no cache
+entry is written. The JSON summary adds `compilation` counts and is incomplete when
+a required compilation is missing. Ordinary `run` reuses these artifacts and can
+compile a missing entry in a writable cache; it never caches document verdicts.
+
+Repeat `--compile-schema` or pass comma-separated catalog IDs to limit compilation
+to the schemas the caller actually uses; it requires `--compile`. Unknown IDs fail.
+The complete source catalog is still materialized. This lets a caller reuse its
+reviewed coverage policy instead of making unrelated catalog schemas installation
+requirements.
 
 Repeated runs download nothing: they re-verify every entry and report the
 counts. An interrupted run can simply be re-run; only what is missing is
@@ -260,7 +276,7 @@ schepherd --repository ghcr.io/ovineko/schepherd-schemas \
   --catalog sha256:<digest> --cache-dir ./cache --offline materialize --json
 ```
 
-## `run [--schema <id>] [--ignore-unmatched] [--report <file>] -- <files...>`
+## `run [--schema <id>] [--ignore-unmatched] [--report <file>] [--json] -- <files...>`
 
 Runs the configured consumer for the given files. Files are paths you pass;
 Schepherd does not walk directories or expand globs. With `--schema`, every
@@ -270,6 +286,21 @@ Catalog schemas are materialized; local schemas are checked in place.
 `--ignore-unmatched` skips files that match nothing or lie outside the
 workspace (reported on stderr and in the report as `unmatched` or
 `outside-workspace`) but never skips ambiguous ones. See [Runner](runner.md).
+
+`--json` emits exactly one attributed version 2 report on stdout, including
+argument, configuration, matching and execution failures. No consumer bytes or
+Schepherd logs appear outside it. Tasks include original `files`, actual
+consumer `paths`, resolved `cwd`, processor metadata, status and bounded stdout
+and stderr. Each stream counts all original bytes and marks truncation; binary
+output is base64 rather than lossy text. The process keeps its real exit code.
+Machine mode invokes the consumer once per input, changing a batch runner's
+actual mode to `per-file` so anonymous findings have a known input.
+
+`--report <file>` continues to write the version 1 file report atomically and
+does not select machine mode. Both flags may be used together: the file stays
+version 1 and stdout uses version 2. See
+[Attributed JSON output](runner.md#attributed-json-output) for the envelope,
+capture limits and early-error contract.
 
 ## Other commands
 

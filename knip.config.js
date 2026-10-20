@@ -9,6 +9,7 @@ export default defineConfig({
     "packaging/npm/schepherd/stylelint.config.mjs",
     "stylelint.config.mjs",
   ],
+  ignoreFiles: [".claude/worktrees/**", "parsers/target/**", "tools/check-jsonschema/.venv/**"],
   workspaces: {
     // The npm launcher is published from this directory: its bin script and
     // its tests are what use the lib modules.

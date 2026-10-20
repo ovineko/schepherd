@@ -30,6 +30,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ovineko/schepherd/internal/fault"
+	"github.com/ovineko/schepherd/internal/metaschema"
 	"github.com/ovineko/schepherd/internal/publisher/upstream/tomlfile"
 )
 
@@ -174,8 +175,7 @@ func Load(path string) (*Policy, error) {
 
 // Decide combines the rules for sourceURL and its dependencyURLs.
 // Dependencies are deduplicated after normalization; official JSON Schema
-// metaschemas (see IsWellKnownMetaschema) and the source itself are not
-// dependencies and are skipped. Exclude wins over Review, which wins over
+// metaschemas and the source itself are skipped. Exclude wins over Review, which wins over
 // Allow. Decide never consults automatic license detection.
 func (p *Policy) Decide(sourceURL string, dependencyURLs []string) Decision {
 	return p.DecideWith(sourceURL, dependencyURLs, nil, nil)
@@ -284,7 +284,7 @@ func (p *Policy) dependencies(sourceURL string, dependencyURLs []string) []outco
 	var raws []string
 
 	for _, raw := range dependencyURLs {
-		if IsWellKnownMetaschema(raw) {
+		if metaschema.IsStandard(raw) {
 			continue
 		}
 
@@ -1036,34 +1036,6 @@ func combineLicenses(licenses []string) string {
 	}
 
 	return strings.Join(parts, " AND ")
-}
-
-var metaschemaPaths = []string{
-	"/draft-04/schema",
-	"/draft-06/schema",
-	"/draft-07/schema",
-	"/draft/2019-09/schema",
-	"/draft/2020-12/schema",
-}
-
-// IsWellKnownMetaschema reports whether uri is one of the official JSON
-// Schema metaschemas (draft-04, draft-06, draft-07, 2019-09, 2020-12) on
-// json-schema.org, over http or https, optionally followed by an empty
-// fragment. Such URIs identify dialects that validators embed; they are not
-// dependencies to fetch or license. A fragment pointing into a metaschema is
-// not recognized.
-func IsWellKnownMetaschema(uri string) bool {
-	u, err := url.Parse(uri)
-	if err != nil {
-		return false
-	}
-
-	if (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.Opaque != "" ||
-		u.RawQuery != "" || u.ForceQuery || u.Fragment != "" || !strings.EqualFold(u.Host, "json-schema.org") {
-		return false
-	}
-
-	return slices.Contains(metaschemaPaths, u.EscapedPath())
 }
 
 // schemaStoreAlias reports a spelling of a SchemaStore-hosted schema other

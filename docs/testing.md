@@ -6,7 +6,7 @@
 | Race detector          | `pnpm dm exec task -- test:race`                  | Go with cgo (a C toolchain). CI runs it on every runner except windows-11-arm, where Go has no race detector; on windows-2025 it uses the image's MinGW-w64 gcc (`CGO_ENABLED=1`)                                                                                                                                     |
 | Coverage               | `pnpm test:coverage`                              | Go; writes `coverage.out`                                                                                                                                                                                                                                                                                             |
 | Fuzzing (bounded)      | `pnpm dm exec task -- test:fuzz`                  | Go; `FUZZTIME` per target (default `20s`)                                                                                                                                                                                                                                                                             |
-| E2E preparation        | `pnpm test:e2e:install` (`task test:e2e:prepare`) | Linux, Docker with buildx, network (Docker Hub, PyPI, Go module proxy)                                                                                                                                                                                                                                                |
+| E2E preparation        | `pnpm test:e2e:install` (`task test:e2e:prepare`) | Linux, Docker with buildx, uv, rustup with cargo/rustc proxies, network (Docker Hub, PyPI, Go module proxy, Rust distributions, crates.io)                                                                                                                                                                            |
 | End-to-end             | `pnpm test:e2e`                                   | Linux, Docker with Compose and buildx, npm, `task tools`, the preparation step (run automatically)                                                                                                                                                                                                                    |
 | E2E performance        | `pnpm test:e2e:perf` (`task test:e2e:perf`)       | same as end-to-end                                                                                                                                                                                                                                                                                                    |
 | Packaging              | `pnpm dm exec task -- verify:packaging`           | Node.js, npm, uv (it fetches the pinned hatchling from PyPI), `python3` (PyPI launcher tests), Docker for the gem and the Ruby launcher tests (the pinned Ruby image) or `GEM_RUBY=host` with the Ruby and RubyGems of `tools/pins/ruby.go` on `PATH`, `pnpm install` (syft via datamitsu), GoReleaser (`task tools`) |
@@ -153,6 +153,18 @@ the wheels offline), skips images that are already present, and prints one
 line per image (`present`, `pulled` or `built`). A failed validators build leaves
 `validators-build.log` in `tests/e2e/.artifacts/prepare` (or
 `E2E_ARTIFACTS_DIR`).
+
+Preparation also requires `rustup` and its `cargo`/`rustc` proxies on `PATH`.
+It installs the exact channel, profile, components and targets from
+`parsers/rust-toolchain.toml` into `.tools/e2e-rust/rustup`, and fetches the
+locked WASM dependencies into `.tools/e2e-rust/cargo`. These are dedicated
+tooling homes, not copies of the developer's Cargo configuration or credentials.
+Preparation needs access to the Rust distribution server and crates.io;
+repeat it after the toolchain pin or `parsers/Cargo.lock` changes.
+E37 and E41 retain the real GoReleaser parser before hook, with those explicit
+`RUSTUP_HOME`/`CARGO_HOME` paths, `RUSTUP_AUTO_INSTALL=0` and
+`CARGO_NET_OFFLINE=true`. Missing toolchains or crates fail instead of downloading.
+The consumer HOME, XDG directories and registry configuration remain isolated.
 
 The scenarios download nothing. A run first checks that every image is in the
 local image store; otherwise it fails before starting anything and names each

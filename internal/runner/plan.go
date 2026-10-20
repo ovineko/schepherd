@@ -21,8 +21,9 @@ const DefaultKillGrace = 2 * time.Second
 // Input is one file handed to the consumer together with the schema it was
 // resolved to. Path must be absolute.
 type Input struct {
-	Path     string
-	SchemaID string
+	Path         string
+	OriginalPath string
+	SchemaID     string
 }
 
 // SchemaInfo describes a schema ready for a consumer. For a catalog schema
@@ -52,6 +53,7 @@ type Options struct {
 	Environ   []string
 	Spec      Spec
 	KillGrace time.Duration
+	Capture   bool
 }
 
 // Task is one consumer process, fully expanded. Path is the resolved
@@ -66,6 +68,8 @@ type Task struct {
 	Dir          string
 	StdinFile    string
 	Files        []string
+	Paths        []string
+	Processor    Processor
 	Args         []string
 	Env          []string
 	Index        int
@@ -93,6 +97,7 @@ type templates struct {
 type planner struct {
 	lookup      interp.LookupFunc
 	executables map[string]string
+	originals   map[string]string
 	tpl         templates
 	opts        Options
 	command     string
@@ -118,11 +123,19 @@ func BuildPlan(inputs []Input, schemas map[string]SchemaInfo, opts Options) (*Pl
 		return nil, err
 	}
 
+	if opts.Capture {
+		spec = singleInputSpec(spec)
+	}
+
 	if err := checkRoots(opts); err != nil {
 		return nil, err
 	}
 
 	groups, err := groupInputs(inputs, schemas, spec.Mode)
+	if err != nil {
+		return nil, err
+	}
+	originals, converted, err := originalInputPaths(inputs)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +145,7 @@ func BuildPlan(inputs []Input, schemas map[string]SchemaInfo, opts Options) (*Pl
 		return nil, err
 	}
 
-	p := &planner{spec: spec, opts: opts, tpl: tpl, lookup: opts.Lookup, executables: map[string]string{}}
+	p := &planner{spec: spec, opts: opts, tpl: tpl, lookup: opts.Lookup, executables: map[string]string{}, originals: originals}
 	if p.lookup == nil {
 		p.lookup = func(string) (string, bool) { return "", false }
 	}
@@ -152,11 +165,66 @@ func BuildPlan(inputs []Input, schemas map[string]SchemaInfo, opts Options) (*Pl
 		plan.Tasks = append(plan.Tasks, tasks...)
 	}
 
-	for i := range plan.Tasks {
-		plan.Tasks[i].Index = i
-	}
+	attributeInputs(plan, originals, converted)
 
 	return plan, nil
+}
+
+func singleInputSpec(spec Spec) Spec {
+	if spec.Mode != ModeBatch {
+		return spec
+	}
+	spec.Args = slices.Clone(spec.Args)
+	for i, arg := range spec.Args {
+		if arg == "{files...}" {
+			spec.Args[i] = "{file}"
+		}
+	}
+	spec.Mode = ModePerFile
+	return spec
+}
+
+func attributeInputs(plan *Plan, originals map[string]string, converted bool) {
+	for i := range plan.Tasks {
+		plan.Tasks[i].Index = i
+		if !converted {
+			continue
+		}
+		plan.Tasks[i].Files = slices.Clone(plan.Tasks[i].Paths)
+		for j, path := range plan.Tasks[i].Files {
+			if original, ok := originals[path]; ok {
+				plan.Tasks[i].Files[j] = original
+			}
+		}
+	}
+}
+
+func originalInputPaths(inputs []Input) (map[string]string, bool, error) {
+	var originals map[string]string
+	for _, input := range inputs {
+		if input.OriginalPath != "" {
+			originals = make(map[string]string, len(inputs))
+			break
+		}
+	}
+	if originals == nil {
+		return nil, false, nil
+	}
+	for _, input := range inputs {
+		path := filepath.Clean(input.Path)
+		if _, seen := originals[path]; seen {
+			continue
+		}
+		original := path
+		if input.OriginalPath != "" {
+			if !filepath.IsAbs(input.OriginalPath) {
+				return nil, false, fault.New(fault.Internal, "runner: original input path %q is not absolute", input.OriginalPath)
+			}
+			original = filepath.Clean(input.OriginalPath)
+		}
+		originals[path] = original
+	}
+	return originals, true, nil
 }
 
 func effectiveSpec(spec Spec) (Spec, error) {
@@ -357,7 +425,11 @@ func (p *planner) tasksFor(g group) ([]Task, error) {
 
 	values := p.values(g.schema, file)
 
-	env, err := p.childEnv(values)
+	envValues := values
+	if original, ok := p.originals[file]; ok && original != file {
+		envValues = p.values(g.schema, original)
+	}
+	env, err := p.childEnv(envValues)
 	if err != nil {
 		return nil, err
 	}
@@ -390,6 +462,8 @@ func (p *planner) tasksFor(g group) ([]Task, error) {
 			Path:         path,
 			Dir:          p.dir,
 			Files:        files,
+			Paths:        files,
+			Processor:    Processor{Name: p.spec.Name, Type: p.spec.Type, Output: p.spec.Output, Mode: p.spec.Mode},
 			Env:          env,
 		}
 

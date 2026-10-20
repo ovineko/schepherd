@@ -38,6 +38,9 @@
         "path": {
           "$ref": "#/$defs/localFile",
           "description": "The schema file; relative to this file. Only ${NAME} is expanded. Required once the extends chain is merged."
+        },
+        "processor": {
+          "$ref": "#/$defs/schemaId"
         }
       },
       "type": "object"
@@ -47,6 +50,9 @@
       "properties": {
         "file_match": {
           "$ref": "#/$defs/fileMatch"
+        },
+        "processor": {
+          "$ref": "#/$defs/schemaId"
         },
         "schema": {
           "$ref": "#/$defs/schemaId",
@@ -62,6 +68,69 @@
     "path": {
       "minLength": 1,
       "type": "string"
+    },
+    "processor": {
+      "additionalProperties": false,
+      "description": "Explicit executable binding; type and command are required after extends merging. Typed processors have fixed per-file arguments.",
+      "properties": {
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "command": {
+          "$ref": "#/$defs/path"
+        },
+        "convert": {
+          "$ref": "#/$defs/path"
+        },
+        "cwd": {
+          "$ref": "#/$defs/path"
+        },
+        "env": {
+          "$ref": "#/$defs/runner/properties/env"
+        },
+        "formats": {
+          "items": {
+            "enum": [
+              "json",
+              "yaml",
+              "toml",
+              "json5",
+              "jsonc"
+            ]
+          },
+          "type": "array"
+        },
+        "inherit_env": {
+          "type": "boolean"
+        },
+        "mode": {
+          "enum": [
+            "batch",
+            "per-file",
+            "stdin"
+          ]
+        },
+        "output": {
+          "enum": [
+            "sourcemeta-json",
+            "check-jsonschema-json",
+            "ajv-json",
+            "raw"
+          ]
+        },
+        "type": {
+          "enum": [
+            "sourcemeta",
+            "check-jsonschema",
+            "ajv",
+            "custom"
+          ]
+        }
+      },
+      "type": "object"
     },
     "registry": {
       "additionalProperties": false,
@@ -130,10 +199,24 @@
             "stdin"
           ]
         },
+        "processors": {
+          "items": {
+            "$ref": "#/$defs/schemaId"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
         "timeout": {
           "description": "Go duration string such as \"90s\" or \"5m\"; must be positive.",
           "pattern": "^\\+?(?:(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:ns|us|µs|μs|ms|s|m|h))+$",
           "type": "string"
+        },
+        "unsupported": {
+          "enum": [
+            "error",
+            "skip"
+          ]
         }
       },
       "type": "object"
@@ -231,6 +314,15 @@
     "offline": {
       "description": "Forbid all network access by Schepherd itself.",
       "type": "boolean"
+    },
+    "processors": {
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$": {
+          "$ref": "#/$defs/processor"
+        }
+      },
+      "type": "object"
     },
     "registries": {
       "additionalProperties": false,
