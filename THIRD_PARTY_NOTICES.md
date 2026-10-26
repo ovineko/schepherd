@@ -50,22 +50,24 @@ and each catalog entry records its source, source digest and license. The licens
 published schemas is [`sources/licenses.toml`](sources/licenses.toml); see
 [Publishing](docs/publishing.md#licenses).
 
-Catalog revision `20261019.0833` (manifest `sha256:5840fac0f6574ffa26ce432b03d1a821a45e18b1c1d30b769cc3579828acf79e`), prepared from the SchemaStore catalog at commit `8555b25535732da425a6a2cb9799bddd2349fca1`, lists 1027 schemas. Each schema is listed under every source of its content: its own document and every dependency bundled into it.
+Catalog revision `20261026.0836` (manifest `sha256:5e33b4c6aeaefbed3d915eb32c3373955403f176f4f3e242d0b45abadb53285d`), prepared from the SchemaStore catalog at commit `e44768a600cd979285a5179e11e3b19cdf4968f7`, lists 1032 schemas. Each schema is listed under every source of its content: its own document and every dependency bundled into it.
 
 ### SchemaStore repository (Apache-2.0)
 
-Files of the SchemaStore repository `https://github.com/SchemaStore/schemastore` at commit `8555b25535732da425a6a2cb9799bddd2349fca1`, allowed by the rules `schemastore` and `schemastore-raw` of `sources/licenses.toml`. The notice layer of each of these schemas also carries the LICENSE and NOTICE files of the repository. Its NOTICE file reads:
+Files of the SchemaStore repository `https://github.com/SchemaStore/schemastore` at commit `e44768a600cd979285a5179e11e3b19cdf4968f7`, allowed by the rules `schemastore` and `schemastore-raw` of `sources/licenses.toml`. The notice layer of each of these schemas also carries the LICENSE and NOTICE files of the repository. Its NOTICE file reads:
 
 ```text
 JSON Schema Store
 Copyright 2015-Current Mads Kristensen and Contributors
 ```
 
-684 schemas:
+687 schemas:
 
 - `abc-clinical-demand-forecast-5.1.0`
+- `abc-clinical-demand-forecast-6.0.0`
 - `abc-inventory-module-data-5.4.0`
 - `abc-supply-plan-14.2.0`
+- `abc-supply-plan-14.3.0`
 - `abtop`
 - `accelerator`
 - `act3`
@@ -213,6 +215,7 @@ Copyright 2015-Current Mads Kristensen and Contributors
 - `commitlintrc`
 - `compile-commands`
 - `compilerconfig`
+- `complexipy`
 - `component`
 - `component-detection-manifest`
 - `container-structure-test`
@@ -848,7 +851,7 @@ License detected from `LICENSE` at commit `bbe75e6ad25423f075237fd39c4331f0b19ea
 
 ### GitHub repository `apache/camel` (Apache-2.0)
 
-License detected from `LICENSE.txt` at commit `590d392265eceea44b96850d0f027f483506785a` with the notice file `NOTICE.txt`.
+License detected from `LICENSE.txt` at commit `426c3f8a4cb81268113503002605f8653a41d425` with the notice file `NOTICE.txt`.
 
 1 schema:
 
@@ -888,7 +891,7 @@ License detected from `LICENSE` at commit `229753f23eb01d9d3e8095e411ed82dbc6522
 
 ### GitHub repository `ast-grep/ast-grep` (MIT)
 
-License detected from `LICENSE` at commit `25334496c105c9c728f0a6024f3d164aed40cacc`.
+License detected from `LICENSE` at commit `1e6ddb02096b0408a391853142b3f3f6782111c6` and `LICENSE` at commit `25334496c105c9c728f0a6024f3d164aed40cacc`.
 
 2 schemas:
 
@@ -955,7 +958,7 @@ License detected from `LICENSE.txt` at commit `61bba812ce71472684bb7c07f60f1e710
 
 ### GitHub repository `azure/azure-dev` (MIT)
 
-License detected from `LICENSE` at commit `a0f69c325fa54ec6591fc6bf74dada3b500ea8be`.
+License detected from `LICENSE` at commit `2d1ddc179c225b0bcfcbfa92c23cfae0d9f0233d`.
 
 1 schema:
 
@@ -1207,7 +1210,7 @@ License detected from `LICENSE` at commit `48ececbbca56ff4c10d52b26b098800f4d3a2
 
 ### GitHub repository `compose-spec/compose-go` (Apache-2.0)
 
-License detected from `LICENSE` at commit `5515644a24afb050340575c03c0e0c5ee23ba546` with the notice file `NOTICE`.
+License detected from `LICENSE` at commit `6ac9323ede62dd526aaf1bc18f07ee1ce3596d42` with the notice file `NOTICE`.
 
 1 schema:
 
@@ -1461,7 +1464,7 @@ License detected from `LICENSE.txt` at commit `75465614e67b5f1e500d1f8b1cb70af22
 
 ### GitHub repository `dotnetanalyzers/stylecopanalyzers` (MIT)
 
-License detected from `LICENSE` at commit `013effdc233cb042d229b34b23cbdf85d07e7e5d`.
+License detected from `LICENSE` at commit `6449f6c898cc897a001b74e74195b0dacfd98960`.
 
 1 schema:
 
@@ -1610,7 +1613,7 @@ License detected from `LICENSE` at commit `90f206a39e4b505e43b18fbb63238512ad06d
 
 ### GitHub repository `google-gemini/gemini-cli` (Apache-2.0)
 
-License detected from `LICENSE` at commit `9b6e0265d16bbd29ca51e33c9e0c01dc4cec5e83`.
+License detected from `LICENSE` at commit `cd1b45c2db0a5ea7b7fc3b67c1ba5879601d6005`.
 
 1 schema:
 
@@ -1667,7 +1670,7 @@ License detected from `LICENSE` at commit `04e60a44bb904971fc302b1e720537230ccec
 
 ### GitHub repository `home-assistant/core` (Apache-2.0)
 
-License detected from `LICENSE.md` at commit `d18a3664bdbb56052e1320dc8df0b1393b3858e2`.
+License detected from `LICENSE.md` at commit `cb31da017acb662ae22d94fb9d8befc17a3e8cf0`.
 
 1 schema:
 
@@ -1692,7 +1695,7 @@ License detected from `LICENSE` at commit `59d4d23d9e10f706617f149a5e3fda6e8bde8
 
 ### GitHub repository `hudson-trading/slang-server` (MIT)
 
-License detected from `LICENSE` at commit `d5116cc1ed305ffcd49c2500dc97a48563678f4d`.
+License detected from `LICENSE` at commit `60857ce8b4a01b6d11443fb1af1eb41c261c702c`.
 
 1 schema:
 
@@ -1718,7 +1721,7 @@ License detected from `LICENSE.md` at commit `1d7fefdb4ca3601a2990e66b3695d32d8a
 
 ### GitHub repository `int-brain-lab/bpod-core` (MIT)
 
-License detected from `LICENSE` at commit `2ffcb5320db4f124c483345975d3dc1103f656fb`.
+License detected from `LICENSE` at commit `cfffecc12667948b7cfb52d06e27f4f893b86127`.
 
 1 schema:
 
@@ -1735,7 +1738,7 @@ License detected from `LICENSE` at commit `587444e1cd24858845c2a0297f76e8ba72fe8
 
 ### GitHub repository `iobroker/json-config` (MIT)
 
-License detected from `LICENSE` at commit `b7be652aca47e1eef20aeae6ac66e546d40cab9a`.
+License detected from `LICENSE` at commit `b2b4669fd5d8eadc7a500446353872832829ee82`.
 
 1 schema:
 
@@ -1761,7 +1764,7 @@ License detected from `LICENSE` at commit `0ab9695efc56fa22e07d7ff7ef9a3ba353625
 
 ### GitHub repository `jandedobbeleer/oh-my-posh` (MIT)
 
-License detected from `COPYING` at commit `bc8e8cd292f4bce17f461654db2dd8072be6fdf2`.
+License detected from `COPYING` at commit `0b9da69da2f294dbda90574f3bc25a26fbd854d8`.
 
 1 schema:
 
@@ -1850,7 +1853,7 @@ License detected from `LICENSE` at commit `959e6f782179cb614a41b2beeec15153ed136
 
 ### GitHub repository `karakum-team/karakum` (Apache-2.0)
 
-License detected from `LICENSE` at commit `9465ab3a68872cb5270d7fc48d4048e1ded132d0`.
+License detected from `LICENSE` at commit `82dd0900e688a4af2109c9a4b79343ace7715fdb`.
 
 1 schema:
 
@@ -1874,7 +1877,7 @@ License detected from `LICENSE.rst` at commit `d291927f5ddb49ccfc20acc907863c7d7
 
 ### GitHub repository `kometa-team/kometa` (MIT)
 
-License detected from `LICENSE` at commit `b77e2ae26f30b5a637f7440ae84bc25924d93db7` and `LICENSE` at commit `e1327dc4e7f709277e3e2be88df76c3eefe349e2`.
+License detected from `LICENSE` at commit `234884d80fdef746acca74322e30b60b10fda5d6` and `LICENSE` at commit `e1327dc4e7f709277e3e2be88df76c3eefe349e2`.
 
 2 schemas:
 
@@ -1891,7 +1894,7 @@ License detected from `LICENSE` at commit `23b3c418b7a995f6423b0b04ac4bb1b8fe396
 
 ### GitHub repository `langchain-ai/langgraph` (MIT)
 
-License detected from `LICENSE` at commit `07b33185eab893be2ed031eedae52f09314bf77c`.
+License detected from `LICENSE` at commit `a25bfafe4858d2a85bede09ba83f9a591d1f1133`.
 
 1 schema:
 
@@ -1899,7 +1902,7 @@ License detected from `LICENSE` at commit `07b33185eab893be2ed031eedae52f09314bf
 
 ### GitHub repository `leanprover/lean4` (Apache-2.0)
 
-License detected from `LICENSE` at commit `a332ad1000004723f3fedf2990e775762dbe6ecd`.
+License detected from `LICENSE` at commit `c3f0fa3b44bf1e3aeae3a613c66e7262b8a6ba6f`.
 
 1 schema:
 
@@ -1915,11 +1918,19 @@ License detected from `LICENSE` at commit `8ff6260787edacfa2c0d30d1ff62358d36d48
 
 ### GitHub repository `loft-sh/vcluster` (Apache-2.0)
 
-License detected from `LICENSE` at commit `7d4225aeb6d64ea7181f66d6daf4bc90dade86df`.
+License detected from `LICENSE` at commit `e702d7ba743bd03d9c572cc0d3807def27779317`.
 
 1 schema:
 
 - `values`
+
+### GitHub repository `luals/vscode-lua` (MIT)
+
+License detected from `LICENSE` at commit `76ad79d8bf3260a78ce6ab3d967e27c39261dc95`.
+
+1 schema:
+
+- `schema-43`
 
 ### GitHub repository `lxman/contractguard` (MIT)
 
@@ -1948,7 +1959,7 @@ License detected from `LICENSE` at commit `699fdddcc684010f3cb29ed068219a2d9078f
 
 ### GitHub repository `meltano/meltano` (MIT)
 
-License detected from `LICENSE` at commit `1ec107865b3c0bf21e1582503e1d13109bb4cc47`.
+License detected from `LICENSE` at commit `6c58634959a5ca23054795b483bc0c504900f270`.
 
 1 schema:
 
@@ -1956,7 +1967,7 @@ License detected from `LICENSE` at commit `1ec107865b3c0bf21e1582503e1d13109bb4c
 
 ### GitHub repository `metalbear-co/mirrord` (MIT)
 
-License detected from `LICENSE` at commit `2a29e4d05ea2efac01103430040d57dc62f9b353`.
+License detected from `LICENSE` at commit `21cf7bffa834b53f38af00007873831ae4ff93a3`.
 
 2 schemas:
 
@@ -2081,7 +2092,7 @@ License detected from `LICENSE` at commit `972faf6f783fe9685267220965a9169074146
 
 ### GitHub repository `nodejsmith/hassette` (MIT)
 
-License detected from `LICENSE` at commit `d89a441a356a3e584b12af2c1b4c94b752641128`.
+License detected from `LICENSE` at commit `752505210229449a25adbb6f3e9f08c1a591381f`.
 
 1 schema:
 
@@ -2105,7 +2116,7 @@ License detected from `LICENSE` at commit `d84283b7ff30f4f596ef1c848b775f3c918bc
 
 ### GitHub repository `okteto/okteto` (Apache-2.0)
 
-License detected from `LICENSE` at commit `a06c777dcab3ccd1fdf230a572dd6a0cfad73f8c`.
+License detected from `LICENSE` at commit `903f657d4122c3cbd6490635ad8bfc23393b888d`.
 
 1 schema:
 
@@ -2191,7 +2202,7 @@ License detected from `LICENSE` at commit `f724e228b38d495142a679c555ae8814a13c9
 
 ### GitHub repository `oxc-project/oxc` (MIT)
 
-License detected from `LICENSE` at commit `1e4c6ee7761148c25c36aa6119fe110f3b4c4f4c` and `LICENSE` at commit `e236de026ab8fa3999cd122e7f29498d720403d9`.
+License detected from `LICENSE` at commit `016c4a2a0d58f853d330bf7126d635cf2bbe5a46` and `LICENSE` at commit `1e4c6ee7761148c25c36aa6119fe110f3b4c4f4c`.
 
 2 schemas:
 
@@ -2234,7 +2245,7 @@ License detected from `LICENSE` at commit `dc7b173f389dec43461a79af3f875f38373a2
 
 ### GitHub repository `prefecthq/prefect` (Apache-2.0)
 
-License detected from `LICENSE` at commit `72fd185f4a42cc88b3458dbb1700dde6b0865654`.
+License detected from `LICENSE` at commit `21a1f025480406046668edf22705234ce6b1c31f`.
 
 2 schemas:
 
@@ -2243,7 +2254,7 @@ License detected from `LICENSE` at commit `72fd185f4a42cc88b3458dbb1700dde6b0865
 
 ### GitHub repository `prefix-dev/pixi` (BSD-3-Clause)
 
-License detected from `LICENSE` at commit `b4ab6735e59fab927149d18f63751e022b25e748`.
+License detected from `LICENSE` at commit `886941f2e3c73117838fa41ecd9de80ff4abb008`.
 
 1 schema:
 
@@ -2259,7 +2270,7 @@ License detected from `LICENSE` at commit `7be6ba9f7085359eda3c3c18e405fe6247142
 
 ### GitHub repository `prida-takon/debim` (MIT)
 
-License detected from `LICENSE` at commit `5cbb4a447e12b28cf8fe70c1f72d5dafe27aa568`.
+License detected from `LICENSE` at commit `c9fc83434db36251001bf2d69591d26527f4d4db`.
 
 1 schema:
 
@@ -2377,7 +2388,7 @@ License detected from `LICENSE` at commit `4ede561a18c23de3625f6fcb9837b0a9eada7
 
 ### GitHub repository `release-drafter/release-drafter` (ISC)
 
-License detected from `LICENSE` at commit `dad22d8f5eaeb2fb6926ec634f682cc0d9098b61`.
+License detected from `LICENSE` at commit `717bd98eae13d6ecfcd9706a0f0a8e7d5179a08e`.
 
 1 schema:
 
@@ -2441,7 +2452,7 @@ License detected from `LICENSE` at commit `f097ef04a5ea299edd82ac2edda176168db4e
 
 ### GitHub repository `shopware/platform` (MIT)
 
-License detected from `LICENSE` at commit `0e782aa79e93b15cc3b832c1a7eae30c92208786`.
+License detected from `LICENSE` at commit `1307180770624626c4063d594d4b7c8d58ed5968`.
 
 1 schema:
 
@@ -2462,6 +2473,14 @@ License detected from `LICENSE` at commit `055518846c3963114efbd0107bf3f2e59b4b3
 1 schema:
 
 - `schema-kas`
+
+### GitHub repository `simonvanlierde/sourceledger` (MIT)
+
+License detected from `LICENSE` at commit `a99678fbeb9b48239abb777b20bca334ed141b9b`.
+
+1 schema:
+
+- `sources`
 
 ### GitHub repository `sinaatalay/rendercv` (MIT)
 
@@ -2543,7 +2562,7 @@ License detected from `LICENSE` at commit `ad19c5599be8e03ab64ff3ca67c4942eceb2a
 
 ### GitHub repository `srl-labs/containerlab` (BSD-3-Clause)
 
-License detected from `LICENSE` at commit `48b22f414e75e59b9eaa855dda636ceda8e5e4df`.
+License detected from `LICENSE` at commit `76c45d7eb64f61a210a75d3056d905a97218d528`.
 
 1 schema:
 
@@ -2607,7 +2626,7 @@ License detected from `LICENSE` at commit `a210586ea2a3c0501153e4a39925cee325fe0
 
 ### GitHub repository `symfony/symfony` (MIT)
 
-License detected from `LICENSE` at commit `06b66c8822e422f686f63491062a667f0b6bab9a` and `LICENSE` at commit `2e56795f4ecbff21f62ec4dc60376993617db8d5`.
+License detected from `LICENSE` at commit `06b66c8822e422f686f63491062a667f0b6bab9a`, `LICENSE` at commit `2e56795f4ecbff21f62ec4dc60376993617db8d5` and `LICENSE` at commit `dbdaf9e15f88c7853a3972cb95384c63f21d50fd`.
 
 4 schemas:
 
@@ -2788,7 +2807,7 @@ License detected from `LICENSE.txt` at commit `0f5b90519fecfcc66accc5d6ddc884484
 
 ### GitHub repository `woodpecker-ci/woodpecker` (Apache-2.0)
 
-License detected from `LICENSE` at commit `a28a1fcccd950cce5806bfb22572f5a08a693cca`.
+License detected from `LICENSE` at commit `ae3b942fa228c354927cee0818de28360e9cf7dd`.
 
 1 schema:
 
