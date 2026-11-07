@@ -59,7 +59,7 @@ commit = "05b037b7a2b68ead6893c857db2594bcad9951d4"
 tarball_base_url = "https://codeload.github.com/SchemaStore/schemastore/tar.gz"
 max_tarball_bytes = 67108864
 
-[dependencies]          # per schema, never per run
+[dependencies] # per schema, never per run
 max_depth = 8
 max_per_schema = 64
 max_document_bytes = 16777216
@@ -94,16 +94,16 @@ name = "company"
 policy = "licenses.toml"
 
 [[entries]]
-id = "company-config"                          # optional; derived from url otherwise
+id = "company-config" # optional; derived from url otherwise
 name = "company.json"
 description = "Company configuration"
-url = "https://schemas.example/company.json"   # provenance; not fetched when file is set
+url = "https://schemas.example/company.json" # provenance; not fetched when file is set
 file = "schemas/company.json"
 file_match = ["config/company.json"]
-license = "MIT"                                # SPDX expression; see Licenses
-instances = ["tests/company/valid.json"]       # optional JSON instances for the behaviour check
+license = "MIT" # SPDX expression; see Licenses
+instances = ["tests/company/valid.json"] # optional JSON instances for the behaviour check
 
-[[documents]]                                  # serve a dependency URI from a local file
+[[documents]] # serve a dependency URI from a local file
 uri = "https://schemas.example/common.json"
 file = "schemas/common.json"
 license = "MIT"
@@ -461,9 +461,9 @@ A publicly reachable URL is not permission to redistribute. The policy file
 ```toml
 [[rules]]
 id = "schemastore"
-decision = "allow"            # allow | exclude | review
+decision = "allow" # allow | exclude | review
 hosts = ["www.schemastore.org", "json.schemastore.org"]
-path_prefix = "/"             # optional
+path_prefix = "/" # optional
 license = "Apache-2.0"
 notice_file = "notices/schemastore.txt"
 reason = "why this decision was made"
@@ -515,8 +515,19 @@ list publishes them:
 
 ```toml
 [auto]
-enabled = true          # default false when the section or the key is absent
-allow = ["MIT", "MIT-0", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "0BSD", "CC0-1.0", "Unlicense", "BlueOak-1.0.0"]
+enabled = true # default false when the section or the key is absent
+allow = [
+  "MIT",
+  "MIT-0",
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "0BSD",
+  "CC0-1.0",
+  "Unlicense",
+  "BlueOak-1.0.0",
+]
 hosts = ["api.github.com", "registry.npmjs.org", "unpkg.com", "cdn.jsdelivr.net"]
 ```
 
@@ -656,7 +667,7 @@ is new.
    revision is the UTC minute of the publication. It must be newer than every
    revision in the repository and in the state: the same minute with other
    content, or a clock behind, is refused with exit code 2 (`… publish again
-in a later minute`). A newest tag in a newer Schepherd wire format stops
+   in a later minute`). A newest tag in a newer Schepherd wire format stops
    `publish` with exit code 2 before anything is written.
 4. **Push schemas.** Missing blobs and manifests are uploaded, without tags
    of their own, and every entry is verified to resolve in the repository. A recorded artifact missing from the repository is pushed

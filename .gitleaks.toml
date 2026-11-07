@@ -1,8 +1,7 @@
+[[allowlists]]
+description = "Nested worktrees and installed build/dependency trees are not project source"
+paths = ['(?:^|/)\.claude/worktrees/', "(?:^|/)parsers/target/", '(?:^|/)\.venv/', '(?:^|/)\.tools/']
 title = "Schepherd source checks"
 
 [extend]
 path = ".datamitsu/gitleaks-managed.toml"
-
-[[allowlists]]
-description = "Nested worktrees and installed build/dependency trees are not project source"
-paths = ['(?:^|/)\.claude/worktrees/', "(?:^|/)parsers/target/", '(?:^|/)\.venv/', '(?:^|/)\.tools/']

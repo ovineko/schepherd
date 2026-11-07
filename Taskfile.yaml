@@ -44,6 +44,11 @@ tasks:
       - cargo test --locked
     desc: Native Rust parser behavior tests (requires the pinned Rust toolchain)
     dir: parsers
+  python:setup:
+    cmds:
+      - uv sync --directory tools/check-jsonschema --locked
+      - uv sync --directory packaging/python --group dev --locked --no-install-project
+    desc: Provision the locked Python checker and wheel build-hook type-check environments
   test:
     cmds:
       - go test ./...
@@ -86,6 +91,8 @@ tasks:
     cmds:
       - pnpm --filter @ovineko/schepherd-ajv test
       - uv run --directory tools/check-jsonschema --locked python -m unittest discover -s tests
+    deps:
+      - python:setup
     desc: Owned validator frontend tests (locked dependencies; pinned Python from .python-version; requires uv 0.12.19)
   test:fuzz:
     cmds:
@@ -120,6 +127,7 @@ tasks:
       - grep -q 'dm exec syft' {{.TOOLS_BIN}}/syft
   verify:
     cmds:
+      - task: python:setup
       - pnpm dm check
       - task: lint
       - task: lint:vuln
@@ -135,7 +143,7 @@ tasks:
       - task: test:e2e
       - task: verify:packaging
       - pnpm dm exec zensical -- build --strict
-    desc: "Local equivalent of CI on this platform (CI additionally runs the OS matrix)"
+    desc: "Local equivalent of CI on this platform (CI adds the OS matrix)"
   verify:packaging:
     cmds:
       - "{{.TOOLS_BIN}}/goreleaser check"

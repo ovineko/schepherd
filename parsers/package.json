@@ -6,5 +6,11 @@
   "scripts": {
     "build": "cargo build --locked --release --target wasm32-unknown-unknown",
     "test": "cargo test --locked"
+  },
+  "devDependencies": {
+    "@shibanet0/datamitsu-config": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

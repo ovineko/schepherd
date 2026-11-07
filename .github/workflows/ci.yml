@@ -78,11 +78,10 @@ jobs:
         with:
           enable-cache: false
           version: "0.12.19"
-      - name: Install the frontend's pinned portable Python
-        run: uv python install
-        working-directory: tools/check-jsonschema
-      - name: Locked workspace dependencies
+      - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install locked Python environments
+        run: pnpm dm exec task -- python:setup
       - name: Frontend behavior (no validation result cache)
         run: pnpm dm exec task -- test:frontends
   fuzz:
@@ -128,7 +127,8 @@ jobs:
         name: RubyGems launcher tests (Ruby 2.7)
         run: docker run --rm --network none -v "$PWD/packaging/ruby:/src:ro" -w /src "$IMAGE" ruby -W test/schepherd_test.rb
   # Formatting, go vet and golangci-lint (with the e2e build tag, see
-  # .golangci.yaml) run once, in `pnpm dm check` of the repository-checks job.
+  # .golangci.yaml) run once, in `pnpm dm check` of repository-checks, after
+  # the project-owned locked Python setup task provisions its environments.
   lint:
     name: Lint (modules, client dependency boundary, govulncheck)
     runs-on: ubuntu-26.04
@@ -271,8 +271,10 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - name: Install toolchain
+      - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install locked Python environments
+        run: pnpm dm exec task -- python:setup
       - name: Linters and formatters (fails on any change)
         run: |
           pnpm dm check

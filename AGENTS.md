@@ -43,8 +43,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   Keep `rustfmt` in the toolchain's components even with the minimal profile: clean CI runs formatters too.
 - Owned validator frontends: `pnpm dm exec task -- test:frontends` (AJV plus locked Python environment).
   This task runs in mandatory CI and in `task verify`; Go and Rust tests do not cover the frontend packages.
-  CI installs the pinned Python with uv, not `actions/setup-python`: older Python patches may have
-  no runner-specific build for the current Ubuntu release.
+  Before `pnpm dm check` in a clean checkout, run `pnpm dm exec task -- python:setup`; the `verify`
+  Task and CI check jobs run it first. It provisions both environments from their locked uv files.
 
 ### Rules specific to this project
 

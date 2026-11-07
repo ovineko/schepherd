@@ -2,8 +2,15 @@
   "name": "@schepherd/check-jsonschema",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "pnpm --dir ../.. dm exec uv -- build tools/check-jsonschema --out-dir dist/local-tools/python-wheel",
     "test": "pnpm --dir ../.. dm exec uv -- run --directory tools/check-jsonschema --locked python -m unittest discover -s tests"
+  },
+  "devDependencies": {
+    "@shibanet0/datamitsu-config": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

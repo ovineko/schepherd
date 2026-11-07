@@ -1,5 +1,37 @@
 root = true
 
+[*.{kt,kts}]
+ij_continuation_indent_size                                    = 2
+ij_kotlin_allow_trailing_comma                                 = true
+ij_kotlin_allow_trailing_comma_on_call_site                    = true
+ij_kotlin_code_style_defaults                                  = KOTLIN_OFFICIAL
+ij_kotlin_imports_layout                                       = *
+ij_kotlin_name_count_to_use_star_import                        = 2147483647
+ij_kotlin_name_count_to_use_star_import_for_members            = 2147483647
+ij_kotlin_packages_to_use_import_on_demand                     = unset
+indent_size                                                    = 2
+indent_style                                                   = space
+ktfmt_trailing_comma_management_strategy                       = complete
+ktlint_code_style                                              = ktlint_official
+ktlint_enum_entry_name_casing                                  = upper_or_camel_cases
+ktlint_function_naming_ignore_when_annotated_with              = Composable
+ktlint_property_naming_constant_naming                         = screaming_snake_case
+ktlint_standard                                                = disabled
+max_line_length                                                = 100
+ktlint_standard_backing-property-naming                        = enabled
+ktlint_standard_class-naming                                   = enabled
+ktlint_standard_enum-entry-name-case                           = enabled
+ktlint_standard_function-expression-body                       = enabled
+ktlint_standard_function-naming                                = enabled
+ktlint_standard_mixed-condition-operators                      = enabled
+ktlint_standard_modifier-order                                 = enabled
+ktlint_standard_no-unit-return                                 = enabled
+ktlint_standard_no-wildcard-imports                            = enabled
+ktlint_standard_package-name                                   = enabled
+ktlint_standard_property-naming                                = enabled
+ktlint_standard_string-template                                = enabled
+ktlint_standard_unnecessary-parentheses-before-trailing-lambda = enabled
+
 [*]
 charset                  = utf-8
 end_of_line              = lf
