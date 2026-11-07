@@ -45,6 +45,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   This task runs in mandatory CI and in `task verify`; Go and Rust tests do not cover the frontend packages.
   Before `pnpm dm check` in a clean checkout, run `pnpm dm exec task -- python:setup`; the `verify`
   Task and CI check jobs run it first. It provisions both environments from their locked uv files.
+  Jobs invoking `python:setup` must install uv with the pinned `astral-sh/setup-uv` action first;
+  `pnpm dm exec task` provisions Task, not the `uv` executable that its commands invoke.
 
 ### Rules specific to this project
 
