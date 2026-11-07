@@ -318,8 +318,7 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   `dist/artifacts.json` is written only at the end of a successful `goreleaser release`: never build packages from a
   failed release run. Re-runs after publication and finishing a failed Homebrew, Scoop or winget push by hand:
   `docs/versioning.md`.
-- Workflows use only the newest GitHub-hosted runner labels; `.github/actionlint.yaml` declares the `ubuntu-26.04`
-  labels that actionlint 1.7.12 (the datamitsu pin) does not know. Every `astral-sh/setup-uv` step pins uv 0.12.19
+  labels that actionlint 1.7.12 (the datamitsu pin) does not know. Every `astral-sh/setup-uv` step pins uv 0.13.7
   with `enable-cache: false`; every `ruby/setup-ruby` step uses `bundler: none` and a `working-directory` holding
   `.ruby-version`.
 - `pnpm dm check` skips zizmor: run `pnpm dm exec zizmor -- --offline .github/workflows` after changing a workflow.

@@ -202,7 +202,7 @@ reviewer approves it before it starts.
 
 The called CI workflow includes mandatory owned-frontend tests: AJV uses the
 frozen pnpm workspace lock, and check-jsonschema uses its committed `uv.lock`
-with `uv run --locked`, uv 0.12.19 and the Python version in
+with `uv run --locked`, the uv version pinned by CI, and the Python version in
 `tools/check-jsonschema/.python-version`. `pnpm dm exec task -- test:frontends`
 runs both locally and is part of `task verify`.
 

@@ -93,7 +93,7 @@ tasks:
       - uv run --directory tools/check-jsonschema --locked python -m unittest discover -s tests
     deps:
       - python:setup
-    desc: Owned validator frontend tests (locked dependencies; pinned Python from .python-version; requires uv 0.12.19)
+    desc: Owned validator frontend tests (locked dependencies; Python pinned by .python-version; requires uv)
   test:fuzz:
     cmds:
       - |
@@ -189,7 +189,7 @@ vars:
     sh: echo ${GEM_RUBY:-docker}
   # Also the version of goreleaser/goreleaser-action in .github/workflows;
   # tools/release/workflows_test.go keeps them equal.
-  GORELEASER_VERSION: v2.18.2
+  GORELEASER_VERSION: v2.20.0
   GOVULNCHECK_VERSION: v1.8.0
   TOOLS_BIN: .tools/bin
 version: "3"
