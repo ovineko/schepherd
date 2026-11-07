@@ -38,7 +38,7 @@ sequenceDiagram
 1. **prepare** (`contents: read`, no secrets) resolves the current `master`
    commit, writes a copy of `sources/schemastore.toml` that records it
    (`catalogbot set-commit`), runs `schepherd-publisher prepare --state
-catalog/state.json` (with the job's read-only `GITHUB_TOKEN` for license
+   catalog/state.json` (with the job's read-only `GITHUB_TOKEN` for license
    detection, and `--refresh` or `--refresh-all` from the `refresh` input) and
    `diff`, and writes the job summary. When `hasChanges` is false the run ends
    there, however many schemas are held. When the recorded revision is
@@ -55,7 +55,7 @@ catalog/state.json` (with the job's read-only `GITHUB_TOKEN` for license
    mode.
 3. **publish** runs only on `main`, in the protected `schemas-publish`
    environment, with `contents: read`, `packages: write`, `attestations:
-write` and `id-token: write`. The prepare job ran the bundler on untrusted
+   write` and `id-token: write`. The prepare job ran the bundler on untrusted
    upstream data, so of its `catalog-update` artifact only the prepared set is
    used, after `cmp` confirms that the artifact's `base-state.json` equals
    `catalog/state.json` of the checkout. Everything else comes from the

@@ -16,10 +16,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
-          version: "0.12.19"
+          version: "0.13.7"
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       # The pinned Sourcemeta CLI and GoReleaser in .tools/bin, as locally.
       - name: Install pinned maintainer tools
@@ -74,15 +74,14 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
-          version: "0.12.19"
-      - name: Install the frontend's pinned portable Python
-        run: uv python install
-        working-directory: tools/check-jsonschema
-      - name: Locked workspace dependencies
+          version: "0.13.7"
+      - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
+      - name: Install locked Python environments
+        run: pnpm dm exec task -- python:setup
       - name: Frontend behavior (no validation result cache)
         run: pnpm dm exec task -- test:frontends
   fuzz:
@@ -128,7 +127,8 @@ jobs:
         name: RubyGems launcher tests (Ruby 2.7)
         run: docker run --rm --network none -v "$PWD/packaging/ruby:/src:ro" -w /src "$IMAGE" ruby -W test/schepherd_test.rb
   # Formatting, go vet and golangci-lint (with the e2e build tag, see
-  # .golangci.yaml) run once, in `pnpm dm check` of the repository-checks job.
+  # .golangci.yaml) run once, in `pnpm dm check` of repository-checks, after
+  # the project-owned locked Python setup task provisions its environments.
   lint:
     name: Lint (modules, client dependency boundary, govulncheck)
     runs-on: ubuntu-26.04
@@ -167,11 +167,11 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       # The same GoReleaser and syft as the release workflow.
-      - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+      - uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           distribution: goreleaser
           install-only: true
-          version: v2.18.2
+          version: v2.20.0
       - uses: anchore/sbom-action/download-syft@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
           syft-version: v1.52.0
@@ -193,10 +193,10 @@ jobs:
           (cd "$clone" && go run ./tools/release parsers build --dir .tools/parsers --version "$version")
           (cd "$clone" && goreleaser release --snapshot --clean --skip=before,sign,sbom)
           diff -u <(grep -v '\.sbom\.json$' dist/*_checksums.txt) "$clone"/dist/*_checksums.txt
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
-          version: "0.12.19"
+          version: "0.13.7"
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           bundler: none
@@ -271,8 +271,16 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - name: Install toolchain
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+          version: "0.13.7"
+      - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
+      - name: Initialize datamitsu tooling and managed configurations
+        run: pnpm dm init
+      - name: Install locked Python environments
+        run: pnpm dm exec task -- python:setup
       - name: Linters and formatters (fails on any change)
         run: |
           pnpm dm check
@@ -351,16 +359,16 @@ jobs:
       # each launcher must run exactly like the binary.
       - if: runner.os != 'Linux' || runner.arch != 'X64'
         name: Snapshot binary of this runner (launcher smokes)
-        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           args: build --snapshot --clean --single-target --id schepherd --skip=before
           distribution: goreleaser
-          version: v2.18.2
+          version: v2.20.0
       - if: runner.os != 'Linux' || runner.arch != 'X64'
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
-          version: "0.12.19"
+          version: "0.13.7"
       - if: runner.os != 'Linux' || runner.arch != 'X64'
         name: npm, PyPI and RubyGems launcher smokes (packages of this runner's binary)
         run: |

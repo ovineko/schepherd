@@ -5,7 +5,7 @@ audit:
 autoInstallPeers: true
 blockExoticSubdeps: true
 catalog:
-  "@shibanet0/datamitsu-config": 0.5.0
+  "@shibanet0/datamitsu-config": 0.6.3
 dangerouslyAllowAllBuilds: false
 dedupeDirectDeps: true
 dedupePeerDependents: true
@@ -16,16 +16,9 @@ hoistPattern: []
 lockfile: true
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
-  - "@datamitsu/datamitsu-darwin-arm64@0.5.1"
-  - "@datamitsu/datamitsu-darwin-x64@0.5.1"
-  - "@datamitsu/datamitsu-freebsd-arm64@0.5.1"
-  - "@datamitsu/datamitsu-freebsd-x64@0.5.1"
-  - "@datamitsu/datamitsu-linux-arm64@0.5.1"
-  - "@datamitsu/datamitsu-linux-x64@0.5.1"
-  - "@datamitsu/datamitsu-win32-arm64@0.5.1"
-  - "@datamitsu/datamitsu-win32-x64@0.5.1"
-  - "@datamitsu/datamitsu@0.5.1"
-  - "@shibanet0/datamitsu-config@0.5.0"
+  - "@datamitsu/*"
+  - "@ovineko/*"
+  - "@shibanet0/*"
 optimisticRepeatInstall: true
 overrides:
   "@shibanet0/datamitsu-config@0.5.0>fast-glob": "-"
@@ -38,8 +31,6 @@ packages:
   - parsers
   - tools/ajv
   - tools/check-jsonschema
-patchedDependencies:
-  "@shibanet0/datamitsu-config@0.5.0": patches/@shibanet0__datamitsu-config@0.5.0.patch
 preferFrozenLockfile: true
 resolutionMode: lowest-direct
 savePrefix: ""

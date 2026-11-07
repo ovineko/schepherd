@@ -118,7 +118,7 @@ jobs:
       # skip-existing: PyPI accepts a byte-identical file again and refuses
       # any other file of an existing name.
       - if: steps.plan.outputs.wheels != '0'
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           attestations: true
           packages-dir: pypi-upload/
@@ -223,10 +223,10 @@ jobs:
         with:
           node-version-file: .node-version
           package-manager-cache: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: false
-          version: "0.12.19"
+          version: "0.13.7"
       - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           bundler: none
@@ -242,11 +242,11 @@ jobs:
       - env:
           GORELEASER_CURRENT_TAG: ${{ github.ref_name }}
         name: Binaries of every target (nothing is published)
-        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           args: build --clean --skip=before
           distribution: goreleaser
-          version: v2.18.2
+          version: v2.20.0
       # The packages are built here, once, with npm pack, uv build (the
       # hatchling of packaging/python/build-constraints.txt) and gem build
       # (the Ruby of packaging/ruby/.ruby-version); each must hold exactly its
@@ -278,11 +278,11 @@ jobs:
           SCOOP_TOKEN: ${{ secrets.SCOOP_TOKEN }}
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         name: Publish the GitHub release, Homebrew cask, Scoop manifest and winget pull request
-        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           args: release --clean
           distribution: goreleaser
-          version: v2.18.2
+          version: v2.20.0
       # The registries follow the published GitHub release, not the package
       # managers: npm, PyPI and RubyGems get the packages even when a
       # Homebrew, Scoop or winget push failed after the release was

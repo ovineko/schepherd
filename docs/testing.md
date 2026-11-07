@@ -1,16 +1,22 @@
 # Testing
 
-| Layer                  | Command                                           | Needs                                                                                                                                                                                                                                                                                                                 |
-| ---------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit and integration   | `pnpm test` (or `go test ./...`)                  | Go (the `go` command on `PATH`: the client smoke tests build binaries); `.tools/bin/jsonschema` for publisher tests                                                                                                                                                                                                   |
-| Race detector          | `pnpm dm exec task -- test:race`                  | Go with cgo (a C toolchain). CI runs it on every runner except windows-11-arm, where Go has no race detector; on windows-2025 it uses the image's MinGW-w64 gcc (`CGO_ENABLED=1`)                                                                                                                                     |
-| Coverage               | `pnpm test:coverage`                              | Go; writes `coverage.out`                                                                                                                                                                                                                                                                                             |
-| Fuzzing (bounded)      | `pnpm dm exec task -- test:fuzz`                  | Go; `FUZZTIME` per target (default `20s`)                                                                                                                                                                                                                                                                             |
-| E2E preparation        | `pnpm test:e2e:install` (`task test:e2e:prepare`) | Linux, Docker with buildx, uv, rustup with cargo/rustc proxies, network (Docker Hub, PyPI, Go module proxy, Rust distributions, crates.io)                                                                                                                                                                            |
-| End-to-end             | `pnpm test:e2e`                                   | Linux, Docker with Compose and buildx, npm, `task tools`, the preparation step (run automatically)                                                                                                                                                                                                                    |
-| E2E performance        | `pnpm test:e2e:perf` (`task test:e2e:perf`)       | same as end-to-end                                                                                                                                                                                                                                                                                                    |
-| Packaging              | `pnpm dm exec task -- verify:packaging`           | Node.js, npm, uv (it fetches the pinned hatchling from PyPI), `python3` (PyPI launcher tests), Docker for the gem and the Ruby launcher tests (the pinned Ruby image) or `GEM_RUBY=host` with the Ruby and RubyGems of `tools/pins/ruby.go` on `PATH`, `pnpm install` (syft via datamitsu), GoReleaser (`task tools`) |
-| Local equivalent of CI | `pnpm dm exec task -- verify`                     | all of the above (CI adds the OS matrix)                                                                                                                                                                                                                                                                              |
+| Layer                | Command                                           | Needs                                                                                                                                                                             |
+| -------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit and integration | `pnpm test` (or `go test ./...`)                  | Go (the `go` command on `PATH`: the client smoke tests build binaries); `.tools/bin/jsonschema` for publisher tests                                                               |
+| Race detector        | `pnpm dm exec task -- test:race`                  | Go with cgo (a C toolchain). CI runs it on every runner except windows-11-arm, where Go has no race detector; on windows-2025 it uses the image's MinGW-w64 gcc (`CGO_ENABLED=1`) |
+| Coverage             | `pnpm test:coverage`                              | Go; writes `coverage.out`                                                                                                                                                         |
+| Fuzzing (bounded)    | `pnpm dm exec task -- test:fuzz`                  | Go; `FUZZTIME` per target (default `20s`)                                                                                                                                         |
+| E2E preparation      | `pnpm test:e2e:install` (`task test:e2e:prepare`) | Linux, Docker with buildx, uv, rustup with cargo/rustc proxies, network (Docker Hub, PyPI, Go module proxy, Rust distributions, crates.io)                                        |
+| End-to-end           | `pnpm test:e2e`                                   | Linux, Docker with Compose and buildx, npm, `task tools`, the preparation step (run automatically)                                                                                |
+| E2E performance      | `pnpm test:e2e:perf` (`task test:e2e:perf`)       | same as end-to-end                                                                                                                                                                |
+
+| Packaging | `pnpm dm exec task -- verify:packaging` | Node.js, npm, uv (it fetches the pinned hatchling from PyPI), `python3` (PyPI launcher tests), Docker for the gem and the Ruby launcher tests (the pinned Ruby image) or `GEM_RUBY=host` with the Ruby and RubyGems of `tools/pins/ruby.go` on `PATH`, `pnpm install` (syft via datamitsu), GoReleaser (`task tools`) |
+| Local equivalent of CI | `pnpm dm exec task -- verify` | all of the above (CI adds the OS matrix) |
+Before running `pnpm dm check` in a clean checkout, provision the repository's
+locked Python environments with `pnpm dm exec task -- python:setup`. The
+`verify` Task and the relevant CI jobs run this setup before checks; it uses the
+declared `uv.lock` files rather than relying on a developer-created virtual
+environment. Re-run the setup command to recreate the environments.
 
 `pnpm dm exec task -- tools` installs the pinned maintainer tools into
 `.tools/bin`: the Sourcemeta bundler (`go run ./tools/install-jsonschema`,
@@ -78,7 +84,7 @@ outside their temporary directories. They cover, among others:
   and a module cache that holds the client's dependencies;
 - the launchers: `node --test packaging/npm/schepherd/test/`, the PyPI
   launcher tests (`PYTHONPATH=packaging/python python3 -m unittest discover
---start-directory packaging/python/tests`) and
+  --start-directory packaging/python/tests`) and
   `ruby -W packaging/ruby/test/schepherd_test.rb`: platform selection, the
   `SCHEPHERD_BINARY` override, and arguments, standard input, signals and
   exit status passed through. On Windows the npm tests' stand-in binary is a

@@ -211,7 +211,7 @@ for the rules.
 
 - Secrets exist only in the publish job of `update-schemas.yml`, in the
   protected `schemas-publish` environment, which alone gets `packages:
-write`, `attestations: write` and `id-token: write`. The prepare job uses
+  write`, `attestations: write` and `id-token: write`. The prepare job uses
   only its read-only `GITHUB_TOKEN` (status lookups and license detection)
   and resolves `catalog-latest` anonymously; the test job's token has only
   `packages: read`. Registry credential files are written with mode 0600 and
@@ -254,7 +254,7 @@ write`, `attestations: write` and `id-token: write`. The prepare job uses
   against it again, and a version a registry already has with other contents
   fails the job instead of being replaced.
 - The website workflow holds no secrets; its deploy job gets only `pages:
-write` and `id-token: write`.
+  write` and `id-token: write`.
 
 ## Reporting vulnerabilities
 
