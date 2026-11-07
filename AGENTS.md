@@ -47,6 +47,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   Task and CI check jobs run it first. It provisions both environments from their locked uv files.
   Jobs invoking `python:setup` must install uv with the pinned `astral-sh/setup-uv` action first;
   `pnpm dm exec task` provisions Task, not the `uv` executable that its commands invoke.
+  Clean CI jobs must also run `pnpm dm init` after `pnpm install --frozen-lockfile` and before
+  `pnpm dm check`; package installation alone does not render `.datamitsu/configs/`.
 
 ### Rules specific to this project
 

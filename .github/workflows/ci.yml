@@ -277,6 +277,8 @@ jobs:
           version: "0.13.7"
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
+      - name: Initialize datamitsu tooling and managed configurations
+        run: pnpm dm init
       - name: Install locked Python environments
         run: pnpm dm exec task -- python:setup
       - name: Linters and formatters (fails on any change)
