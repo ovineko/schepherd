@@ -17,7 +17,8 @@ func TestVersionsOf(t *testing.T) {
 		"1.0.0-alpha.1":          {SemVer: "1.0.0-alpha.1", PEP440: "1.0.0a1", Gem: "1.0.0.alpha.1"},
 		"1.0.0-beta.2":           {SemVer: "1.0.0-beta.2", PEP440: "1.0.0b2", Gem: "1.0.0.beta.2"},
 		"2.3.4-rc.12":            {SemVer: "2.3.4-rc.12", PEP440: "2.3.4rc12", Gem: "2.3.4.rc.12"},
-		"0.0.0-snapshot-f94b599": {SemVer: "0.0.0-snapshot-f94b599", PEP440: "0.0.0+snapshot.f94b599", Gem: "0.0.0.1.snapshot.f94b599", Snapshot: true},
+		"0.0.0-snapshot-f94b599": {SemVer: "0.0.0-snapshot-f94b599", PEP440: "0.0.0+snapshot.shaf94b599", Gem: "0.0.0.1.snapshot.f94b599", Snapshot: true},
+		"0.0.0-snapshot-0482522": {SemVer: "0.0.0-snapshot-0482522", PEP440: "0.0.0+snapshot.sha0482522", Gem: "0.0.0.1.snapshot.0482522", Snapshot: true},
 	} {
 		if got, err := VersionsOf(in); err != nil || got != want {
 			t.Errorf("VersionsOf(%q) = %+v, %v; want %+v", in, got, err, want)

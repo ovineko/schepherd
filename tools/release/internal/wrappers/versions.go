@@ -45,7 +45,8 @@ func VersionsOf(version string) (Versions, error) {
 			return Versions{}, fmt.Errorf("snapshot version %s: want %s<lowercase hexadecimal commit>", version, SnapshotPrefix)
 		}
 
-		return Versions{SemVer: version, PEP440: "0.0.0+snapshot." + commit, Gem: "0.0.0.1.snapshot." + commit, Snapshot: true}, nil
+		// PEP 440 strips leading zeroes from numeric local segments; keep the commit alphanumeric.
+		return Versions{SemVer: version, PEP440: "0.0.0+snapshot.sha" + commit, Gem: "0.0.0.1.snapshot." + commit, Snapshot: true}, nil
 	}
 
 	v, err := semver.ParseRelease(version)

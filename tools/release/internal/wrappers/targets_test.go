@@ -147,6 +147,9 @@ func TestWheelTags(t *testing.T) {
 	if got := linux.WheelFile("1.0.0rc1"); got != "schepherd-1.0.0rc1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.musllinux_1_1_x86_64.whl" {
 		t.Errorf("WheelFile = %s", got)
 	}
+	if got := linux.WheelFile("0.0.0+snapshot.sha0482522"); got != "schepherd-0.0.0+snapshot.sha0482522-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.musllinux_1_1_x86_64.whl" {
+		t.Errorf("snapshot WheelFile = %s", got)
+	}
 
 	if got := NpmFile(linux.NpmPackage(), "1.0.0-rc.1"); got != "ovineko-schepherd-linux-x64-1.0.0-rc.1.tgz" {
 		t.Errorf("NpmFile = %s", got)
