@@ -34,6 +34,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   `pnpm dm exec task -- lint` (module verification, client dependency boundary; `lint:vuln` for govulncheck)
 - Packaging (snapshot release, npm, PyPI, RubyGems): `pnpm dm exec task -- verify:packaging` (needs `npm`, `uv` and
   Docker, or `GEM_RUBY=host`; see `CONTRIBUTING.md`)
+- Manual release rehearsal: Actions > Release rehearsal (no publish) > Run workflow. It reuses mandatory CI
+  with read-only permissions and retains snapshot packages as Actions artifacts; it creates no tag or release.
 - Local equivalent of CI: `pnpm dm exec task -- verify`
 - Install pinned tools (bundler, GoReleaser, syft shim): `pnpm dm exec task -- tools`
 - Third-party license texts: `go run ./tools/release licenses generate` (check: `go run ./tools/release licenses check`)
@@ -323,6 +325,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   `UV_OFFLINE=1` from its uv cache). All three package builders must stay byte-reproducible (`packages build` sets
   `SOURCE_DATE_EPOCH` to the binaries' modification time); CI and `task verify:packaging` build twice and compare the
   checksum files.
+  Snapshot PEP 440 local versions prefix the commit with `sha`: a bare numeric commit such as `0482522`
+  loses its leading zeroes under Hatchling normalization and changes the wheel filename.
 - `packages build` writes the published `package.json` of every npm package itself;
   `packaging/npm/schepherd/package.json` is only the private manifest of the launcher sources and is never packed.
 - npm 11 refuses to publish a pre-release version without `--tag`; the release workflow and E37 always pass one.

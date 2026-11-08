@@ -1,0 +1,9 @@
+jobs:
+  checks:
+    name: Mandatory checks and snapshot packaging
+    uses: ./.github/workflows/ci.yml
+name: Release rehearsal (no publish)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
