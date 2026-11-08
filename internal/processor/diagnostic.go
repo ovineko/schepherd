@@ -30,8 +30,13 @@ func NormalizeDiagnosticPaths(message string, substitutions ...PathSubstitution)
 		}
 		path := filepath.Clean(substitution.Path)
 		variants := []string{path, filepath.ToSlash(path), filepath.FromSlash(path)}
-		if escaped := (&url.URL{Path: filepath.ToSlash(path)}).EscapedPath(); escaped != path {
+		slashPath := filepath.ToSlash(path)
+		if escaped := (&url.URL{Path: slashPath}).EscapedPath(); escaped != slashPath {
 			variants = append(variants, escaped)
+		}
+		if filepath.IsAbs(path) && filepath.VolumeName(path) != "" {
+			uriPath := "/" + slashPath
+			message = replaceLocalPath(message, (&url.URL{Path: uriPath}).EscapedPath(), substitution.Token)
 		}
 		for _, variant := range slices.Compact(variants) {
 			message = replaceLocalPath(message, variant, substitution.Token)

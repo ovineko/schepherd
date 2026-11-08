@@ -18,6 +18,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/ovineko/schepherd/internal/catalog"
 )
 
 // releaseNpmPackages are the npm packages of a release: the launcher
@@ -185,8 +187,8 @@ func releaseCheckLauncher(t *testing.T, project, binDir, commit string) {
 		Release               bool   `json:"release"`
 		CatalogFormatVersions []int  `json:"catalogFormatVersions"`
 	}](t, direct.Stdout)
-	if info.Version != "dev" || info.Release || info.Commit != commit || !slices.Equal(info.CatalogFormatVersions, []int{2}) {
-		t.Fatalf("the snapshot binary reports %+v, want version dev, no release, commit %s, catalog format 1", info, commit)
+	if info.Version != "dev" || info.Release || info.Commit != commit || !slices.Equal(info.CatalogFormatVersions, []int{catalog.FormatVersion, catalog.MetadataFormatVersion}) {
+		t.Fatalf("the snapshot binary reports %+v, want version dev, no release, commit %s, catalog formats %d and %d", info, commit, catalog.FormatVersion, catalog.MetadataFormatVersion)
 	}
 
 	if len(directFail.Stdout) != 0 || !bytes.Contains(directFail.Stderr, []byte("sha256:"+strings.Repeat("a", 64))) {

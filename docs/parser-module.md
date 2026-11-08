@@ -24,8 +24,11 @@ home, Rust sysroot and target directory. The resulting artifact is retained at
 deleted. `check` executes the actual module in Node's WebAssembly engine, checks
 function ABI 2, capability schema 4 and the `input-skips` feature, all four dispatch
 keys, validator findings and Schepherd file attribution. `host` additionally loads the
-module through the installed Datamitsu host and requires a classified diagnostic from
-an early Schepherd failure.
+module through the installed Datamitsu host and requires a classified diagnostic and
+legacy `partial: true` cache-safety from an early Schepherd failure with a skipped input.
+Older ABI-2 hosts need not expose the optional skip fields; when returned, those fields
+must match. The direct WASM smoke independently requires the complete categorized skip
+and `extractionPartial: false`.
 
 These package commands call the corresponding `parsers:*` Taskfile tasks. For
 an explicit version or output directory use the release helper directly:

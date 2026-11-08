@@ -22,7 +22,11 @@ func TestNormalizeDiagnosticPathsReplacesOnlyDeclaredLocalPaths(t *testing.T) {
 		t.Fatalf("normalized diagnostic = %q, want %q", got, want)
 	}
 
-	fileURI := (&url.URL{Scheme: "file", Path: schema}).String()
+	fileURIPath := filepath.ToSlash(schema)
+	if filepath.VolumeName(schema) != "" {
+		fileURIPath = "/" + fileURIPath
+	}
+	fileURI := (&url.URL{Scheme: "file", Path: fileURIPath}).String()
 	got = NormalizeDiagnosticPaths("cannot read "+fileURI, PathSubstitution{Path: schema, Token: "{schema}"})
 	if !strings.Contains(got, "file://{schema}") {
 		t.Fatalf("escaped local file URI was not normalized: %q", got)

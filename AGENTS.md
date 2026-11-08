@@ -41,6 +41,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
 - Parser module: `pnpm parsers:test`, `pnpm parsers:build`, `pnpm parsers:check`, `pnpm parsers:host`.
   The Go build remains independent of Rust; release preparation builds and verifies the parser separately.
   Keep `rustfmt` in the toolchain's components even with the minimal profile: clean CI runs formatters too.
+  The pinned host smoke requires the ABI-2 diagnostic and legacy `partial` cache-safety signal;
+  optional skip fields are verified when exposed. Full skip metadata is always required by the raw WASM smoke.
 - Owned validator frontends: `pnpm dm exec task -- test:frontends` (AJV plus locked Python environment).
   This task runs in mandatory CI and in `task verify`; Go and Rust tests do not cover the frontend packages.
   Before `pnpm dm check` in a clean checkout, run `pnpm dm exec task -- python:setup`; the `verify`
