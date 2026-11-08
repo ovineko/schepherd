@@ -4,11 +4,28 @@ import (
 	"github.com/ovineko/schepherd/internal/cache"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/processor"
+	"github.com/ovineko/schepherd/internal/runner"
 )
 
-func (s *sources) compiler() (*processor.Compiler, func(), error) {
-	compiler := &processor.Compiler{}
-	if len(s.cfg.Processors) == 0 {
+func (s *sources) compiler(schemas map[string]runner.SchemaInfo) (*processor.Compiler, func(), error) {
+	compiler := &processor.Compiler{VerifyOnly: s.cfg.Offline}
+	typed, catalogSchema := false, false
+	for _, definition := range s.cfg.Processors {
+		if definition.Type != "custom" {
+			typed = true
+			break
+		}
+	}
+	if !typed {
+		return compiler, compiler.Close, nil
+	}
+	for _, schema := range schemas {
+		if schema.Origin == originCatalog {
+			catalogSchema = true
+			break
+		}
+	}
+	if !catalogSchema {
 		return compiler, compiler.Close, nil
 	}
 	if s.sess != nil {

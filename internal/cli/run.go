@@ -21,6 +21,7 @@ type runFlags struct {
 	schema          string
 	report          string
 	ignoreUnmatched bool
+	safeCatalog     bool
 	json            bool
 }
 
@@ -28,18 +29,21 @@ func (a *app) newRunCmd() *cobra.Command {
 	var f runFlags
 
 	cmd := &cobra.Command{
-		Use:   "run [--schema <id>] [--ignore-unmatched] [--report <file>] [--json] -- <files...>",
+		Use:   "run [--schema <id>] [--ignore-unmatched] [--safe-catalog] [--report <file>] [--json] -- <files...>",
 		Short: "Run the configured consumer for the given files",
 		Long: "Resolves a schema for every file (or uses --schema), materializes the catalog schemas,\n" +
 			"checks the local ones in place and starts the consumer from the [runner] section of the\n" +
 			"configuration without a shell.\n" +
-			"Files are taken literally; directories are not walked and globs are not expanded.",
+			"Files are taken literally; directories are not walked and globs are not expanded.\n" +
+			"--safe-catalog leaves ambiguous or unsupported automatic catalog associations unavailable;\n" +
+			"explicit mappings and local schemas remain strict.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return a.run(cmd, f, args)
 		},
 	}
 	cmd.Flags().StringVar(&f.schema, "schema", "", "use this schema id for every file")
-	cmd.Flags().BoolVar(&f.ignoreUnmatched, "ignore-unmatched", false, "skip files that match no schema (ambiguous files still fail)")
+	cmd.Flags().BoolVar(&f.ignoreUnmatched, "ignore-unmatched", false, "skip unmatched or safe-catalog-unavailable files")
+	cmd.Flags().BoolVar(&f.safeCatalog, "safe-catalog", false, "avoid automatic catalog assignment when ambiguous or unsupported by all configured processors")
 	cmd.Flags().StringVar(&f.report, "report", "", "write a JSON report to this file")
 	cmd.Flags().BoolVar(&f.json, "json", false, "emit one attributed JSON report instead of consumer output")
 
@@ -116,7 +120,7 @@ func (a *app) run(cmd *cobra.Command, f runFlags, files []string) error {
 		Capture:   a.machine,
 	}
 
-	compiler, cleanup, err := src.compiler()
+	compiler, cleanup, err := src.compiler(schemas)
 	if err != nil {
 		return err
 	}
@@ -355,7 +359,7 @@ func (a *app) assignSchemas(ctx context.Context, src *sources, f runFlags, paths
 		return inputs, nil, nil
 	}
 
-	r, err := newResolver(src)
+	r, err := newResolver(src, f.safeCatalog)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -366,18 +370,24 @@ func (a *app) assignSchemas(ctx context.Context, src *sources, f runFlags, paths
 		_, res, err := r.resolve(ctx, p)
 		if err != nil {
 			reason := ""
-
+			category := ""
+			unavailable, safeSkip := errors.AsType[*safeCatalogUnavailableError](err)
 			switch {
+			case safeSkip:
+				category = unavailable.category
+				reason = "safe-catalog-unavailable: " + unavailable.Error()
 			case errors.Is(err, match.ErrNoMatch):
-				reason = "unmatched"
+				category = runner.SkipUnmatched
+				reason = runner.SkipUnmatched
 			case errors.Is(err, match.ErrOutsideWorkspace):
-				reason = "outside-workspace"
+				category = runner.SkipOutsideWorkspace
+				reason = runner.SkipOutsideWorkspace
 			}
 
 			if f.ignoreUnmatched && reason != "" {
 				a.logf("skipping %s: %s", p, reason)
 
-				skipped = append(skipped, runner.Skipped{File: p, Reason: reason})
+				skipped = append(skipped, runner.Skipped{File: p, Reason: reason, Category: category})
 
 				continue
 			}

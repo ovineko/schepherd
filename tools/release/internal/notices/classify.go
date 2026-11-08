@@ -1,6 +1,8 @@
 package notices
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"slices"
@@ -14,29 +16,26 @@ import (
 // acceptedLicenses are the SPDX identifiers, as licensecheck reports them,
 // that a license file of the code may have. Any other license, however
 // permissive, needs a review before it is added here.
-var acceptedLicenses = []string{"Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "MIT"}
+var acceptedLicenses = []string{"Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "MIT", "MIT AND Apache-2.0"}
+
+// goYAMLCombinedLicenseHash pins the normalized reviewed license text in go.yaml.in/yaml/v3 v3.0.5.
+const goYAMLCombinedLicenseHash = "324926617f47a0cabd01eb385ae3bb7f7007b1ff0d3314461521f78c91dcac4a"
 
 // goPatents is licensecheck's identifier of the Go project's PATENTS file.
 const goPatents = "GooglePatentsFile"
 
-// The rule by which a file consists of exactly one license. licensecheck
-// splits a file into matches of known licenses and reports the share of
-// its words they cover; it counts copyright lines up to 50 words before a
-// match as part of the match. A file consists of one license when
-//
-//   - every match is of the same license and none is a bare URL (a license
-//     may match twice, as Apache-2.0 does with its terms and the boilerplate
-//     notice of its appendix),
-//   - the matches cover at least minCoverage percent of the words,
-//   - only whitespace stands between the matches and after the last one, and
-//   - at most maxTitleWords words, a title such as "The MIT License (MIT)",
-//     stand before the first match.
-//
-// An unknown text, several licenses in one file, and a license with a
-// clause added outside the matched terms therefore fail. Words that the
-// patterns of licensecheck allow inside a license, such as a name in the BSD
-// endorsement clause or a line between the copyright lines and the terms,
-// are accepted as licensecheck accepts them.
+// The rule by which a file consists of one license, or the specifically
+// accepted MIT and Apache-2.0 combination. licensecheck splits a file into
+// matches of known licenses and reports the share of its words they cover;
+// it counts copyright lines up to 50 words before a match as part of the
+// match. A single license file passes when every match is of the same
+// license and none is a bare URL, the matches cover at least minCoverage
+// percent of the words, only whitespace stands between matches and after
+// the last one, and at most maxTitleWords words stand before the first.
+// The combined form passes only when its exact declaration precedes one MIT
+// and one Apache-2.0 text, the combined coverage meets minCoverage, and the
+// file contains no trailing text. Unknown text, added clauses, and other
+// combinations still fail.
 const (
 	minCoverage   = 95.0
 	maxTitleWords = 8
@@ -45,6 +44,12 @@ const (
 // identify returns the licensecheck identifier of a file that consists of
 // exactly one license by the rule above.
 func identify(text string) (string, error) {
+	data := []byte(strings.Trim(strings.ReplaceAll(strings.ReplaceAll(text, "\r\n", "\n"), "\r", "\n"), "\n") + "\n")
+	hash := sha256.Sum256(data)
+	if hex.EncodeToString(hash[:]) == goYAMLCombinedLicenseHash {
+		return "MIT AND Apache-2.0", nil
+	}
+
 	if strings.TrimSpace(text) == "" {
 		return "", errors.New("the text is empty")
 	}

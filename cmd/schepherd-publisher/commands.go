@@ -19,17 +19,19 @@ import (
 )
 
 type prepareFlags struct {
-	source      string
-	out         string
-	snapshotDir string
-	state       string
-	jsonschema  string
-	policy      string
-	ids         string
-	refresh     []string
-	jobs        int
-	refreshAll  bool
-	asJSON      bool
+	source          string
+	out             string
+	snapshotDir     string
+	state           string
+	jsonschema      string
+	policy          string
+	ids             string
+	refresh         []string
+	jobs            int
+	refreshAll      bool
+	processorConfig string
+	catalogFormat   int
+	asJSON          bool
 }
 
 func (a *app) newPrepareCmd() *cobra.Command {
@@ -64,8 +66,10 @@ func (a *app) newPrepareCmd() *cobra.Command {
 	flags.StringVar(&f.policy, "policy", "", "license policy file; overrides the source's own (required for SchemaStore sources)")
 	flags.StringVar(&f.ids, "ids", "", "ID overrides file ({\"<source URL>\": \"<id>\"}); overrides the source's own")
 	flags.IntVar(&f.jobs, "jobs", prepare.DefaultJobs, "records prepared in parallel")
+	flags.BoolVar(&f.refreshAll, "refresh-all", false, "prepare every published schema anew, including unchanged schemas")
 	flags.StringArrayVar(&f.refresh, "refresh", nil, "prepare this published schema ID anew even when its inputs did not change (repeatable)")
-	flags.BoolVar(&f.refreshAll, "refresh-all", false, "prepare every published schema anew even when its inputs did not change")
+	flags.StringVar(&f.processorConfig, "processors-config", "", "client TOML config defining compatibility validators (required for v3)")
+	flags.IntVar(&f.catalogFormat, "catalog-format", 2, "catalog format to prepare (2 default; 3 requires a released compatible reader)")
 	flags.BoolVar(&f.asJSON, "json", false, "print the result as JSON")
 	markRequired(cmd, "source", "out")
 
@@ -91,6 +95,7 @@ func (a *app) prepare(cmd *cobra.Command, f *prepareFlags) error {
 		Log: a.logf, Tool: tool, State: previous, SourceFile: f.source, OutDir: f.out,
 		SnapshotDir: f.snapshotDir, PolicyFile: f.policy, IDsFile: f.ids, Jobs: f.jobs,
 		Refresh: f.refresh, RefreshAll: f.refreshAll,
+		ProcessorConfig: f.processorConfig, CatalogFormat: f.catalogFormat,
 	})
 	if err != nil {
 		return fault.Wrap(fault.Internal, err, "prepare %s", f.source)

@@ -28,7 +28,7 @@ func TestCaptureSeparatesAnonymousResultsAndDoesNotForwardOutput(t *testing.T) {
 	opts.Stdout, opts.Stderr = &stdout, &stderr
 	first, second := h.file("first.json", "{}"), h.file("second.json", "{}")
 	report, err := h.run([]Input{{Path: first, SchemaID: "a"}, {Path: second, SchemaID: "a"}}, h.schemas("a"), opts)
-	if fault.ExitCodeOf(err) != 42 || report.ExitCode != 42 || report.ReportVersion != 2 || report.Mode != ModePerFile {
+	if fault.ExitCodeOf(err) != 42 || report.ExitCode != 42 || report.ReportVersion != CaptureReportVersion || report.Mode != ModePerFile {
 		t.Fatalf("report = %+v, err = %v", report, err)
 	}
 	if stdout.Len() != 0 || stderr.Len() != 0 {
@@ -149,12 +149,12 @@ func TestCaptureStartFailureKeepsRealTaskMetadata(t *testing.T) {
 }
 
 func TestCaptureDoesNotChangeLegacyReportShape(t *testing.T) {
-	report := &Report{ReportVersion: 1, Workspace: "/not-for-v1", Mode: ModePerFile, Tasks: []TaskReport{{SchemaID: "a", Files: []string{}, Paths: []string{"/not-for-v1"}, Cwd: "/not-for-v1", Processor: &Processor{Name: "not-for-v1"}, Stdout: &StreamReport{Bytes: 1}}}}
+	report := &Report{ReportVersion: 1, Workspace: "/not-for-v1", Mode: ModePerFile, Tasks: []TaskReport{{SchemaID: "a", Files: []string{}, Paths: []string{"/not-for-v1"}, Cwd: "/not-for-v1", Processor: &Processor{Name: "not-for-v1"}, Stdout: &StreamReport{Bytes: 1}}}, Skipped: []Skipped{{File: "/not-for-v1", Reason: "unmatched", Category: SkipUnmatched}}}
 	var out bytes.Buffer
 	if err := WriteJSON(&out, report); err != nil {
 		t.Fatal(err)
 	}
-	for _, field := range []string{"workspace", "paths", "cwd", "processor", "stdout", "stderr"} {
+	for _, field := range []string{"workspace", "paths", "cwd", "processor", "stdout", "stderr", "category"} {
 		if strings.Contains(out.String(), `"`+field+`"`) {
 			t.Fatalf("v1 unexpectedly contains %s: %s", field, out.String())
 		}

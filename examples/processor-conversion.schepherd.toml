@@ -9,4 +9,5 @@ unsupported = "error"
 type = "sourcemeta"
 command = "${JSONSCHEMA_BIN}"
 convert = "${YQ_BIN}"
+convert_args = ["-p={format}", "-o=json", "-I=0", "{file}"]
 formats = ["toml"]

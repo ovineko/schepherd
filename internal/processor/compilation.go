@@ -34,7 +34,8 @@ type Prepared struct {
 }
 
 // Compiler keeps compilation identities in memory and artifacts in the supplied cache.
-// A nil cache retains artifacts only until Close; verify-only never compiles or writes.
+// A nil cache retains artifacts only until Close. VerifyOnly prevents persistent writes;
+// local and invocation-local schemas may still compile into temporary storage.
 type Compiler struct {
 	Cache             *cache.Cache
 	VerifyOnly        bool
@@ -51,27 +52,61 @@ func (c *Compiler) Close() {
 	}
 }
 
+// Persistability explains why a typed schema cannot be prepared for a later immutable run.
+func Persistability(definition Definition, data []byte, catalog bool) (string, error) {
+	if definition.Type == "custom" {
+		return "custom processors do not produce compilation artifacts", nil
+	}
+	cacheable, err := cacheableSchema(data, catalog)
+	if err != nil {
+		return "", fault.Wrap(fault.Integrity, err, "inspect schema persistence")
+	}
+	if placeholder := InputDependentPlaceholder(definition); placeholder != "" {
+		return "processor settings depend on {" + placeholder + "}", nil
+	}
+	if !cacheable {
+		return "schema has external dependencies or a nonstandard dialect", nil
+	}
+	return "", nil
+}
+
 // Prepare reuses a compilation only when schema bytes, compiler and settings agree.
-// Local schemas with external references remain invocation-local until their full
-// dependency graph can be included in the recipe.
+// Only persistable catalog schemas use the cache; local or invocation-local
+// schemas are compiled for the current run even when the cache is offline.
 func (c *Compiler) Prepare(ctx context.Context, definition Definition, task runner.Task, schema string, data []byte, catalog bool) (Prepared, error) {
 	if definition.Type == "custom" {
 		return Prepared{}, nil
 	}
-	persistent := c.Cache != nil && cacheableSchema(data, catalog) && !InputDependent(definition)
-	if !persistent && (c.VerifyOnly || c.RequirePersistent) {
-		return Prepared{}, fault.New(fault.Usage, "schema %s has dependencies or settings that cannot be cached safely", schema)
+	reason, err := Persistability(definition, data, catalog)
+	if err != nil {
+		return Prepared{}, err
+	}
+	persistable := reason == ""
+	if catalog && persistable && c.VerifyOnly && c.Cache == nil {
+		return Prepared{}, fault.New(fault.Offline, "compiled processor %s is not prepared: no compiler cache is available", definition.Spec.Name)
+	}
+	persistent := catalog && c.Cache != nil && persistable
+	if c.RequirePersistent && !persistent {
+		if reason == "" {
+			reason = "persistent compiler cache is unavailable"
+		}
+		return Prepared{}, fault.New(fault.Usage, "schema %s cannot be prepared persistently: %s", schema, reason)
 	}
 	configuration := ""
+	if !persistent {
+		if definition.Type == "sourcemeta" {
+			configuration, err = c.temporary([]byte("{}"))
+			if err != nil {
+				return Prepared{}, err
+			}
+		}
+		return c.prepareTemporary(ctx, definition, task, schema, configuration)
+	}
 	if definition.Type == "sourcemeta" {
-		var err error
 		configuration, err = c.configuration(ctx)
 		if err != nil {
 			return Prepared{}, err
 		}
-	}
-	if !persistent {
-		return c.prepareTemporary(ctx, definition, task, schema, configuration)
 	}
 	return c.prepareCached(ctx, definition, task, schema, data, configuration)
 }
@@ -98,7 +133,7 @@ func (c *Compiler) prepareCached(ctx context.Context, definition Definition, tas
 		return Prepared{}, fault.Wrap(fault.Internal, err, "load processor compilation")
 	}
 	if c.VerifyOnly {
-		return Prepared{}, fault.Wrap(fault.Offline, err, "compiled processor %s is not prepared", definition.Spec.Name)
+		return Prepared{}, fault.Wrap(fault.Offline, err, "compiled processor %s is not prepared; run materialize --compile-persistable before making the cache read-only", definition.Spec.Name)
 	}
 	release, err := c.Cache.Lock(ctx, "compile-"+digest.Hex(key))
 	if err != nil {
@@ -212,7 +247,13 @@ func (c *Compiler) temporary(data []byte) (string, error) {
 }
 
 func (c *Compiler) key(ctx context.Context, definition Definition, task runner.Task, schema []byte) (string, error) {
-	identityEnv := slices.Clone(task.Env)
+	identityEnv := make([]string, 0, len(task.Env))
+	for _, entry := range task.Env {
+		name, _, _ := strings.Cut(entry, "=")
+		if !runtimeLocatorEnvironment(definition.Type, name, definition.Spec.Env) {
+			identityEnv = append(identityEnv, entry)
+		}
+	}
 	slices.Sort(identityEnv)
 	identityKey := task.Path + "\x00" + definition.Type + "\x00" + strings.Join(identityEnv, "\x00")
 	if c.identities == nil {
@@ -242,14 +283,7 @@ func (c *Compiler) key(ctx context.Context, definition Definition, task runner.T
 		}
 		c.identities[identityKey] = identity
 	}
-	settings := make([]string, 0, len(definition.Spec.Env))
-	for _, entry := range task.Env {
-		name, _, _ := strings.Cut(entry, "=")
-		if _, explicit := definition.Spec.Env[name]; explicit || compilationEnvironment(definition.Type, name) {
-			settings = append(settings, entry)
-		}
-	}
-	slices.Sort(settings)
+	settings := semanticEnvironment(definition.Type, task.Env, definition.Spec.Env)
 	recipe, err := json.Marshal(struct {
 		Recipe     string   `json:"recipe"`
 		Processor  string   `json:"processor"`
@@ -262,20 +296,6 @@ func (c *Compiler) key(ctx context.Context, definition Definition, task runner.T
 		return "", fault.Wrap(fault.Internal, err, "compilation recipe")
 	}
 	return digest.FromBytes(recipe), nil
-}
-
-func compilationEnvironment(kind, name string) bool {
-	if strings.HasPrefix(name, "LD_") || strings.HasPrefix(name, "DYLD_") {
-		return true
-	}
-	switch kind {
-	case "ajv":
-		return name == "NODE_OPTIONS" || name == "NODE_PATH"
-	case "check-jsonschema":
-		return strings.HasPrefix(name, "PYTHON") && name != "PYTHONUNBUFFERED" && name != "PYTHONDONTWRITEBYTECODE" && name != "PYTHONIOENCODING"
-	default:
-		return false
-	}
 }
 
 func (c *Compiler) compile(ctx context.Context, definition Definition, task runner.Task, schema, configuration string) (cache.Compilation, []byte, error) {
@@ -391,12 +411,12 @@ func (w *compiledOutput) ReadFrom(r io.Reader) (int64, error) {
 	return total + n, nil
 }
 
-func cacheableSchema(data []byte, bundled bool) bool {
+func cacheableSchema(data []byte, bundled bool) (bool, error) {
 	var value any
-	if json.Unmarshal(data, &value) != nil {
-		return false
+	if err := json.Unmarshal(data, &value); err != nil {
+		return false, fmt.Errorf("decode schema for persistence: %w", err)
 	}
-	return noExternalDependencies(value, bundled)
+	return noExternalDependencies(value, bundled), nil
 }
 
 func noExternalDependencies(value any, bundled bool) bool {
@@ -427,14 +447,31 @@ func noExternalDependencies(value any, bundled bool) bool {
 	return true
 }
 
-// InputDependent detects compilation settings that vary with each document.
+// InputDependent reports compilation settings that vary across inputs or schema identities.
 func InputDependent(definition Definition) bool {
-	for _, value := range definition.Spec.Env {
-		if template, err := interp.Parse(value); err == nil && template.Uses(interp.File) {
-			return true
+	return InputDependentPlaceholder(definition) != ""
+}
+
+// InputDependentPlaceholder returns the first schema or input placeholder used by processor settings.
+func InputDependentPlaceholder(definition Definition) string {
+	placeholders := []string{interp.File, interp.Schema, interp.SchemaID, interp.SchemaRef}
+	envNames := make([]string, 0, len(definition.Spec.Env))
+	for name := range definition.Spec.Env {
+		envNames = append(envNames, name)
+	}
+	slices.Sort(envNames)
+	for _, name := range envNames {
+		template, err := interp.Parse(definition.Spec.Env[name])
+		if err != nil {
+			continue
+		}
+		for _, placeholder := range placeholders {
+			if template.Uses(placeholder) {
+				return placeholder
+			}
 		}
 	}
-	return false
+	return ""
 }
 
 func portableTemplate(artifact []byte, snapshot, schemaDigest string) ([]byte, error) {

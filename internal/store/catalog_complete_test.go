@@ -357,7 +357,7 @@ func TestCatalogForCompletenessUnsupportedRemainsFatal(t *testing.T) {
 					setChild(0, "size", len(data))(m)
 				})
 			case "catalog format":
-				index, _ = f.addCatalog(t, []byte(`{"formatVersion":3}`), nil)
+				index, _ = f.addCatalog(t, []byte(`{"formatVersion":4}`), nil)
 			}
 			dir := t.TempDir()
 			s, opened := f.store(t, dir, true)

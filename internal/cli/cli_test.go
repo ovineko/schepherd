@@ -30,7 +30,7 @@ func TestVersionJSON(t *testing.T) {
 		t.Fatalf("version --json is not JSON: %v\n%s", err, stdout)
 	}
 
-	if v.Version != "dev" || len(v.CatalogFormatVersions) != 1 || v.CatalogFormatVersions[0] != 2 || len(v.ConfigFormatVersions) != 1 {
+	if v.Version != "dev" || len(v.CatalogFormatVersions) != 2 || v.CatalogFormatVersions[0] != 2 || v.CatalogFormatVersions[1] != 3 || len(v.ConfigFormatVersions) != 1 {
 		t.Errorf("version output = %+v", v)
 	}
 

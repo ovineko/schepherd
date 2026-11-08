@@ -21,12 +21,13 @@ const (
 	SchemaRef = "schema-ref"
 	File      = "file"
 	Files     = "files..."
+	Format    = "format"
 	Workspace = "workspace"
 	Cache     = "cache"
 )
 
 var known = map[string]struct{}{
-	Schema: {}, SchemaID: {}, SchemaRef: {}, File: {}, Files: {}, Workspace: {}, Cache: {},
+	Schema: {}, SchemaID: {}, SchemaRef: {}, File: {}, Files: {}, Format: {}, Workspace: {}, Cache: {},
 }
 
 // ErrSyntax reports a malformed template.

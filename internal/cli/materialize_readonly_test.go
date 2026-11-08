@@ -234,10 +234,12 @@ func assertCompleteReadOnlyMaterialize(t *testing.T, dir, pinned string) {
 	}
 }
 
-func seedOfflineMaterializeCache(t *testing.T) (dir, pinned string) {
+func seedOfflineMaterializeCache(t *testing.T, schemaBytes ...[]byte) (dir, pinned string) {
 	t.Helper()
-
 	schema := []byte(`{"type":"object"}`)
+	if len(schemaBytes) > 0 {
+		schema = schemaBytes[0]
+	}
 	packed, err := artifact.PackSchema(schema, []byte("NOTICE\n"))
 	if err != nil {
 		t.Fatal(err)

@@ -124,6 +124,10 @@ type Options struct {
 	PolicyFile string
 	// IDsFile overrides the source file's ID overrides.
 	IDsFile string
+	// ProcessorConfig enables catalog v3 compatibility profiling with the named client config.
+	ProcessorConfig string
+	// CatalogFormat is 2 by default; 3 requires ProcessorConfig.
+	CatalogFormat int
 	// Jobs bounds records prepared in parallel; DefaultJobs when not positive.
 	Jobs int
 }
@@ -268,7 +272,40 @@ func Run(ctx context.Context, opts Options) (*Result, error) {
 		return nil, err
 	}
 
-	return p.finish(outcomes)
+	for attempts := 0; ; attempts++ {
+		result, finishErr := p.finish(ctx, outcomes)
+		if finishErr == nil {
+			return result, nil
+		}
+		var refresh *profileRefreshError
+		if !errors.As(finishErr, &refresh) {
+			return nil, finishErr
+		}
+		if attempts >= len(p.groups) {
+			return nil, fault.Wrap(fault.Internal, finishErr, "profile refresh did not converge")
+		}
+		found := false
+		for i, g := range p.groups {
+			if g.key != refresh.source {
+				continue
+			}
+			id, ok := p.previous[g.key]
+			if !ok {
+				return nil, fault.Wrap(fault.Internal, finishErr, "cannot find published ID for profile refresh")
+			}
+			p.refresh[id] = true
+			o, processErr := p.process(ctx, g)
+			if processErr != nil {
+				return nil, processErr
+			}
+			outcomes[i] = o
+			found = true
+			break
+		}
+		if !found {
+			return nil, fault.Wrap(fault.Internal, finishErr, "cannot find source for profile refresh")
+		}
+	}
 }
 
 func jobsOrDefault(jobs int) int {
@@ -282,6 +319,15 @@ func jobsOrDefault(jobs int) int {
 func newPreparer(ctx context.Context, opts Options) (*preparer, func(), error) {
 	noop := func() {}
 
+	if opts.CatalogFormat == 0 {
+		opts.CatalogFormat = 2
+	}
+	if opts.CatalogFormat != 2 && opts.CatalogFormat != catalog.MetadataFormatVersion {
+		return nil, noop, fault.New(fault.Usage, "--catalog-format must be 2 or %d", catalog.MetadataFormatVersion)
+	}
+	if opts.CatalogFormat == catalog.MetadataFormatVersion && opts.ProcessorConfig == "" {
+		return nil, noop, fault.New(fault.Usage, "--catalog-format 3 requires --processors-config")
+	}
 	switch {
 	case opts.Tool == nil:
 		return nil, noop, fault.New(fault.Usage, "prepare needs the JSON Schema bundler")

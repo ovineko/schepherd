@@ -10,6 +10,10 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/bmatcuk/doublestar/v4"
+
+	"github.com/ovineko/schepherd/internal/match"
 )
 
 const (
@@ -357,6 +361,43 @@ plain_http = true
 	}
 }
 
+func TestCoveringPatternsCoverRootNestedDotAndUnusualExtensions(t *testing.T) {
+	cases := []struct {
+		name     string
+		patterns []string
+		paths    []string
+	}{
+		{name: "basename", patterns: []string{"package.json"}, paths: []string{"package.json", "apps/web/package.json", ".github/workflows/package.json", ".config/deep/package.json"}},
+		{name: "wildcard extension", patterns: []string{"*.schema.json"}, paths: []string{"open.schema.json", "apps/open.schema.json", ".config/open.schema.json"}},
+		{name: "root anchored dot directory", patterns: []string{"/.github/workflows/*.yaml"}, paths: []string{".github/workflows/build.yaml"}},
+		{name: "unusual extension", patterns: []string{"*.schema.custom"}, paths: []string{"schema.schema.custom", "nested/schema.schema.custom"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			set, err := match.NewSet(match.OriginCatalog, []match.Rule{{SchemaID: "schema", Patterns: tc.patterns}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			globs := coveringPatterns(tc.patterns)
+			for _, path := range tc.paths {
+				if len(set.Match(path)) == 0 {
+					t.Fatalf("test path %q does not match source pattern %v", path, tc.patterns)
+				}
+				covered := false
+				for _, glob := range globs {
+					if doublestar.MatchUnvalidated(glob, path) {
+						covered = true
+						break
+					}
+				}
+				if !covered {
+					t.Errorf("covering globs %v miss source-matched path %q", globs, path)
+				}
+			}
+		})
+	}
+}
+
 // A local schema with the ID of a catalog entry replaces that entry: its
 // file is served instead of the artifact and the catalog's fileMatch for the
 // ID no longer applies.
@@ -414,6 +455,15 @@ plain_http = true
 	if len(patterns) != 2 || patterns[0]["id"] != "alpha" || patterns[0]["shadows"] != true || !reflect.DeepEqual(patterns[0]["fileMatch"], []any{"local-alpha.json"}) ||
 		patterns[0]["artifact"] != nil || patterns[1]["id"] != "beta" || patterns[1]["origin"] != "catalog" || patterns[1]["artifact"] == nil {
 		t.Errorf("patterns --json = %v", patterns)
+	}
+	covering := decodeInto[[]map[string]any](t, mustRun(t, p.args("patterns", "--validators", "sourcemeta,ajv", "--covering", "--json")...))
+	row := covering[1]["covering"].(map[string]any)
+	if !reflect.DeepEqual(row["validators"], []any{"sourcemeta", "ajv"}) || !reflect.DeepEqual(row["globs"], []any{"**/beta.json"}) {
+		t.Errorf("covering = %v", row)
+	}
+	_, _, code := runWith(t, nil, p.args("patterns", "--validators", "unknown", "--covering", "--json")...)
+	if code == 0 {
+		t.Fatal("unknown validator unexpectedly succeeded")
 	}
 
 	if got := mustRun(t, p.args("patterns")...); got != "alpha\tlocal-alpha.json\tlocal, shadows catalog\nbeta\tbeta.json\n" {

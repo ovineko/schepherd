@@ -12,8 +12,11 @@ import (
 // ReportVersion remains the on-disk report format used by --report.
 const ReportVersion = 1
 
-// CaptureReportVersion identifies the attributed stdout envelope used by --json.
-const CaptureReportVersion = 2
+// LegacyCaptureReportVersion is the original attributed stdout envelope.
+const LegacyCaptureReportVersion = 2
+
+// CaptureReportVersion identifies the current attributed stdout envelope used by --json.
+const CaptureReportVersion = 3
 
 // Processor identifies the configured output format without publishing its command or environment.
 type Processor struct {
@@ -70,9 +73,19 @@ type TaskReport struct {
 
 // Skipped is an input that was not handed to any consumer.
 type Skipped struct {
-	File   string `json:"file"`
-	Reason string `json:"reason"`
+	File     string `json:"file"`
+	Reason   string `json:"reason"`
+	Category string `json:"category,omitempty"`
 }
+
+// Skip categories identify why an input was not handed to a consumer.
+const (
+	SkipUnmatched                = "unmatched"
+	SkipOutsideWorkspace         = "outside-workspace"
+	SkipCatalogAmbiguous         = "catalog-ambiguous"
+	SkipCatalogFormatUnavailable = "catalog-format-unavailable"
+	SkipUnsupportedProcessor     = "unsupported-processor"
+)
 
 // Report is the machine-readable result of a run. It never contains
 // environment values.
@@ -86,8 +99,31 @@ type Report struct {
 	Error         *ReportError `json:"error,omitempty"`
 }
 
-// MarshalJSON preserves the exact v1 field set for existing report consumers.
+// MarshalJSON preserves exact version-one and legacy version-two field sets.
 func (r Report) MarshalJSON() ([]byte, error) {
+	if r.ReportVersion == LegacyCaptureReportVersion {
+		type legacySkipped struct {
+			File   string `json:"file"`
+			Reason string `json:"reason"`
+		}
+		skipped := make([]legacySkipped, 0, len(r.Skipped))
+		for _, item := range r.Skipped {
+			skipped = append(skipped, legacySkipped{item.File, item.Reason})
+		}
+		data, err := json.Marshal(struct {
+			ReportVersion int             `json:"reportVersion"`
+			Mode          Mode            `json:"mode"`
+			ExitCode      int             `json:"exitCode"`
+			Tasks         []TaskReport    `json:"tasks"`
+			Skipped       []legacySkipped `json:"skipped"`
+			Workspace     string          `json:"workspace"`
+			Error         *ReportError    `json:"error,omitempty"`
+		}{r.ReportVersion, r.Mode, r.ExitCode, r.Tasks, skipped, r.Workspace, r.Error})
+		if err != nil {
+			return nil, fault.Wrap(fault.Internal, err, "encode legacy attributed report")
+		}
+		return data, nil
+	}
 	if r.ReportVersion != ReportVersion {
 		type envelope Report
 		data, err := json.Marshal(envelope(r))
@@ -105,17 +141,25 @@ func (r Report) MarshalJSON() ([]byte, error) {
 		ExitCode   int      `json:"exitCode"`
 		DurationMs int64    `json:"durationMs"`
 	}
+	type legacySkipped struct {
+		File   string `json:"file"`
+		Reason string `json:"reason"`
+	}
 	tasks := make([]legacyTask, 0, len(r.Tasks))
 	for _, task := range r.Tasks {
 		tasks = append(tasks, legacyTask{task.SchemaID, task.SchemaRef, task.Origin, task.Files, task.Status, task.ExitCode, task.DurationMs})
 	}
+	skipped := make([]legacySkipped, 0, len(r.Skipped))
+	for _, item := range r.Skipped {
+		skipped = append(skipped, legacySkipped{item.File, item.Reason})
+	}
 	data, err := json.Marshal(struct {
-		ReportVersion int          `json:"reportVersion"`
-		Mode          Mode         `json:"mode"`
-		ExitCode      int          `json:"exitCode"`
-		Tasks         []legacyTask `json:"tasks"`
-		Skipped       []Skipped    `json:"skipped"`
-	}{r.ReportVersion, r.Mode, r.ExitCode, tasks, r.Skipped})
+		ReportVersion int             `json:"reportVersion"`
+		Mode          Mode            `json:"mode"`
+		ExitCode      int             `json:"exitCode"`
+		Tasks         []legacyTask    `json:"tasks"`
+		Skipped       []legacySkipped `json:"skipped"`
+	}{r.ReportVersion, r.Mode, r.ExitCode, tasks, skipped})
 	if err != nil {
 		return nil, fault.Wrap(fault.Internal, err, "encode legacy report")
 	}

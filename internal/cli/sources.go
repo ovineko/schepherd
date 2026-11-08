@@ -147,8 +147,21 @@ func (s *sources) prepare(ctx context.Context, id string) (preparedSchema, error
 		return preparedSchema{}, fault.Wrap(fault.Internal, err, "schema %q", id)
 	}
 
+	sourceFormats := []runner.DocumentFormat{}
+	schemaDigest := ""
+	profiles := []runner.ProcessorProfile{}
+	if e.Metadata != nil {
+		schemaDigest = e.Metadata.SchemaDigest
+		for _, format := range e.Metadata.SourceFormats {
+			sourceFormats = append(sourceFormats, runner.DocumentFormat{Format: format.Format, Extensions: append([]string(nil), format.Extensions...), Filenames: append([]string(nil), format.Filenames...)})
+		}
+		for _, profile := range e.Metadata.Profiles {
+			profiles = append(profiles, runner.ProcessorProfile{Processor: profile.Processor, Tool: profile.Tool, SettingsDigest: profile.SettingsDigest, Result: profile.Result, Reason: profile.Reason})
+		}
+	}
+	info := runner.SchemaInfo{ID: sch.ID, Path: sch.Path, Ref: sch.Ref, Origin: originCatalog, SourceFormats: sourceFormats, SchemaDigest: schemaDigest, ProcessorProfiles: profiles}
 	return preparedSchema{
-		info: runner.SchemaInfo{ID: sch.ID, Path: sch.Path, Ref: sch.Ref, Origin: originCatalog},
+		info: info,
 		content: func() ([]byte, error) {
 			data, err := sess.store.ReadSchema(sch)
 			if err != nil {

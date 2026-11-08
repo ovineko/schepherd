@@ -95,6 +95,7 @@ type Entry struct {
 	Reused        *catalog.Descriptor   `json:"reusedArtifact,omitempty"`
 	Provenance    catalog.Provenance    `json:"provenance"`
 	License       state.LicenseDecision `json:"licenseDecision,omitzero"`
+	Metadata      *catalog.Metadata     `json:"metadata,omitempty"`
 }
 
 // Hold names a published schema that the next catalog keeps with its last
@@ -117,6 +118,7 @@ type Exclusion struct {
 // records as excluded that none of them names stays excluded.
 type Document struct {
 	FormatVersion int         `json:"formatVersion"`
+	CatalogFormat int         `json:"catalogFormat,omitempty"`
 	Recipe        string      `json:"recipe"`
 	Source        Source      `json:"source"`
 	Entries       []Entry     `json:"entries"`
@@ -241,6 +243,9 @@ func clip(raw json.RawMessage) string {
 }
 
 func (d *Document) validate() error {
+	if d.CatalogFormat != 0 && d.CatalogFormat != catalog.MetadataFormatVersion {
+		return fmt.Errorf("catalogFormat must be %d when present", catalog.MetadataFormatVersion)
+	}
 	if err := d.Source.validate(); err != nil {
 		return err
 	}
@@ -253,6 +258,12 @@ func (d *Document) validate() error {
 
 	for i := range d.Entries {
 		e := &d.Entries[i]
+		if d.CatalogFormat == 0 && e.Metadata != nil {
+			return fmt.Errorf("entry %d (%q): metadata requires catalogFormat 3", i, e.ID)
+		}
+		if d.CatalogFormat == catalog.MetadataFormatVersion && e.Metadata == nil {
+			return fmt.Errorf("entry %d (%q): catalog format 3 requires metadata", i, e.ID)
+		}
 		if err := e.validate(); err != nil {
 			return fmt.Errorf("entry %d (%q): %w", i, e.ID, err)
 		}
@@ -359,7 +370,20 @@ func (e *Entry) validate() error {
 		return fmt.Errorf("provenance: %w", err)
 	}
 
-	return CheckMetadata(e.Name, e.Description, e.Dialect, e.FileMatch, &e.Provenance)
+	if err := CheckMetadata(e.Name, e.Description, e.Dialect, e.FileMatch, &e.Provenance); err != nil {
+		return err
+	}
+	if e.Metadata != nil {
+		if e.Metadata.SchemaDigest != e.ContentDigest {
+			return errors.New("metadata.schemaDigest must match contentDigest")
+		}
+		entry := catalog.Entry{ID: e.ID, Name: e.Name, Description: e.Description, Dialect: e.Dialect, FileMatch: e.FileMatch, Artifact: placeholderArtifact, Metadata: e.Metadata, Provenance: &e.Provenance}
+		c := catalog.Catalog{FormatVersion: catalog.MetadataFormatVersion, Revision: "20000101.0000", Schemas: []catalog.Entry{entry}}
+		if err := c.Validate(catalog.DefaultLimits()); err != nil {
+			return fmt.Errorf("compatibility metadata: %w", err)
+		}
+	}
+	return nil
 }
 
 func (e *Entry) validateContent() error {

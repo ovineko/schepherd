@@ -58,7 +58,7 @@ pub fn describe_json() -> String {
     })
   })
   .collect::<Vec<_>>();
-  json!({"schemaVersion":3,"module":"schepherd-parsers","version":version,"abi":2,"features":["tools"],"tools":tools}).to_string()
+  json!({"schemaVersion":4,"module":"schepherd-parsers","version":version,"abi":2,"features":["tools","input-skips"],"tools":tools}).to_string()
 }
 
 #[no_mangle]

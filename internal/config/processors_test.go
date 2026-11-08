@@ -54,6 +54,9 @@ func TestProcessorExtendsMergesFields(t *testing.T) {
 type="custom"
 command="${VALIDATOR}"
 args=["{file}"]
+convert="converter"
+convert_args=["--input", "{file}", "--format", "{format}"]
+formats=["toml"]
 cwd="relative"
 [processors.validator.env]
 A="one"
@@ -74,7 +77,7 @@ B="two"
 		t.Fatal(err)
 	}
 	p := cfg.Processors["validator"]
-	if p.Spec.Command != "${VALIDATOR}" || p.Spec.CwdBase != dir || p.Spec.Env["A"] != "one" || p.Spec.Env["B"] != "two" || cfg.Unsupported != "skip" {
+	if p.Spec.Command != "${VALIDATOR}" || p.Spec.CwdBase != dir || p.Spec.Env["A"] != "one" || p.Spec.Env["B"] != "two" || cfg.Unsupported != "skip" || p.Convert != "converter" || !reflect.DeepEqual(p.ConvertArgs, []string{"--input", "{file}", "--format", "{format}"}) {
 		t.Fatalf("merged processor: %+v", p)
 	}
 	wantUsage(t, cfg.CheckRunnerEnv(nil), "${VALIDATOR}", "processors.validator.command")

@@ -200,8 +200,9 @@ file_match = ["config/company.json"]
   `[[mappings]]` or `file_match`. They work without `[catalog]` and with
   `--offline`. They create no cache by default. A typed-processor `run` with an
   explicitly configured cache directory stores compiler artifacts there, but never
-  copies the local schema or caches validation results. `{cache}` still expands
-  to the configured or default path. When no cache directory can be
+  copies the local schema or caches validation results. Custom-only processors never open or
+  initialize a compiler cache, even when a cache directory was explicitly configured. `{cache}`
+  still expands to the configured or default path. When no cache directory can be
   determined (no `--cache-dir`, `SCHEPHERD_CACHE_DIR` or `cache_dir`, and no
   home directory), such a run still works unless the runner uses `{cache}`.
   With `[schemas]` present and a catalog configured, the catalog is loaded

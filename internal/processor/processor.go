@@ -19,11 +19,12 @@ import (
 
 // Definition binds a declared validator to its executable and input policy.
 type Definition struct {
-	Spec    runner.Spec
-	Type    string
-	Output  string
-	Formats []string
-	Convert string
+	Spec        runner.Spec
+	Type        string
+	Output      string
+	Formats     []string
+	Convert     string
+	ConvertArgs []string
 }
 
 // Types is the deterministic preference order, independent of TOML table ordering.
@@ -55,8 +56,12 @@ func DefaultFormats(kind string) []string {
 	}
 }
 
-// Format derives an explicit format from the input's extension; unknown names stay unsupported.
+// Format derives a conservative format from an input path; unknown names stay unsupported.
 func Format(path string) string {
+	base := strings.ToLower(filepath.Base(path))
+	if knownJSONCFilename(base) {
+		return "jsonc"
+	}
 	switch ext := strings.ToLower(filepath.Ext(path)); ext {
 	case ".yml", ".yaml":
 		return "yaml"
@@ -67,9 +72,21 @@ func Format(path string) string {
 	}
 }
 
+func knownJSONCFilename(base string) bool {
+	return slices.Contains([]string{
+		"cspell.config.json", ".cspell.json", "tsconfig.json", "tsconfig.base.json",
+		"tsconfig.build.json", "tsconfig.node.json", "jsconfig.json", "deno.json", "deno.jsonc",
+		"renovate.json",
+	}, base)
+}
+
 // Accepts distinguishes native input from an explicitly requested conversion.
 func (d Definition) Accepts(path string) (supported, convert bool) {
-	format := Format(path)
+	return d.AcceptsFormat(Format(path))
+}
+
+// AcceptsFormat applies native-format preferences to a caller-resolved source format.
+func (d Definition) AcceptsFormat(format string) (supported, convert bool) {
 	if d.Type == "custom" && len(d.Formats) == 0 {
 		return true, false
 	}
@@ -83,6 +100,38 @@ func (d Definition) Accepts(path string) (supported, convert bool) {
 		return slices.Contains(d.Formats, format), false
 	}
 	return slices.Contains(DefaultFormats(d.Type), format), false
+}
+
+// FormatFor prefers unambiguous catalog source metadata over extension inference.
+func FormatFor(path string, formats []runner.DocumentFormat) string {
+	base := strings.ToLower(filepath.Base(path))
+	filenameFormat := ""
+	for _, source := range formats {
+		if !slices.ContainsFunc(source.Filenames, func(name string) bool { return strings.EqualFold(name, base) }) {
+			continue
+		}
+		if filenameFormat != "" && filenameFormat != source.Format {
+			return ""
+		}
+		filenameFormat = source.Format
+	}
+	if filenameFormat != "" {
+		return filenameFormat
+	}
+	extension := strings.ToLower(filepath.Ext(path))
+	found := ""
+	for _, source := range formats {
+		if slices.ContainsFunc(source.Extensions, func(ext string) bool { return strings.EqualFold(ext, extension) }) {
+			if found != "" && found != source.Format {
+				return ""
+			}
+			found = source.Format
+		}
+	}
+	if found != "" {
+		return found
+	}
+	return Format(path)
 }
 
 const (
@@ -178,6 +227,15 @@ func decodeCapability(name string, data []byte) (string, error) {
 func classifyProbeFailure(definition Definition, err error, stderr []byte) (string, error) {
 	if exit, ok := errors.AsType[*exec.ExitError](err); ok {
 		message := strings.TrimSpace(string(stderr))
+		if definition.Type == "sourcemeta" && exit.ExitCode() == 1 {
+			lower := strings.ToLower(message)
+			if strings.Contains(lower, "a schema with a top-level `$ref` in json schema draft 7 and older dialects ignores every sibling keywords") {
+				return "Sourcemeta cannot compile Draft 7-or-earlier schemas with a top-level $ref and sibling keywords", nil
+			}
+			if strings.HasPrefix(lower, "unexpected error: could not resolve schema reference") {
+				return "Sourcemeta could not resolve a schema reference", nil
+			}
+		}
 		if definition.Type == "sourcemeta" && exit.ExitCode() == 3 {
 			return "schema is not supported by Sourcemeta: " + message, nil
 		}
@@ -204,6 +262,12 @@ func CheckDefinition(d Definition) error {
 	}
 	if d.Convert != "" && len(d.Formats) == 0 {
 		return errors.New("convert requires a nonempty formats list")
+	}
+	if d.Convert != "" && len(d.ConvertArgs) == 0 {
+		return errors.New("convert requires nonempty convert_args")
+	}
+	if d.Convert == "" && len(d.ConvertArgs) > 0 {
+		return errors.New("convert_args requires convert")
 	}
 	if d.Convert == "" && len(d.Formats) > 0 && d.Type != "custom" {
 		return errors.New("formats requires convert for typed processors")

@@ -141,7 +141,7 @@ type Collision struct {
 	Sources    []string `json:"sources"`
 }
 
-func (p *preparer) finish(outcomes []outcome) (*Result, error) {
+func (p *preparer) finish(ctx context.Context, outcomes []outcome) (*Result, error) {
 	previous := p.reservations()
 	sources := make([]string, 0, len(p.groups)+len(previous))
 
@@ -167,7 +167,14 @@ func (p *preparer) finish(outcomes []outcome) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if p.opts.CatalogFormat == catalog.MetadataFormatVersion {
+		set.Document.CatalogFormat = catalog.MetadataFormatVersion
+	}
+	if p.opts.CatalogFormat == catalog.MetadataFormatVersion {
+		if err := profileSet(ctx, p.opts, set.Document.Entries, set.Schemas, p.opts.State); err != nil {
+			return nil, err
+		}
+	}
 	ret := p.retention(outcomes, assigned, set)
 	set.Document.Held, set.Document.Excluded = ret.held, ret.excluded
 

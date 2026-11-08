@@ -104,63 +104,14 @@ func NewPlan(set *prepare.Set, previous *state.State) (*Plan, error) {
 	if err := checkAccounts(set, previous); err != nil {
 		return nil, err
 	}
-
 	p := &Plan{set: set, previous: previous, added: []string{}, changed: []string{}, metadataChanged: []string{}}
-	prepared := make(map[string]*prepare.Entry, len(set.Document.Entries))
-
-	for i := range set.Document.Entries {
-		prepared[set.Document.Entries[i].ID] = &set.Document.Entries[i]
+	if err := p.classifyItems(set); err != nil {
+		return nil, err
 	}
-
-	holds := make(map[string]string, len(set.Document.Held))
-	for _, h := range set.Document.Held {
-		holds[h.ID] = h.Reason
+	if err := p.validateMetadata(); err != nil {
+		return nil, err
 	}
-
-	excluded := make(map[string]bool, len(set.Document.Excluded))
-	for _, x := range set.Document.Excluded {
-		excluded[x.ID] = true
-	}
-
-	ids := slices.Collect(maps.Keys(prepared))
-	ids = append(ids, slices.Collect(maps.Keys(holds))...)
-	slices.Sort(ids)
-
-	for _, id := range ids {
-		it := item{prepared: prepared[id], hold: holds[id]}
-
-		if previous != nil {
-			if rec, ok := previous.Lookup(id); ok {
-				it.previous = rec
-			}
-		}
-
-		if err := it.classify(set); err != nil {
-			return nil, err
-		}
-
-		p.items = append(p.items, it)
-
-		switch it.change {
-		case added:
-			p.added = append(p.added, id)
-		case changed:
-			p.changed = append(p.changed, id)
-		case metadataChanged:
-			p.metadataChanged = append(p.metadataChanged, id)
-		case unchanged:
-			p.unchanged++
-		}
-	}
-
-	if previous != nil {
-		for i := range previous.Schemas {
-			if rec := &previous.Schemas[i]; excluded[rec.ID] && !rec.Excluded() {
-				p.excluded = append(p.excluded, rec)
-			}
-		}
-	}
-
+	p.recordExcluded()
 	return p, nil
 }
 
@@ -313,6 +264,12 @@ func (it *item) classify(set *prepare.Set) error {
 // artifact.
 func entryOf(e *prepare.Entry) catalog.Entry {
 	entry := catalog.Entry{ID: e.ID, Name: e.Name, Description: e.Description, Dialect: e.Dialect}
+	if e.Metadata != nil {
+		metadata := *e.Metadata
+		metadata.Profiles = slices.Clone(e.Metadata.Profiles)
+		metadata.SourceFormats = slices.Clone(e.Metadata.SourceFormats)
+		entry.Metadata = &metadata
+	}
 
 	if len(e.FileMatch) > 0 {
 		entry.FileMatch = slices.Clone(e.FileMatch)
@@ -350,6 +307,74 @@ func (p *Plan) Diff() Diff {
 	return Diff{
 		HasChanges: p.HasChanges(), Added: slices.Clone(p.added), Changed: slices.Clone(p.changed),
 		MetadataChanged: slices.Clone(p.metadataChanged), Held: p.held(), Excluded: p.excludedIDs(), Unchanged: p.unchanged,
+	}
+}
+
+func (p *Plan) classifyItems(set *prepare.Set) error {
+	prepared := make(map[string]*prepare.Entry, len(set.Document.Entries))
+	for i := range set.Document.Entries {
+		prepared[set.Document.Entries[i].ID] = &set.Document.Entries[i]
+	}
+	holds := make(map[string]string, len(set.Document.Held))
+	for _, hold := range set.Document.Held {
+		holds[hold.ID] = hold.Reason
+	}
+	ids := slices.Collect(maps.Keys(prepared))
+	ids = append(ids, slices.Collect(maps.Keys(holds))...)
+	slices.Sort(ids)
+	for _, id := range ids {
+		previous, _ := lookup(p.previous, id)
+		it := item{prepared: prepared[id], hold: holds[id], previous: previous}
+		if err := it.classify(set); err != nil {
+			return err
+		}
+		p.items = append(p.items, it)
+		p.countChange(it)
+	}
+	return nil
+}
+
+func (p *Plan) countChange(it item) {
+	switch it.change {
+	case added:
+		p.added = append(p.added, it.entry.ID)
+	case changed:
+		p.changed = append(p.changed, it.entry.ID)
+	case metadataChanged:
+		p.metadataChanged = append(p.metadataChanged, it.entry.ID)
+	case unchanged:
+		p.unchanged++
+	}
+}
+
+func (p *Plan) validateMetadata() error {
+	v3 := p.set.Document.CatalogFormat == catalog.MetadataFormatVersion
+	for i := range p.items {
+		v3 = v3 || p.items[i].entry.Metadata != nil
+	}
+	if !v3 {
+		return nil
+	}
+	for i := range p.items {
+		if p.items[i].entry.Metadata == nil {
+			return fault.New(fault.Usage, "cannot publish catalog format 3: schema %s has no compatibility metadata; prepare it with --catalog-format 3", p.items[i].entry.ID)
+		}
+	}
+	return nil
+}
+
+func (p *Plan) recordExcluded() {
+	if p.previous == nil {
+		return
+	}
+	excluded := make(map[string]bool, len(p.set.Document.Excluded))
+	for _, item := range p.set.Document.Excluded {
+		excluded[item.ID] = true
+	}
+	for i := range p.previous.Schemas {
+		if rec := &p.previous.Schemas[i]; excluded[rec.ID] && !rec.Excluded() {
+			p.excluded = append(p.excluded, rec)
+		}
 	}
 }
 
@@ -462,7 +487,17 @@ func (it *item) record(revision string) state.Schema {
 
 // candidate returns the catalog of the plan without its revision.
 func (p *Plan) candidate() *catalog.Catalog {
-	c := &catalog.Catalog{FormatVersion: catalog.FormatVersion, Schemas: make([]catalog.Entry, 0, len(p.items))}
+	formatVersion := catalog.FormatVersion
+	if p.set.Document.CatalogFormat == catalog.MetadataFormatVersion {
+		formatVersion = catalog.MetadataFormatVersion
+	}
+	for i := range p.items {
+		if p.items[i].entry.Metadata != nil {
+			formatVersion = catalog.MetadataFormatVersion
+			break
+		}
+	}
+	c := &catalog.Catalog{FormatVersion: formatVersion, Schemas: make([]catalog.Entry, 0, len(p.items))}
 	for i := range p.items {
 		c.Schemas = append(c.Schemas, p.items[i].entry)
 	}

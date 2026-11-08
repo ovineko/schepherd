@@ -1,8 +1,6 @@
-// Package catalog defines the Schepherd catalog document (formatVersion 2):
-// the list of schema IDs, their fileMatch rules and the OCI manifest
-// descriptors of the individual schema artifacts, which the catalog index
-// references as well (package artifact). Descriptors are resolved
-// against the repository the catalog itself was fetched from, which is why the
+// Package catalog defines the Schepherd catalog document (formatVersions 2 and 3):
+// schema IDs, matching rules, compatibility metadata and OCI manifest descriptors.
+// Descriptors resolve against the repository that supplied the catalog, so the
 // document never contains registry hosts or repository names.
 //
 // Parse is strict: member names must match exactly (encoding/json alone would
@@ -36,26 +34,32 @@ import (
 	"github.com/ovineko/schepherd/internal/match"
 )
 
-// FormatVersion is the only catalog format this build understands.
+// FormatVersion remains the published writer format until v3 reader release.
 const FormatVersion = 2
+
+// MetadataFormatVersion is the newest reader format with compatibility metadata.
+const MetadataFormatVersion = 3
 
 // ManifestMediaType is the only descriptor media type allowed for entries.
 const ManifestMediaType = "application/vnd.oci.image.manifest.v1+json"
 
 const (
-	maxIDLength          = 128
-	maxNameBytes         = 512
-	maxDescriptionBytes  = 8192
-	maxPatternsPerEntry  = 256
-	maxPatternBytes      = 1024
-	maxURIBytes          = 4096
-	maxLicenseBytes      = 256
-	maxDependencies      = 1024
-	maxQuotedBytes       = 64
-	maxMessageBytes      = 256
-	maxDigestBytes       = len(digest.Algorithm) + 1 + 2*sha256.Size
-	defaultMaxEntries    = 20000
-	defaultManifestBytes = 4 << 20
+	maxIDLength            = 128
+	maxNameBytes           = 512
+	maxDescriptionBytes    = 8192
+	maxPatternsPerEntry    = 256
+	maxPatternBytes        = 1024
+	maxURIBytes            = 4096
+	maxLicenseBytes        = 256
+	maxDependencies        = 1024
+	maxProfilesPerEntry    = 16
+	maxSourceFormats       = 64
+	maxSourceFormatMatches = 256
+	maxQuotedBytes         = 64
+	maxMessageBytes        = 256
+	maxDigestBytes         = len(digest.Algorithm) + 1 + 2*sha256.Size
+	defaultMaxEntries      = 20000
+	defaultManifestBytes   = 4 << 20
 
 	// maxNesting is the depth encoding/json refuses beyond anyway. A lower
 	// bound would reject a deeply nested document of a future format before
@@ -93,7 +97,7 @@ func (l Limits) withDefaults() Limits {
 	return l
 }
 
-// Catalog is the decoded formatVersion 2 document. Methods that search it
+// Catalog is a decoded supported catalog document. Methods that search it
 // rely on Schemas being sorted by ID, which Parse and Validate guarantee.
 type Catalog struct {
 	Revision      string  `json:"revision"`
@@ -105,12 +109,36 @@ type Catalog struct {
 // slices: Marshal omits them, and Parse rejects them when present but empty.
 type Entry struct {
 	Provenance  *Provenance `json:"provenance,omitempty"`
+	Metadata    *Metadata   `json:"metadata,omitempty"`
 	ID          string      `json:"id"`
 	Name        string      `json:"name"`
 	Description string      `json:"description,omitempty"`
 	Dialect     string      `json:"dialect,omitempty"`
 	FileMatch   []string    `json:"fileMatch,omitempty"`
 	Artifact    Descriptor  `json:"artifact"`
+}
+
+// Metadata records validator compatibility and source document formats.
+type Metadata struct {
+	SchemaDigest  string         `json:"schemaDigest"`
+	Profiles      []Profile      `json:"profiles"`
+	SourceFormats []SourceFormat `json:"sourceFormats"`
+}
+
+// Profile records a validator result for an exact tool/settings identity.
+type Profile struct {
+	Processor      string `json:"processor"`
+	Tool           string `json:"tool"`
+	SettingsDigest string `json:"settingsDigest"`
+	Result         string `json:"result"`
+	Reason         string `json:"reason,omitempty"`
+}
+
+// SourceFormat preserves document formats and native file matching.
+type SourceFormat struct {
+	Format     string   `json:"format"`
+	Extensions []string `json:"extensions"`
+	Filenames  []string `json:"filenames"`
 }
 
 // Descriptor is the OCI descriptor of a schema artifact manifest.
@@ -135,11 +163,8 @@ type Dependency struct {
 	Digest string `json:"digest"`
 }
 
-// Parse validates data as a formatVersion 2 catalog. Only well-formedness
-// (UTF-8, JSON syntax, unique member names, the nesting encoding/json can
-// read) is checked before the format version, so a well-formed document with
-// an unsupported version is a fault.Usage error whatever else it contains.
-// Every other defect is fault.Integrity.
+// Parse accepts strict formatVersion 2 catalogs and metadata-bearing v3 catalogs.
+// Well-formedness is checked before dispatch so future formats stay unsupported errors.
 func Parse(data []byte, limits Limits) (*Catalog, error) {
 	limits = limits.withDefaults()
 
@@ -189,10 +214,10 @@ func checkFormatVersion(data []byte) error {
 	switch {
 	case !ok:
 		return fault.New(fault.Integrity, "invalid catalog: formatVersion is missing")
-	case version.text == strconv.Itoa(FormatVersion):
+	case version.text == strconv.Itoa(FormatVersion), version.text == strconv.Itoa(MetadataFormatVersion):
 		return nil
 	case version.positiveInteger:
-		return fault.New(fault.Usage, "unsupported catalog formatVersion %s: this build supports %d", version.text, FormatVersion)
+		return fault.New(fault.Usage, "unsupported catalog formatVersion %s: this build reads %d and %d", version.text, FormatVersion, MetadataFormatVersion)
 	default:
 		return fault.New(fault.Integrity, "invalid catalog: formatVersion must be a positive integer, got %s", version.text)
 	}
@@ -242,10 +267,10 @@ func (c *Catalog) Validate(limits Limits) error {
 	limits = limits.withDefaults()
 
 	switch {
-	case c.FormatVersion > 0 && c.FormatVersion != FormatVersion:
-		return fault.New(fault.Usage, "unsupported catalog formatVersion %d: this build supports %d", c.FormatVersion, FormatVersion)
-	case c.FormatVersion != FormatVersion:
-		return fault.New(fault.Integrity, "invalid catalog: formatVersion %d is not a positive integer", c.FormatVersion)
+	case c.FormatVersion > 0 && c.FormatVersion != FormatVersion && c.FormatVersion != MetadataFormatVersion:
+		return fault.New(fault.Usage, "unsupported catalog formatVersion %d: this build reads %d and %d", c.FormatVersion, FormatVersion, MetadataFormatVersion)
+	case c.FormatVersion != FormatVersion && c.FormatVersion != MetadataFormatVersion:
+		return fault.New(fault.Integrity, "invalid catalog: formatVersion %d is not a supported positive integer", c.FormatVersion)
 	}
 
 	if _, err := calver.ParseRevision(c.Revision); err != nil {
@@ -260,6 +285,14 @@ func (c *Catalog) Validate(limits Limits) error {
 
 	for i := range c.Schemas {
 		entry := &c.Schemas[i]
+		if c.FormatVersion == FormatVersion && entry.Metadata != nil {
+			return fault.New(fault.Integrity, "invalid formatVersion 2 catalog: schema %s has v3 metadata", quote(entry.ID))
+		}
+		if c.FormatVersion == MetadataFormatVersion {
+			if err := entry.validateMetadata(); err != nil {
+				return fault.Wrap(fault.Integrity, err, "invalid metadata for schema %s", quote(entry.ID))
+			}
+		}
 		if err := entry.validate(limits); err != nil {
 			return fault.Wrap(fault.Integrity, err, "invalid catalog entry %d (%s)", i, quote(entry.ID))
 		}
@@ -317,6 +350,97 @@ func (e *Entry) validate(limits Limits) error {
 		return e.Provenance.validate()
 	}
 
+	return nil
+}
+
+func (e *Entry) validateMetadata() error {
+	if e.Metadata == nil {
+		return errors.New("metadata is required in formatVersion 3")
+	}
+	if err := checkDigest("metadata.schemaDigest", e.Metadata.SchemaDigest); err != nil {
+		return err
+	}
+	if len(e.Metadata.Profiles) > maxProfilesPerEntry || len(e.Metadata.SourceFormats) > maxSourceFormats {
+		return errors.New("metadata exceeds profile or source format limits")
+	}
+	if err := validateProfiles(e.Metadata.Profiles); err != nil {
+		return err
+	}
+	return validateSourceFormats(e.Metadata.SourceFormats)
+}
+
+func validateProfiles(profiles []Profile) error {
+	seen := make(map[string]struct{}, len(profiles))
+	for i, p := range profiles {
+		if err := validateProfile(p, i); err != nil {
+			return err
+		}
+		key := p.Processor + "\x00" + p.Tool + "\x00" + p.SettingsDigest
+		if _, ok := seen[key]; ok {
+			return fmt.Errorf("duplicate profile identity at index %d", i)
+		}
+		seen[key] = struct{}{}
+	}
+	return nil
+}
+
+func validateProfile(p Profile, index int) error {
+	if p.Processor == "" || p.Tool == "" {
+		return fmt.Errorf("profile %d has an empty processor or tool identity", index)
+	}
+	if err := checkText("profile.processor", p.Processor, maxNameBytes, false); err != nil {
+		return err
+	}
+	if err := checkText("profile.tool", p.Tool, maxPatternBytes, false); err != nil {
+		return err
+	}
+	if err := checkDigest("profile.settingsDigest", p.SettingsDigest); err != nil {
+		return err
+	}
+	if p.Result != "supported" && p.Result != "unsupported" {
+		return fmt.Errorf("profile %d result must be supported or unsupported", index)
+	}
+	if p.Result == "unsupported" && p.Reason == "" || p.Result == "supported" && p.Reason != "" {
+		return fmt.Errorf("profile %d reason must be present only for unsupported results", index)
+	}
+	return checkText("profile.reason", p.Reason, maxDescriptionBytes, true)
+}
+
+func validateSourceFormats(formats []SourceFormat) error {
+	for i, f := range formats {
+		if f.Format == "" || len(f.Extensions)+len(f.Filenames) == 0 {
+			return fmt.Errorf("source format %d must name a format and at least one extension or filename", i)
+		}
+		if err := checkText("source format", f.Format, maxNameBytes, false); err != nil {
+			return err
+		}
+		if err := validateSourceFormatMatches(f, i); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateSourceFormatMatches(f SourceFormat, index int) error {
+	if len(f.Extensions) > maxSourceFormatMatches || len(f.Filenames) > maxSourceFormatMatches {
+		return fmt.Errorf("source format %d exceeds the match limit", index)
+	}
+	for _, ext := range f.Extensions {
+		if !strings.HasPrefix(ext, ".") || ext == "." || strings.ContainsAny(ext, `/\\*?[]{}!`) {
+			return fmt.Errorf("source format %d has invalid extension %s", index, quote(ext))
+		}
+		if err := checkText("source format extension", ext, maxPatternBytes, false); err != nil {
+			return err
+		}
+	}
+	for _, name := range f.Filenames {
+		if name == "." || name == ".." || strings.ContainsAny(name, `/\\*?[]{}!`) {
+			return fmt.Errorf("source format %d has invalid filename %s", index, quote(name))
+		}
+		if err := checkText("source format filename", name, maxPatternBytes, false); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -641,9 +765,11 @@ func (c *Catalog) List() []ListItem {
 // keeps its patterns and descriptor together so integrations never lose the
 // association between a glob and the artifact it selects.
 type PatternItem struct {
-	ID        string     `json:"id"`
-	FileMatch []string   `json:"fileMatch"`
-	Artifact  Descriptor `json:"artifact"`
+	ID            string         `json:"id"`
+	FileMatch     []string       `json:"fileMatch"`
+	Artifact      Descriptor     `json:"artifact"`
+	Metadata      *Metadata      `json:"metadata,omitempty"`
+	SourceFormats []SourceFormat `json:"sourceFormats,omitempty"`
 }
 
 // Patterns returns the entries that have fileMatch rules, in id order, with
@@ -653,11 +779,28 @@ func (c *Catalog) Patterns() []PatternItem {
 
 	for _, e := range c.Schemas {
 		if len(e.FileMatch) > 0 {
-			items = append(items, PatternItem{ID: e.ID, FileMatch: slices.Clone(e.FileMatch), Artifact: e.Artifact})
+			item := PatternItem{ID: e.ID, FileMatch: slices.Clone(e.FileMatch), Artifact: e.Artifact}
+			if e.Metadata != nil {
+				metadata := *e.Metadata
+				metadata.Profiles = slices.Clone(e.Metadata.Profiles)
+				metadata.SourceFormats = cloneSourceFormats(e.Metadata.SourceFormats)
+				item.Metadata = &metadata
+				item.SourceFormats = cloneSourceFormats(e.Metadata.SourceFormats)
+			}
+			items = append(items, item)
 		}
 	}
 
 	return items
+}
+
+func cloneSourceFormats(formats []SourceFormat) []SourceFormat {
+	cloned := slices.Clone(formats)
+	for i := range cloned {
+		cloned[i].Extensions = slices.Clone(formats[i].Extensions)
+		cloned[i].Filenames = slices.Clone(formats[i].Filenames)
+	}
+	return cloned
 }
 
 // quote renders untrusted text for error messages, shortened so a hostile

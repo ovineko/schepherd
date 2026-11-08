@@ -22,7 +22,7 @@ func (d *decoder) processors(root node, doc map[string]any, ly *layer) {
 	if !ok {
 		return
 	}
-	keys := []string{"type", "command", "args", "mode", "cwd", "env", "inherit_env", "output", "formats", "convert"}
+	keys := []string{"type", "command", "args", "mode", "cwd", "env", "inherit_env", "output", "formats", "convert", "convert_args"}
 	for _, name := range slices.Sorted(maps.Keys(m)) {
 		kn, t, ok := d.table(n, m, name)
 		if !ok {
@@ -43,6 +43,7 @@ func (d *decoder) processors(root node, doc map[string]any, ly *layer) {
 			d.failf(d.child(kn, "output"), "unknown output format %q", p.output.val)
 		}
 		p.formats, _ = d.stringList(kn, t, "formats")
+		p.convertArgs = d.templatedArgs(kn, t, "convert_args")
 		p.convert, _ = d.templated(kn, t, "convert", pathPlaceholders)
 		r := &p.runner
 		r.command, _ = d.templated(kn, t, "command", pathPlaceholders)
@@ -160,7 +161,7 @@ func buildProcessorDefinition(name string, p *processorLayer, base runner.Spec) 
 		}
 	}
 	spec.Output = output
-	definition := processor.Definition{Spec: spec, Type: p.typeName.val, Output: output, Formats: slices.Clone(p.formats.val), Convert: p.convert.val}
+	definition := processor.Definition{Spec: spec, Type: p.typeName.val, Output: output, Formats: slices.Clone(p.formats.val), Convert: p.convert.val, ConvertArgs: slices.Clone(p.convertArgs.val)}
 	if err := processor.CheckDefinition(definition); err != nil {
 		return processor.Definition{}, fault.Wrap(fault.Usage, err, "processors.%s", name)
 	}
@@ -217,6 +218,9 @@ func processorFields(name string, p processor.Definition) []runnerField {
 	for _, key := range slices.Sorted(maps.Keys(p.Spec.Env)) {
 		fields = append(fields, runnerField{prefix + ".env." + key, p.Spec.Env[key]})
 	}
+	for i, arg := range p.ConvertArgs {
+		fields = append(fields, runnerField{fmt.Sprintf("%s.convert_args[%d]", prefix, i), arg})
+	}
 	if p.Convert != "" {
 		fields = append(fields, runnerField{prefix + ".convert", p.Convert})
 	}
@@ -226,7 +230,7 @@ func processorFields(name string, p processor.Definition) []runnerField {
 func processorSummary(c *Config) map[string]any {
 	out := map[string]any{}
 	for name, p := range c.Processors {
-		out[name] = map[string]any{"type": p.Type, "command": p.Spec.Command, "args": nonNil(p.Spec.Args), "mode": p.Spec.Mode, "output": p.Output, "formats": nonNil(p.Formats), "convert": p.Convert, "cwd": p.Spec.Cwd, "cwdBase": p.Spec.CwdBase, "env": maps.Clone(p.Spec.Env), "inheritEnv": p.Spec.InheritEnv}
+		out[name] = map[string]any{"type": p.Type, "command": p.Spec.Command, "args": nonNil(p.Spec.Args), "mode": p.Spec.Mode, "output": p.Output, "formats": nonNil(p.Formats), "convert": p.Convert, "convertArgs": nonNil(p.ConvertArgs), "cwd": p.Spec.Cwd, "cwdBase": p.Spec.CwdBase, "env": maps.Clone(p.Spec.Env), "inheritEnv": p.Spec.InheritEnv}
 	}
 	return out
 }

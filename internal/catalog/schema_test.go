@@ -71,6 +71,29 @@ func TestCatalogSchemaAcceptsFixtures(t *testing.T) {
 	}
 }
 
+func TestCatalogSchemaAcceptsV3Metadata(t *testing.T) {
+	t.Parallel()
+
+	doc := validDoc()
+	doc["formatVersion"] = catalog.MetadataFormatVersion
+	entry := doc["schemas"].([]any)[0].(map[string]any)
+	entry["metadata"] = map[string]any{
+		"schemaDigest": digestA,
+		"profiles": []any{map[string]any{
+			"processor": "ajv", "tool": "binary+identity", "settingsDigest": digestB, "result": "unsupported", "reason": "schema dialect is unsupported",
+		}},
+		"sourceFormats": []any{map[string]any{"format": "jsonc", "extensions": []any{".jsonc"}, "filenames": []any{"tsconfig.json"}}},
+	}
+	doc["schemas"].([]any)[1].(map[string]any)["metadata"] = entry["metadata"]
+	if err := validateAgainstSchema(compileCatalogSchema(t), encode(t, doc)); err != nil {
+		t.Fatalf("schema rejects v3 metadata: %v", err)
+	}
+	doc["formatVersion"] = catalog.FormatVersion
+	if err := validateAgainstSchema(compileCatalogSchema(t), encode(t, doc)); err == nil {
+		t.Fatal("schema accepts v3 metadata in a v2 catalog")
+	}
+}
+
 // TestCatalogSchemaAgreesOnRejections runs every invalid document that JSON
 // Schema can express through both validators.
 func TestCatalogSchemaAgreesOnRejections(t *testing.T) {

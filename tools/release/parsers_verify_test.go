@@ -27,7 +27,7 @@ func TestPublishedParserAnonymousRetrieval(t *testing.T) {
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			module := []byte{0, 'a', 's', 'm', 1, 0, 0, 0, 0}
-			metadata, body, err := parserArtifact(module, "1.2.3")
+			metadata, body, err := parserArtifact(module, "1.2.3", testParserCapabilities("1.2.3"))
 			if err != nil {
 				t.Fatal(err)
 			}
