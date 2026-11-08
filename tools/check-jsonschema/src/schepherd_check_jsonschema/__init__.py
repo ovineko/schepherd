@@ -33,7 +33,7 @@ from check_jsonschema.schema_loader.main import (
   _extend_with_pattern_implementation,
 )
 from jsonschema_specifications import REGISTRY as METASCHEMAS
-from referencing import Registry, Resource
+from referencing import Registry, Resource, Specification
 from referencing.exceptions import (
   CannotDetermineSpecification,
   NoSuchResource,
@@ -128,8 +128,15 @@ def _require_json_value(value: Any, active: set[int] | None = None) -> None:
     active.remove(identity)
 
 
-def _read_document(path: pathlib.Path, *, schema: bool = False) -> Any:
-  file_format = _FILE_FORMATS.get(path.suffix.lower())
+def _read_document(
+  path: pathlib.Path,
+  *,
+  schema: bool = False,
+  format_override: str | None = None,
+) -> Any:
+  file_format = format_override or _FILE_FORMATS.get(path.suffix.lower())
+  if file_format == "jsonc":
+    file_format = "json5"
   if file_format is None:
     if schema:
       file_format = "json"
@@ -191,6 +198,23 @@ def _check_vocabularies(schema: dict) -> None:
     raise UnsupportedSchema(f"unsupported required vocabulary: {min(unsupported)}")
 
 
+def _schema_specification(uri: str, default: Any) -> Specification:
+  specification = specification_with(uri, default=default)
+
+  def subresources(contents: Any) -> Any:
+    return (
+      child for child in specification.subresources_of(contents) if isinstance(child, (dict, bool))
+    )
+
+  return Specification(
+    name=specification.name,
+    id_of=specification.id_of,
+    subresources_of=subresources,
+    maybe_in_subresource=specification.maybe_in_subresource,
+    anchors_in=lambda _specification, contents: specification.anchors_in(contents),
+  )
+
+
 def _normalize_schema_dialects(schema: Any) -> Any:
   normalized = copy.deepcopy(schema)
   pending = [(normalized, DRAFT202012)]
@@ -208,6 +232,61 @@ def _normalize_schema_dialects(schema: Any) -> Any:
   return normalized
 
 
+def _nested_dialect_resources(resource: Resource) -> list[dict]:
+  resources = [resource]
+  seen: set[int] = set()
+  nested = []
+  while resources:
+    current = resources.pop()
+    contents = current.contents
+    if id(contents) in seen:
+      continue
+    seen.add(id(contents))
+    if current is not resource and isinstance(contents, dict) and "$schema" in contents:
+      nested.append(contents)
+    resources.extend(current.subresources())
+  return nested
+
+
+def _container_parents(root: Any) -> dict[int, list[tuple[Any, Any]]]:
+  parents: dict[int, list[tuple[Any, Any]]] = {}
+  pending = [root]
+  seen: set[int] = set()
+  while pending:
+    contents = pending.pop()
+    if not isinstance(contents, (dict, list)) or id(contents) in seen:
+      continue
+    seen.add(id(contents))
+    children = contents.items() if isinstance(contents, dict) else enumerate(contents)
+    for key, child in children:
+      if isinstance(child, (dict, list)):
+        parents.setdefault(id(child), []).append((contents, key))
+        pending.append(child)
+  return parents
+
+
+def _check_schema_with_boundaries(
+  schema: Any,
+  validator_class: type[jsonschema.protocols.Validator],
+  regex: RegexImplementation,
+  boundaries: list[dict],
+  parents: dict[int, list[tuple[Any, Any]]],
+  preserve: Any,
+) -> None:
+  masked: list[tuple[Any, Any, dict]] = []
+  for boundary in boundaries:
+    if boundary is preserve:
+      continue
+    for parent, key in parents.get(id(boundary), []):
+      masked.append((parent, key, boundary))
+      parent[key] = {}
+  try:
+    _check_schema(validator_class, schema, regex_impl=regex)
+  finally:
+    for parent, key, contents in masked:
+      parent[key] = contents
+
+
 def compile_schema(path: pathlib.Path) -> jsonschema.protocols.Validator:
   schema = _normalize_schema_dialects(_read_document(path, schema=True))
   root_class = _dialect(schema, jsonschema.Draft202012Validator)
@@ -217,11 +296,16 @@ def compile_schema(path: pathlib.Path) -> jsonschema.protocols.Validator:
     if "$id" in root_class.META_SCHEMA
     else root_class.META_SCHEMA["id"]
   )
-  specification = specification_with(dialect, default=DRAFT202012)
-  resource = Resource.from_contents(schema, default_specification=specification)
+  specification = _schema_specification(dialect, default=DRAFT202012)
+  resource = Resource(contents=schema, specification=specification)
   registry = Registry(retrieve=_reject_retrieval).with_resources(METASCHEMAS.items())
   registry = registry.with_resource(path.resolve().as_uri(), resource).crawl()
   resolver = registry.resolver(path.resolve().as_uri()).in_subresource(resource)
+
+  nested = _nested_dialect_resources(resource)
+  parents = _container_parents(schema) if nested else {}
+  _check_schema_with_boundaries(schema, root_class, regex, nested, parents, schema)
+
   pending = [(resource, resolver, root_class)]
   seen: set[tuple[int, str]] = set()
   unsupported: list[str] = []
@@ -235,7 +319,15 @@ def compile_schema(path: pathlib.Path) -> jsonschema.protocols.Validator:
     seen.add(key)
     try:
       validator_class = _dialect(contents, inherited_class)
-      _check_schema(validator_class, contents, regex_impl=regex)
+      if contents is not schema and isinstance(contents, dict) and "$schema" in contents:
+        _check_schema_with_boundaries(
+          contents,
+          validator_class,
+          regex,
+          nested,
+          parents,
+          contents,
+        )
     except UnsupportedSchema as error:
       unsupported.append(str(error))
       continue
@@ -261,14 +353,15 @@ def compile_schema(path: pathlib.Path) -> jsonschema.protocols.Validator:
           raise FrontendError(
             f"unresolved schema reference: {reference}; external retrieval is disabled"
           ) from error
-        target = Resource.from_contents(
-          resolved.contents,
-          default_specification=specification_with(
+        target = Resource(
+          contents=resolved.contents,
+          specification=_schema_specification(
             validator_class.META_SCHEMA.get("$id", validator_class.META_SCHEMA.get("id")),
             default=specification,
           ),
         )
-        pending.append((target, resolved.resolver, validator_class))
+        if resolved.resolver._base_uri not in METASCHEMAS:
+          pending.append((target, resolved.resolver, validator_class))
     for child in current.subresources():
       pending.append((child, current_resolver.in_subresource(child), validator_class))
   if unsupported:
@@ -282,9 +375,12 @@ def compile_schema(path: pathlib.Path) -> jsonschema.protocols.Validator:
   )
 
 
-def _read_instances(path: pathlib.Path) -> list[Any]:
-  if _FILE_FORMATS.get(path.suffix.lower()) != "yaml":
-    return [_read_document(path)]
+def _read_instances(path: pathlib.Path, format_override: str | None = None) -> list[Any]:
+  file_format = format_override or _FILE_FORMATS.get(path.suffix.lower())
+  if file_format == "jsonc":
+    file_format = "json5"
+  if file_format != "yaml":
+    return [_read_document(path, format_override=file_format)]
   raw = path.read_bytes()
   yaml = construct_yaml_implementation()
   try:
@@ -300,11 +396,13 @@ def _read_instances(path: pathlib.Path) -> list[Any]:
 
 
 def validate_file(
-  validator: jsonschema.protocols.Validator, path: pathlib.Path
+  validator: jsonschema.protocols.Validator,
+  path: pathlib.Path,
+  format_override: str | None = None,
 ) -> tuple[CheckResult, int]:
   result = CheckResult()
   try:
-    instances = _read_instances(path)
+    instances = _read_instances(path, format_override)
   except (OSError, ValueError, UnicodeError) as error:
     result.record_parse_error(path, ParseError(str(error)))
     return result, 7 if isinstance(error, OSError) else 6
@@ -326,6 +424,11 @@ class _StreamReporter(JsonReporter):
     self.stream.write(json.dumps(data, ensure_ascii=True, separators=(",", ":")) + "\n")
 
 
+def _dependency_lock_sha256() -> str:
+  lockfile = pathlib.Path(sys.prefix).parent / "uv.lock"
+  return hashlib.sha256(lockfile.read_bytes()).hexdigest()
+
+
 def main(
   argv: Sequence[str] | None = None,
   *,
@@ -339,9 +442,11 @@ def main(
   commands.add_parser("identity")
   probe = commands.add_parser("probe")
   probe.add_argument("schema", type=pathlib.Path)
+  probe.add_argument("--format", choices=("json", "jsonc", "json5", "yaml", "toml"))
   validate = commands.add_parser("validate")
   validate.add_argument("schema", type=pathlib.Path)
   validate.add_argument("input", type=pathlib.Path)
+  validate.add_argument("--format", choices=("json", "jsonc", "json5", "yaml", "toml"))
   arguments = parser.parse_args(argv)
   try:
     if arguments.operation == "identity":
@@ -349,6 +454,7 @@ def main(
         json.dumps(
           {
             "frontend": {"sha256": hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()},
+            "dependency_lock": {"sha256": _dependency_lock_sha256()},
             "runtime": {
               "name": "python",
               "version": sys.version,
@@ -379,7 +485,7 @@ def main(
     if arguments.operation == "probe":
       stdout.write('{"supported":true}\n')
       return 0
-    result, code = validate_file(validator, arguments.input)
+    result, code = validate_file(validator, arguments.input, arguments.format)
     _StreamReporter(stdout).report_result(result)
     return code
   except UnsupportedSchema as error:

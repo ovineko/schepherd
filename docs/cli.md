@@ -118,12 +118,12 @@ file.
 These commands fetch the catalog only (never schema artifacts); without
 `[catalog]`, `list`, `patterns` and `resolve` use only the local schemas.
 
-| Command                 | Output (`--json`)                                                                                                                                                                        |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `catalog`               | The verified catalog document, byte for byte.                                                                                                                                            |
-| `list`                  | `[{id, name, description?, dialect?, digest, origin: "catalog"}]`; a local schema is `{id, origin: "local", schemaPath, shadows}`.                                                       |
-| `patterns`              | `[{id, fileMatch, artifact, origin: "catalog"}]` for catalog schemas that have `fileMatch`; a local schema with `file_match` is `{id, fileMatch, origin: "local", schemaPath, shadows}`. |
-| `resolve --file <path>` | `{file, path, schema, origin, artifact}` for a catalog schema, `{file, path, schema, origin, schemaPath}` for a local one.                                                               |
+| Command                 | Output (`--json`)                                                                                                                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `catalog`               | The verified catalog document, byte for byte.                                                                                                                                                                                               |
+| `list`                  | `[{id, name, description?, dialect?, digest, origin: "catalog"}]`; a local schema is `{id, origin: "local", schemaPath, shadows}`.                                                                                                          |
+| `patterns`              | `[{id, fileMatch, artifact, origin: "catalog", metadata?, sourceFormats?}]` for catalog schemas with patterns; `--covering` adds row-level validator/glob coverage. Local rows are `{id, fileMatch, origin: "local", schemaPath, shadows}`. |
+| `resolve --file <path>` | `{file, path, schema, origin, artifact}` for a catalog schema, `{file, path, schema, origin, schemaPath}` for a local one.                                                                                                                  |
 
 Without `--json`, `catalog` prints a summary and `resolve` prints the ID.
 `list` prints `id<TAB>name` for catalog entries and `id<TAB>schemaPath<TAB>local`
@@ -131,6 +131,7 @@ for local ones. `patterns` prints `id<TAB>pattern` lines, with a third column
 `local` for local schemas. The marker reads `local, shadows catalog` when the
 entry replaces a catalog ID. Items are in ID order, and a shadowing local
 schema replaces the catalog entry in both commands.
+`patterns --validators <ids> --covering --json` adds `covering: {validators, globs, recordedSupported?, recordedExcluded?}` to catalog and local rows. `--validators` requires `--covering` and selects the recorded profile summaries for the comma-separated union of `sourcemeta`, `check-jsonschema`, and `ajv`; unknown or repeated identities are usage errors. `globs` are positive, doublestar-compatible discovery patterns: unanchored basename rules use recursive `**/basename` forms that also match root files, while `./` and `/` stay root-anchored. The original `fileMatch` remains intact with negations associated to its schema. Historical unsupported profiles never remove schema rows or globs: only a caller that matches tool/settings identity and schema digest may decide a recorded profile applies. Missing, ambiguous or stale profiles remain conservatively discoverable.
 
 `resolve` only matches paths; the file does not need to exist and is never
 read. Local `[[mappings]]` take precedence over local `file_match`, which
@@ -194,7 +195,7 @@ copied from the source is verified by digest and size on the way (a mismatch
 exits with code 5 before any catalog tag is created), and an interrupted
 mirror exits with code 130 and can be re-run. See [Mirroring](mirroring.md).
 
-## `materialize [--concurrency <n>] [--compile] [--compile-schema <id,...>] [--json]`
+## `materialize [--concurrency <n>] [--compile | --compile-persistable] [--compile-schema <id,...>] [--json]`
 
 Fills the cache directory with the whole pinned catalog: every schema
 manifest, its payload blob, its unpacked `schema.json` and every notice
@@ -208,22 +209,31 @@ payload when the cache is writable; `materialize --offline` never rebuilds
 it. The catalog is pinned the usual way (`--repository`/`--catalog`, the
 environment, or `[catalog]`); no project configuration file is required,
 and local `[schemas]` are project files, so they are not copied.
+The compilation flags additionally require a project config with typed processors, supplied with the global `--config <file>` flag before `materialize`.
 
-`--compile` also prepares each configured typed processor for every catalog schema.
+`--compile` strictly prepares each configured typed processor for every catalog schema.
 Sourcemeta templates and AJV standalone validators are stored with verified hashes;
 check-jsonschema retains its capability decision because it has no portable compiled
 validator format. Known incompatibilities are recorded, not treated as installation
 failures. Missing tools, crashes and malformed compiler output still fail preparation.
-With `--offline`, compilation is verification-only: no compiler runs and no cache
-entry is written. The JSON summary adds `compilation` counts and is incomplete when
-a required compilation is missing. Ordinary `run` reuses these artifacts and can
-compile a missing entry in a writable cache; it never caches document verdicts.
+With `--offline`, both compilation modes verify only persistable entries: no
+compiler runs or cache writes occur, and a missing persistable entry makes the
+summary incomplete. Runtime `run --offline` compiles local or invocation-local
+schemas in private temporary storage; it never writes them to the source cache.
+
+`--compile-persistable` is the immutable-runtime preparation mode. It stores every
+catalog processor compilation that can safely be reused, and reports known
+invocation-local cases separately in `invocationLocal` and `invocationLocalReasons`.
+These are not missing artifacts: runtime compiles them in private temporary storage,
+including in offline mode, while leaving the source cache untouched. Invalid schema
+bytes, compiler failures and infrastructure errors remain fatal. `--compile` and
+`--compile-persistable` are mutually exclusive.
 
 Repeat `--compile-schema` or pass comma-separated catalog IDs to limit compilation
-to the schemas the caller actually uses; it requires `--compile`. Unknown IDs fail.
-The complete source catalog is still materialized. This lets a caller reuse its
-reviewed coverage policy instead of making unrelated catalog schemas installation
-requirements.
+to the schemas the caller actually uses; the flag works with either compilation mode.
+Unknown IDs fail. The complete source catalog is still materialized. This lets a
+caller reuse its reviewed coverage policy instead of making unrelated catalog schemas
+installation requirements.
 
 Repeated runs download nothing: they re-verify every entry and report the
 counts. An interrupted run can simply be re-run; only what is missing is
@@ -276,18 +286,27 @@ schepherd --repository ghcr.io/ovineko/schepherd-schemas \
   --catalog sha256:<digest> --cache-dir ./cache --offline materialize --json
 ```
 
-## `run [--schema <id>] [--ignore-unmatched] [--report <file>] [--json] -- <files...>`
+## `run [--schema <id>] [--safe-catalog] [--ignore-unmatched] [--report <file>] [--json] -- <files...>`
 
 Runs the configured consumer for the given files. Files are paths you pass;
 Schepherd does not walk directories or expand globs. With `--schema`, every
 file uses that schema. Otherwise each file is resolved like `resolve`;
 unknown files and ambiguous matches are errors before any consumer starts.
 Catalog schemas are materialized; local schemas are checked in place.
-`--ignore-unmatched` skips files that match nothing or lie outside the
-workspace (reported on stderr and in the report as `unmatched` or
-`outside-workspace`) but never skips ambiguous ones. See [Runner](runner.md).
 
-`--json` emits exactly one attributed version 2 report on stdout, including
+`--safe-catalog` changes only automatic catalog association: a catalog schema
+is assigned only when one schema matches and at least one configured processor
+accepts its source format. Ambiguous catalog matches and formats no processor
+can read are unavailable, not assigned by arbitrary precedence; explicit
+`[[mappings]]` and local schemas retain strict priority. They are errors unless
+`--ignore-unmatched` is also given, in which case the version 3 report records a
+skip categorized as `catalog-ambiguous` or `catalog-format-unavailable`, with
+the candidate IDs or unsupported source format in its reason.
+Schema capability failures and invalid documents after a unique assignment
+remain failures, never skips. Without `--safe-catalog`, ambiguity remains a
+strict error. See [Runner](runner.md).
+
+`--json` emits exactly one attributed version 3 report on stdout, including
 argument, configuration, matching and execution failures. No consumer bytes or
 Schepherd logs appear outside it. Tasks include original `files`, actual
 consumer `paths`, resolved `cwd`, processor metadata, status and bounded stdout

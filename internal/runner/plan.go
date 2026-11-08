@@ -24,6 +24,7 @@ type Input struct {
 	Path         string
 	OriginalPath string
 	SchemaID     string
+	Format       string // Resolved document format; empty derives it from the path and schema metadata.
 }
 
 // SchemaInfo describes a schema ready for a consumer. For a catalog schema
@@ -32,10 +33,30 @@ type Input struct {
 // own file and Ref is "local:" followed by its path. Origin is where the
 // schema comes from ("catalog" or "local") and is copied into the report.
 type SchemaInfo struct {
-	ID     string
-	Path   string
-	Ref    string
-	Origin string
+	ID                string
+	Path              string
+	Ref               string
+	Origin            string
+	SourceFormats     []DocumentFormat
+	SchemaDigest      string
+	ProcessorProfiles []ProcessorProfile
+}
+
+// ProcessorProfile is a catalog verdict, reusable only after the schema, tool
+// and settings identities match the active validation inputs.
+type ProcessorProfile struct {
+	Processor      string
+	Tool           string
+	SettingsDigest string
+	Result         string
+	Reason         string
+}
+
+// DocumentFormat describes native input names recorded with a catalog schema.
+type DocumentFormat struct {
+	Format     string
+	Extensions []string
+	Filenames  []string
 }
 
 // Options is the environment of one run. Workspace is absolute. CacheDir is
@@ -84,6 +105,7 @@ type Plan struct {
 type group struct {
 	schema SchemaInfo
 	files  []string
+	format string
 }
 
 type templates struct {
@@ -98,6 +120,7 @@ type planner struct {
 	lookup      interp.LookupFunc
 	executables map[string]string
 	originals   map[string]string
+	formats     map[string]string
 	tpl         templates
 	opts        Options
 	command     string
@@ -145,7 +168,14 @@ func BuildPlan(inputs []Input, schemas map[string]SchemaInfo, opts Options) (*Pl
 		return nil, err
 	}
 
-	p := &planner{spec: spec, opts: opts, tpl: tpl, lookup: opts.Lookup, executables: map[string]string{}, originals: originals}
+	formats := make(map[string]string, len(inputs))
+	for _, input := range inputs {
+		if input.Format != "" {
+			formats[filepath.Clean(input.Path)] = input.Format
+		}
+	}
+
+	p := &planner{spec: spec, opts: opts, tpl: tpl, lookup: opts.Lookup, executables: map[string]string{}, originals: originals, formats: formats}
 	if p.lookup == nil {
 		p.lookup = func(string) (string, bool) { return "", false }
 	}
@@ -292,21 +322,28 @@ func groupInputs(inputs []Input, schemas map[string]SchemaInfo, mode Mode) ([]gr
 		}
 
 		schema.ID = in.SchemaID
+		format := in.Format
+		if format == "" {
+			format = formatFor(path, schema.SourceFormats)
+		}
 
 		if mode != ModeBatch {
-			groups = append(groups, group{schema: schema, files: []string{path}})
+			groups = append(groups, group{schema: schema, files: []string{path}, format: format})
 
 			continue
 		}
 
 		if i, ok := byID[in.SchemaID]; ok {
 			groups[i].files = append(groups[i].files, path)
+			if groups[i].format != format {
+				groups[i].format = ""
+			}
 
 			continue
 		}
 
 		byID[in.SchemaID] = len(groups)
-		groups = append(groups, group{schema: schema, files: []string{path}})
+		groups = append(groups, group{schema: schema, files: []string{path}, format: format})
 	}
 
 	return groups, nil
@@ -397,11 +434,51 @@ func (p *planner) values(schema SchemaInfo, file string) map[string]string {
 	values[interp.SchemaID] = schema.ID
 	values[interp.SchemaRef] = schema.Ref
 
-	if file != "" {
-		values[interp.File] = file
+	values[interp.File] = file
+	format := p.formats[filepath.Clean(file)]
+	if format == "" {
+		format = formatFor(file, schema.SourceFormats)
+	}
+	if format != "" {
+		values[interp.Format] = format
 	}
 
 	return values
+}
+
+func formatFor(path string, formats []DocumentFormat) string {
+	base := strings.ToLower(filepath.Base(path))
+	if base == "cspell.config.json" || base == ".cspell.json" || base == "tsconfig.json" || base == "jsconfig.json" {
+		return "jsonc"
+	}
+	for _, source := range formats {
+		if slices.Contains(source.Filenames, base) {
+			return source.Format
+		}
+	}
+	extension := strings.ToLower(filepath.Ext(path))
+	found := ""
+	for _, source := range formats {
+		if slices.ContainsFunc(source.Extensions, func(ext string) bool { return strings.EqualFold(ext, extension) }) {
+			if found != "" && found != source.Format {
+				return ""
+			}
+			found = source.Format
+		}
+	}
+	if found != "" {
+		return found
+	}
+	switch extension {
+	case ".yaml", ".yml":
+		return "yaml"
+	case ".json":
+		return "json"
+	case ".toml", ".json5", ".jsonc":
+		return extension[1:]
+	default:
+		return ""
+	}
 }
 
 func (p *planner) expand(field string, tpl *interp.Template, values map[string]string) (string, error) {
@@ -424,6 +501,9 @@ func (p *planner) tasksFor(g group) ([]Task, error) {
 	}
 
 	values := p.values(g.schema, file)
+	if file == "" && g.format != "" {
+		values[interp.Format] = g.format
+	}
 
 	envValues := values
 	if original, ok := p.originals[file]; ok && original != file {

@@ -48,6 +48,13 @@ func TestParseValid(t *testing.T) {
 			},
 		},
 		{
+			name: "empty v3 catalog",
+			doc:  `{"formatVersion":3,"revision":"20260923.1200","schemas":[]}`,
+			want: func() *catalog.Catalog {
+				return &catalog.Catalog{FormatVersion: catalog.MetadataFormatVersion, Revision: testRevision, Schemas: []catalog.Entry{}}
+			},
+		},
+		{
 			name: "every member",
 			doc:  string(encode(t, validDoc())),
 			want: validCatalog,
@@ -171,6 +178,54 @@ func TestParseValid(t *testing.T) {
 	}
 }
 
+func TestParseV3MetadataAndStrictV2(t *testing.T) {
+	t.Parallel()
+
+	doc := validDoc()
+	doc["formatVersion"] = catalog.MetadataFormatVersion
+	schemas := doc["schemas"].([]any)
+	entry := schemas[1].(map[string]any)
+	entry["metadata"] = map[string]any{
+		"schemaDigest": digestA,
+		"profiles": []any{map[string]any{
+			"processor": "ajv", "tool": "sha256:tool-id", "settingsDigest": digestB, "result": "supported",
+		}},
+		"sourceFormats": []any{map[string]any{
+			"format": "jsonc", "extensions": []any{".jsonc"}, "filenames": []any{"tsconfig.json", "jsconfig.json"},
+		}},
+	}
+	schemas[0].(map[string]any)["metadata"] = entry["metadata"]
+
+	parsed, err := catalog.Parse(encode(t, doc), catalog.DefaultLimits())
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadata := parsed.Schemas[1].Metadata
+	if metadata == nil || metadata.SchemaDigest != digestA || len(metadata.Profiles) != 1 || metadata.Profiles[0].Result != "supported" ||
+		len(metadata.SourceFormats) != 1 || metadata.SourceFormats[0].Format != "jsonc" {
+		t.Fatalf("v3 metadata = %#v", metadata)
+	}
+	patterns := parsed.Patterns()
+	if len(patterns) != 1 || patterns[0].Metadata == nil || len(patterns[0].SourceFormats) != 1 {
+		t.Fatalf("v3 pattern metadata = %#v", patterns)
+	}
+	patterns[0].Metadata.Profiles[0].Result = "changed"
+	patterns[0].SourceFormats[0].Filenames[0] = "changed.json"
+	if metadata.Profiles[0].Result != "supported" || metadata.SourceFormats[0].Filenames[0] != "tsconfig.json" {
+		t.Fatal("Patterns returned aliases to catalog metadata")
+	}
+
+	doc["formatVersion"] = catalog.FormatVersion
+	if _, err := catalog.Parse(encode(t, doc), catalog.DefaultLimits()); fault.KindOf(err) != fault.Integrity {
+		t.Fatalf("v2 metadata error = %v, want integrity", err)
+	}
+	doc["formatVersion"] = catalog.MetadataFormatVersion
+	entry["metadata"].(map[string]any)["profiles"].([]any)[0].(map[string]any)["result"] = "unsupported"
+	if _, err := catalog.Parse(encode(t, doc), catalog.DefaultLimits()); fault.KindOf(err) != fault.Integrity || !strings.Contains(err.Error(), "reason") {
+		t.Fatalf("unsupported profile without reason = %v", err)
+	}
+}
+
 func TestParseFormatVersion(t *testing.T) {
 	t.Parallel()
 
@@ -184,8 +239,7 @@ func TestParseFormatVersion(t *testing.T) {
 		kind   fault.Kind
 		schema bool
 	}{
-		{name: "next version", doc: `{"formatVersion":3` + rest + `}`, kind: fault.Usage, msg: "unsupported catalog formatVersion 3", schema: true},
-		{name: "previous version", doc: `{"formatVersion":1` + rest + `}`, kind: fault.Usage, msg: "unsupported catalog formatVersion 1: this build supports 2", schema: true},
+		{name: "previous version", doc: `{"formatVersion":1` + rest + `}`, kind: fault.Usage, msg: "unsupported catalog formatVersion 1: this build reads 2 and 3", schema: true},
 		{name: "future version with unknown shape", doc: `{"schemas":{"x":null},"extra":true,"formatVersion":4}`, kind: fault.Usage, msg: "formatVersion 4", schema: true},
 		{name: "future version nested deeper than format 1", doc: `{"formatVersion":7,"payload":` + nested(100) + `}`, kind: fault.Usage, msg: "formatVersion 7", schema: true},
 		{name: "future version nested deeper than jsonutil's default depth", doc: `{"formatVersion":7,"payload":` + nested(600) + `}`, kind: fault.Usage, msg: "formatVersion 7", schema: true},
@@ -233,7 +287,7 @@ func TestParseFormatVersion(t *testing.T) {
 	t.Run("exit codes", func(t *testing.T) {
 		t.Parallel()
 
-		_, usage := catalog.Parse([]byte(`{"formatVersion":3}`), catalog.Limits{})
+		_, usage := catalog.Parse([]byte(`{"formatVersion":4}`), catalog.Limits{})
 		_, integrity := catalog.Parse([]byte(`{"formatVersion":"3"}`), catalog.Limits{})
 
 		if fault.ExitCodeOf(usage) != 2 || fault.ExitCodeOf(integrity) != 5 {
@@ -684,8 +738,8 @@ func TestValidate(t *testing.T) {
 			c.Schemas[0].FileMatch = []string{}
 			c.Schemas[1].Provenance.Dependencies = []catalog.Dependency{}
 		}, ok: true},
-		{name: "newer format", edit: func(c *catalog.Catalog) { c.FormatVersion = 3 }, kind: fault.Usage, msg: "unsupported catalog formatVersion 3"},
-		{name: "older format", edit: func(c *catalog.Catalog) { c.FormatVersion = 1 }, kind: fault.Usage, msg: "unsupported catalog formatVersion 1"},
+		{name: "newer format", edit: func(c *catalog.Catalog) { c.FormatVersion = 4 }, kind: fault.Usage, msg: "unsupported catalog formatVersion 4"},
+		{name: "v3 requires metadata", edit: func(c *catalog.Catalog) { c.FormatVersion = catalog.MetadataFormatVersion }, kind: fault.Integrity, msg: "metadata is required"},
 		{name: "unset format", edit: func(c *catalog.Catalog) { c.FormatVersion = 0 }, kind: fault.Integrity, msg: "formatVersion 0"},
 		{name: "negative format", edit: func(c *catalog.Catalog) { c.FormatVersion = -1 }, kind: fault.Integrity, msg: "formatVersion -1"},
 		{name: "bad revision", edit: func(c *catalog.Catalog) { c.Revision = "v1" }, kind: fault.Integrity, msg: "invalid catalog revision"},

@@ -22,10 +22,10 @@ compilation, overrides inherited compiler flags and remaps the checkout, Cargo
 home, Rust sysroot and target directory. The resulting artifact is retained at
 `dist/parsers/schepherd-parsers.wasm`; only the intermediate target directory is
 deleted. `check` executes the actual module in Node's WebAssembly engine, checks
-ABI 2, capability schema 3, all four dispatch keys, validator findings and
-Schepherd file attribution. `host` additionally loads the module through the
-installed Datamitsu host and requires a classified diagnostic from an early
-Schepherd failure.
+function ABI 2, capability schema 4 and the `input-skips` feature, all four dispatch
+keys, validator findings and Schepherd file attribution. `host` additionally loads the
+module through the installed Datamitsu host and requires a classified diagnostic from
+an early Schepherd failure.
 
 These package commands call the corresponding `parsers:*` Taskfile tasks. For
 an explicit version or output directory use the release helper directly:
@@ -43,12 +43,21 @@ writes metadata for the exact existing bytes. Local commands default to
 ## Consumer contract
 
 The module exports `memory`, `alloc`, `dealloc`, `parse`, `describe` and `reset`.
-It returns ABI 2 responses and capability schema 3. Its dispatch keys are
+It returns function ABI 2 responses and capability schema 4. Its dispatch keys are
 `schepherd`, `sourcemeta`, `check_jsonschema` and `ajv`. The `schepherd` parser
 consumes `schepherd run --json` reports and attributes each task's diagnostics
 to its original input file, rather than a converted document or cached schema.
+It reads legacy report version 2 and current version 3; version 3 carries categorized skips, while a categoryless version 2 skip is surfaced as `unknown`.
 Standalone validator keys consume their respective machine-readable output;
 their caller supplies the schema and input arguments.
+
+Parser responses include `extractionPartial`, which reports extraction loss or incomplete
+attribution, separately from skipped inputs. The optional `skipped` array carries
+`{file, reason, category}` for meaningful and unknown categories; categoryless legacy
+skips use `unknown`. Only explicitly categorized `unmatched` and `outside-workspace`
+skips are omitted. A surfaced skip also sets legacy `partial: true` so older
+function-ABI-2 hosts cannot cache the run as a clean pass. Consumers of schema 4
+use `extractionPartial` rather than treating skip-only `partial` as truncated bytes.
 
 The output directory contains:
 
@@ -59,10 +68,7 @@ The output directory contains:
 | `schepherd-parsers.oci.json` | Exact OCI manifest bytes pinned by metadata                                                      |
 | `SHA256SUMS`                 | SHA-256 of the other three files                                                                 |
 
-`schepherd-parsers.json` is generated from real bytes, not a committed release
-pin. Do not use a development artifact's release URL or OCI reference as if it
-were already published. A consuming package adopts a release only after its
-artifact has actually been published and checked.
+`schepherd-parsers.json` is generated from the actual module bytes and its `describe` output; `capabilitySchema` preserves the raw descriptor schema version. Do not hand-edit metadata or use a development artifact's release URL or OCI reference as if it were already published. A consuming package adopts a release only after its artifact has actually been published and checked.
 
 ## Release ordering and OCI integrity
 

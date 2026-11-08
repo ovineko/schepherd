@@ -1,14 +1,20 @@
-use crate::limits::{excerpt, MAX_DIAGNOSTICS};
+use crate::limits::{excerpt, MAX_DIAGNOSTICS, MAX_DOCUMENTS};
 use serde_json::{json, Value};
 
 #[derive(Default)]
 pub struct Response {
   pub recognized: bool,
   pub partial: bool,
+  pub extraction_partial: bool,
   pub diagnostics: Vec<Value>,
+  pub skipped: Vec<Value>,
 }
 
 impl Response {
+  pub fn mark_partial(&mut self) {
+    self.partial = true;
+    self.extraction_partial = true;
+  }
   pub fn push(&mut self, mut diagnostic: Value) {
     if let Some(object) = diagnostic.as_object_mut() {
       for key in ["message", "file", "code"] {
@@ -16,7 +22,7 @@ impl Response {
           if let Some(text) = value.as_str() {
             if text.len() > crate::limits::MAX_EXCERPT_BYTES {
               *value = Value::String(excerpt(text).to_string());
-              self.partial = true;
+              self.mark_partial();
             }
           }
         }
@@ -25,12 +31,29 @@ impl Response {
     if self.diagnostics.len() < MAX_DIAGNOSTICS {
       self.diagnostics.push(diagnostic);
     } else {
-      self.partial = true;
+      self.mark_partial();
     }
+  }
+  pub fn push_skipped(&mut self, file: &str, reason: &str, category: &str) {
+    if self.skipped.len() >= MAX_DOCUMENTS {
+      self.mark_partial();
+      return;
+    }
+    let mut values = [file, reason, category];
+    for value in &mut values {
+      if value.len() > crate::limits::MAX_EXCERPT_BYTES {
+        *value = excerpt(value);
+        self.mark_partial();
+      }
+    }
+    self
+      .skipped
+      .push(json!({"file":values[0],"reason":values[1],"category":values[2]}));
+    self.partial = true;
   }
 
   pub fn incomplete(&mut self, source: &str, message: &str) {
-    self.partial = true;
+    self.mark_partial();
     self.push(diagnostic(source, message, None, None, false));
   }
 
@@ -42,6 +65,10 @@ impl Response {
     }
     let mut value =
       json!({"abi":2,"recognized":self.recognized,"format":format,"diagnostics":self.diagnostics});
+    value["extractionPartial"] = json!(self.extraction_partial);
+    if !self.skipped.is_empty() {
+      value["skipped"] = json!(self.skipped);
+    }
     if self.partial {
       value["partial"] = json!(true);
     }

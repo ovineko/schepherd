@@ -16,8 +16,105 @@ fn task(output: &str, text: &str, code: i32) -> Value {
   })
 }
 
+#[test]
+fn processor_selection_errors_keep_the_named_input_file() {
+  let file = "/work/input.toml";
+  let mut run = report(vec![], 2);
+  run["error"] = json!({
+    "kind": "usage",
+    "message": "unsupported input /work/input.toml: processor does not support toml",
+    "file": file,
+    "files": [file],
+  });
+  let out = parse("schepherd", &run.to_string(), 2);
+  assert_eq!(out["diagnostics"].as_array().unwrap().len(), 1);
+  assert_eq!(out["diagnostics"][0]["file"], file);
+}
 fn report(tasks: Vec<Value>, code: i32) -> Value {
   json!({"reportVersion":2,"workspace":"/work","mode":"per-file","exitCode":code,"tasks":tasks,"skipped":[]})
+}
+
+#[test]
+fn categorized_skips_are_visible_separate_and_incomplete_for_old_hosts() {
+  let mut run = report(vec![], 0);
+  run["reportVersion"] = json!(3);
+  run["skipped"] = json!([
+    {"file":"/work/a.json", "reason":"no match", "category":"unmatched"},
+    {"file":"/work/b.json", "reason":"outside", "category":"outside-workspace"},
+    {"file":"/work/c.toml", "reason":"no TOML processor", "category":"catalog-format-unavailable"},
+    {"file":"/work/d.json", "reason":"future reason", "category":"future-category"},
+  ]);
+  let out = parse("schepherd", &run.to_string(), 0);
+  assert_eq!(out["diagnostics"], json!([]));
+  assert_eq!(
+    out["skipped"],
+    json!([
+      {"file":"/work/c.toml", "reason":"no TOML processor", "category":"catalog-format-unavailable"},
+      {"file":"/work/d.json", "reason":"future reason", "category":"future-category"}
+    ])
+  );
+  assert_eq!(out["partial"], true);
+  assert_eq!(out["extractionPartial"], false);
+}
+
+#[test]
+fn report_v2_categoryless_skips_are_unknown_and_explicit_routine_skips_are_filtered() {
+  let mut run = report(vec![], 0);
+  run["skipped"] = json!([
+    {"file":"/work/legacy.json", "reason":"safe-catalog-unavailable: ambiguous match"},
+    {"file":"/work/routine.json", "reason":"unmatched", "category":"unmatched"}
+  ]);
+  let out = parse("schepherd", &run.to_string(), 0);
+  assert_eq!(out["recognized"], true);
+  assert_eq!(out["diagnostics"], json!([]));
+  assert_eq!(
+    out["skipped"],
+    json!([
+      {"file":"/work/legacy.json", "reason":"safe-catalog-unavailable: ambiguous match", "category":"unknown"}
+    ])
+  );
+  assert_eq!(out["partial"], true);
+  assert_eq!(out["extractionPartial"], false);
+}
+
+#[test]
+fn skipped_input_does_not_hide_real_extraction_truncation() {
+  let mut t = task("sourcemeta-json", r#"{"valid":true}"#, 0);
+  t["stdout"]["truncated"] = json!(true);
+  let mut run = report(vec![t], 0);
+  run["reportVersion"] = json!(3);
+  run["skipped"] = json!([
+    {"file":"/work/skip.json", "reason":"ambiguous", "category":"catalog-ambiguous"}
+  ]);
+  let out = parse("schepherd", &run.to_string(), 0);
+  assert_eq!(out["skipped"][0]["file"], "/work/skip.json");
+  assert_eq!(out["partial"], true);
+  assert_eq!(out["extractionPartial"], true);
+}
+
+#[test]
+fn report_v3_skip_without_category_is_incomplete() {
+  let mut run = report(vec![], 0);
+  run["reportVersion"] = json!(3);
+  run["skipped"] = json!([
+    {"file":"/work/missing-category.json", "reason":"unknown"}
+  ]);
+  let out = parse("schepherd", &run.to_string(), 0);
+  assert!(out["skipped"].is_null());
+  assert_eq!(out["partial"], true);
+  assert_eq!(out["extractionPartial"], true);
+  assert!(!out["diagnostics"].as_array().unwrap().is_empty());
+}
+
+#[test]
+fn parser_descriptor_advertises_input_skip_support_without_changing_function_abi() {
+  let descriptor: Value = serde_json::from_str(&describe_json()).unwrap();
+  assert_eq!(descriptor["schemaVersion"], 4);
+  assert_eq!(descriptor["abi"], 2);
+  assert!(descriptor["features"]
+    .as_array()
+    .unwrap()
+    .contains(&json!("input-skips")));
 }
 
 #[test]
@@ -339,8 +436,12 @@ fn malformed_known_result_does_not_become_clean_success() {
 #[test]
 fn descriptor_advertises_exact_dispatch_and_column_contract() {
   let desc: Value = serde_json::from_str(&describe_json()).unwrap();
-  assert_eq!(desc["schemaVersion"], 3);
+  assert_eq!(desc["schemaVersion"], 4);
   assert_eq!(desc["abi"], 2);
+  assert!(desc["features"]
+    .as_array()
+    .unwrap()
+    .contains(&json!("input-skips")));
   for name in ["schepherd", "sourcemeta", "check_jsonschema", "ajv"] {
     let d = desc["tools"]
       .as_array()

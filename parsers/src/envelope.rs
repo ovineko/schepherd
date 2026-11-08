@@ -8,9 +8,9 @@ pub fn parse(bytes: &[u8], process_exit: i32) -> Response {
   let Ok(report) = serde_json::from_slice::<Value>(bytes) else {
     return response;
   };
-  if report.get("reportVersion").and_then(Value::as_u64) != Some(2) {
+  let Some(version @ (2 | 3)) = report.get("reportVersion").and_then(Value::as_u64) else {
     return response;
-  }
+  };
   response.recognized = true;
   let Some(tasks) = report.get("tasks").and_then(Value::as_array) else {
     response.incomplete("schepherd", "Malformed Schepherd report: missing tasks");
@@ -30,6 +30,7 @@ pub fn parse(bytes: &[u8], process_exit: i32) -> Response {
   {
     response.incomplete("schepherd", "Malformed Schepherd report metadata");
   }
+  parse_skipped(&report, version, &mut response);
   if let Some(error) = report.get("error") {
     if let Some(message) = error.get("message").and_then(Value::as_str) {
       let code = error.get("kind").and_then(Value::as_str);
@@ -42,7 +43,7 @@ pub fn parse(bytes: &[u8], process_exit: i32) -> Response {
           response.push(diagnostic("schepherd", message, Some(path), code, true));
         }
         if files.len() > MAX_DOCUMENTS {
-          response.partial = true;
+          response.mark_partial();
         }
       } else {
         response.push(diagnostic("schepherd", message, None, code, true));
@@ -81,6 +82,46 @@ fn string_list(value: &Value) -> Vec<&str> {
     .as_array()
     .map(|items| items.iter().filter_map(Value::as_str).collect())
     .unwrap_or_default()
+}
+
+fn parse_skipped(report: &Value, version: u64, response: &mut Response) {
+  let Some(skipped) = report.get("skipped").and_then(Value::as_array) else {
+    return;
+  };
+  for entry in skipped.iter().take(MAX_DOCUMENTS) {
+    let category = match entry.get("category").and_then(Value::as_str) {
+      Some(category) => category,
+      None if version == 3 => {
+        response.incomplete(
+          "schepherd",
+          "Version-three skipped input is missing its category",
+        );
+        continue;
+      }
+      None => "unknown",
+    };
+    if category == "unmatched" || category == "outside-workspace" {
+      continue;
+    }
+    let (Some(file), Some(reason)) = (
+      entry.get("file").and_then(Value::as_str),
+      entry.get("reason").and_then(Value::as_str),
+    ) else {
+      response.incomplete("schepherd", "Malformed skipped input in Schepherd report");
+      continue;
+    };
+    if file.is_empty() || category.is_empty() {
+      response.incomplete("schepherd", "Malformed skipped input in Schepherd report");
+      continue;
+    }
+    response.push_skipped(file, reason, category);
+  }
+  if skipped.len() > MAX_DOCUMENTS {
+    response.incomplete(
+      "schepherd",
+      "Schepherd report exceeds the skipped input limit",
+    );
+  }
 }
 
 struct Stream<'a> {
@@ -221,12 +262,14 @@ fn parse_task(task: &Value, workspace: &str, response: &mut Response) {
     || (!parsed.recognized && failed)
     || (failed && parsed.diagnostics.is_empty())
     || !matches!(status, "ok" | "failed");
-  response.partial |= incomplete;
+  if incomplete {
+    response.mark_partial();
+  }
   for d in parsed.diagnostics {
     response.push(d);
   }
   if fallback {
-    response.partial = true;
+    response.mark_partial();
     let reason = if stdout.incomplete || stderr.incomplete {
       "incomplete or non-UTF-8 output"
     } else if attribution_missing {

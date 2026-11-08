@@ -80,6 +80,9 @@
           "pattern": "^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$",
           "type": "string"
         },
+        "metadata": {
+          "$ref": "#/$defs/metadata"
+        },
         "name": {
           "$ref": "#/$defs/singleLineText",
           "description": "Display name: at most 512 UTF-8 bytes, a single line with at least one visible character.",
@@ -106,6 +109,34 @@
       "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://[A-Za-z0-9._~!$&'()*+,;=%:\\[\\]-]+(?:[/?#][A-Za-z0-9._~:/?#\\[\\]@!$&'()*+,;=%-]*)?$",
       "type": "string"
     },
+    "metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/profile"
+          },
+          "maxItems": 16,
+          "type": "array"
+        },
+        "schemaDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceFormats": {
+          "items": {
+            "$ref": "#/$defs/sourceFormat"
+          },
+          "maxItems": 64,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaDigest",
+        "profiles",
+        "sourceFormats"
+      ],
+      "type": "object"
+    },
     "multiLineText": {
       "description": "Text without control characters other than line feed and tab; U+2028 and U+2029 are allowed as line breaks.",
       "pattern": "^[^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f]*$",
@@ -126,6 +157,68 @@
           }
         ]
       }
+    },
+    "profile": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "unsupported"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "supported"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "reason"
+              ]
+            }
+          }
+        }
+      ],
+      "properties": {
+        "processor": {
+          "$ref": "#/$defs/singleLineText"
+        },
+        "reason": {
+          "$ref": "#/$defs/multiLineText"
+        },
+        "result": {
+          "enum": [
+            "supported",
+            "unsupported"
+          ]
+        },
+        "settingsDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "tool": {
+          "$ref": "#/$defs/singleLineText"
+        }
+      },
+      "required": [
+        "processor",
+        "tool",
+        "settingsDigest",
+        "result"
+      ],
+      "type": "object"
     },
     "provenance": {
       "additionalProperties": false,
@@ -165,6 +258,56 @@
       "pattern": "^[^\\x00-\\x1f\\x7f-\\x9f\u2028\u2029]*$",
       "type": "string"
     },
+    "sourceFormat": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "extensions": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "filenames": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "properties": {
+        "extensions": {
+          "items": {
+            "$ref": "#/$defs/singleLineText",
+            "pattern": "^\\.[^/\\\\*?\\[\\]{}!]+$"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "filenames": {
+          "items": {
+            "$ref": "#/$defs/singleLineText",
+            "not": {
+              "pattern": "[/\\\\*?\\[\\]{}!]"
+            }
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "format": {
+          "$ref": "#/$defs/singleLineText"
+        }
+      },
+      "required": [
+        "format",
+        "extensions",
+        "filenames"
+      ],
+      "type": "object"
+    },
     "uri": {
       "description": "An absolute URI of at most 4096 characters without user information.",
       "format": "uri",
@@ -180,11 +323,58 @@
   "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/catalog.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "The catalog.json payload of the metadata manifest of a Schepherd catalog index. Constraints that JSON Schema cannot express are enforced by the client and listed in docs/oci-format.md: entries sorted by id in strictly ascending byte order, equal artifact digests with equal sizes, distinct artifact descriptors equal to the schema children of the catalog index, dependencies sorted by source, valid fileMatch glob syntax, a real calendar date in the revision, text limits counted in UTF-8 bytes, no Unicode bidirectional controls in text, the configurable entry and manifest size limits, and formatVersion written as the literal 2.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "formatVersion": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "schemas": {
+            "items": {
+              "not": {
+                "required": [
+                  "metadata"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "formatVersion": {
+            "const": 3
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "schemas": {
+            "items": {
+              "required": [
+                "metadata"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "description": "Catalog format v2 remains supported; v3 adds per-entry validator compatibility profiles and source document format metadata. V3 is read-only until the reader release is published.",
   "properties": {
     "formatVersion": {
-      "const": 2,
-      "description": "Catalog format version. Clients refuse every other value before reading anything else."
+      "description": "Catalog format version. Readers support v2 and v3; writers remain v2 until v3 readers are released.",
+      "enum": [
+        2,
+        3
+      ]
     },
     "revision": {
       "description": "Catalog revision YYYYMMDD.HHMM: the UTC minute of the publication, with a date from 2000 to 9999 and a time from 00:00 to 23:59.",
@@ -204,6 +394,6 @@
     "revision",
     "schemas"
   ],
-  "title": "Schepherd catalog, formatVersion 2",
+  "title": "Schepherd catalog, formatVersion 2 and 3",
   "type": "object"
 }

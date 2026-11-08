@@ -34,7 +34,7 @@ var (
 
 	pathPlaceholders = []string{interp.Workspace, interp.Cache}
 	envPlaceholders  = []string{interp.Schema, interp.SchemaID, interp.SchemaRef, interp.File, interp.Workspace, interp.Cache}
-	argPlaceholders  = append(slices.Clone(envPlaceholders), interp.Files)
+	argPlaceholders  = append(slices.Clone(envPlaceholders), interp.Files, interp.Format)
 
 	schemeRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9+.-]+:`)
 	idRE     = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9._-]{0,126}[a-z0-9])?$`)
@@ -465,32 +465,29 @@ func (d *decoder) runner(root node, doc map[string]any, r *runnerLayer) {
 }
 
 func (d *decoder) args(parent node, m map[string]any) opt[[]string] {
-	list, nodes := d.stringList(parent, m, "args")
+	return d.templatedArgs(parent, m, "args")
+}
+
+func (d *decoder) templatedArgs(parent node, m map[string]any, key string) opt[[]string] {
+	list, nodes := d.stringList(parent, m, key)
 	if !list.set {
 		return list
 	}
-
 	ok := true
-
 	for i, arg := range list.val {
 		tpl, valid := d.template(nodes[i], arg, argPlaceholders)
 		if !valid {
 			ok = false
-
 			continue
 		}
-
 		if tpl.Uses(interp.Files) && !tpl.IsFilesList() {
 			d.failf(nodes[i], "{files...} must be a whole argument")
-
 			ok = false
 		}
 	}
-
 	if !ok {
 		return opt[[]string]{}
 	}
-
 	return list
 }
 

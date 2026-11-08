@@ -98,7 +98,7 @@ func TestUnsupportedCatalogFormatVersionStopsEveryCommand(t *testing.T) {
 
 	reg := newTestRegistry(t)
 	repo := reg.repo("org/schemas", "", "")
-	future := reg.publishRawCatalog(t, "org/schemas", []byte(`{"formatVersion":3,"revision":"20260924.1","schemas":{"alpha":{"layout":"new"}}}`))
+	future := reg.publishRawCatalog(t, "org/schemas", []byte(`{"formatVersion":4,"revision":"20260924.1","schemas":{"alpha":{"layout":"new"}}}`))
 	current := reg.publishCatalog(t, "org/schemas")
 
 	marker := filepath.Join(t.TempDir(), "consumer-ran")
@@ -130,7 +130,7 @@ func TestUnsupportedCatalogFormatVersionStopsEveryCommand(t *testing.T) {
 			args := append([]string{"--config", cfg, "--cache-dir", t.TempDir(), "--repository", repo, "--catalog", future}, tc.command...)
 
 			stdout, stderr, code := run(t, args...)
-			if code != 2 || stdout != "" || !strings.Contains(stderr, "unsupported catalog formatVersion 3") {
+			if code != 2 || stdout != "" || !strings.Contains(stderr, "unsupported catalog formatVersion 4") {
 				t.Errorf("exit %d, stdout %q, stderr %q; want exit 2 for the unsupported format", code, stdout, stderr)
 			}
 

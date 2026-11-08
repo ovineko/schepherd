@@ -34,7 +34,7 @@ func (a *app) newVersionCmd() *cobra.Command {
 
 			return a.writeJSON(versionOutput{
 				Info:                  info,
-				CatalogFormatVersions: []int{catalog.FormatVersion},
+				CatalogFormatVersions: []int{catalog.FormatVersion, catalog.MetadataFormatVersion},
 				ConfigFormatVersions:  []int{configFormatVersion},
 			})
 		},

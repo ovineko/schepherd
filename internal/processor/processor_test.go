@@ -102,3 +102,32 @@ func TestFormatsRequireExplicitConversion(t *testing.T) {
 		t.Fatal("custom allowlist rejects JSON")
 	}
 }
+
+func TestFormatForUsesMetadataBeforeNamesAndRejectsConflicts(t *testing.T) {
+	if got := FormatFor("/work/tsconfig.json", []runner.DocumentFormat{{Format: "json", Filenames: []string{"tsconfig.json"}}}); got != "json" {
+		t.Fatalf("metadata filename format = %q, want json", got)
+	}
+	if got := FormatFor("/work/.prettierrc", []runner.DocumentFormat{{Format: "jsonc", Filenames: []string{".prettierrc"}}}); got != "jsonc" {
+		t.Fatalf("extensionless metadata format = %q, want jsonc", got)
+	}
+	if got := FormatFor("/work/policy", []runner.DocumentFormat{{Format: "jsonc", Filenames: []string{"policy"}}, {Format: "yaml", Filenames: []string{"policy"}}}); got != "" {
+		t.Fatalf("ambiguous filename metadata selected %q", got)
+	}
+	if got := FormatFor("/work/no-format", nil); got != "" {
+		t.Fatalf("unknown extensionless path inferred %q", got)
+	}
+	if got := Format("/work/tsconfig.base.json"); got != "jsonc" {
+		t.Fatalf("known JSONC filename = %q, want jsonc", got)
+	}
+}
+
+func TestExplicitConverterOverridesNativeFormat(t *testing.T) {
+	native := Definition{Type: "check-jsonschema"}
+	if ok, convert := native.Accepts("tsconfig.json"); !ok || convert {
+		t.Fatalf("native JSONC support = %v, conversion = %v", ok, convert)
+	}
+	explicit := Definition{Type: "check-jsonschema", Convert: "converter", ConvertArgs: []string{"{file}"}, Formats: []string{"jsonc"}}
+	if ok, convert := explicit.Accepts("tsconfig.json"); !ok || !convert {
+		t.Fatalf("explicit JSONC conversion = %v, conversion = %v", ok, convert)
+	}
+}

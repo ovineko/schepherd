@@ -103,11 +103,12 @@ type runnerLayer struct {
 }
 
 type processorLayer struct {
-	runner   runnerLayer
-	typeName opt[string]
-	output   opt[string]
-	formats  opt[[]string]
-	convert  opt[string]
+	runner      runnerLayer
+	typeName    opt[string]
+	output      opt[string]
+	formats     opt[[]string]
+	convert     opt[string]
+	convertArgs opt[[]string]
 }
 
 func newLayer(file string) *layer {
@@ -169,6 +170,7 @@ func (l *layer) apply(src *layer) {
 		dst.output.override(p.output)
 		dst.formats.override(p.formats)
 		dst.convert.override(p.convert)
+		dst.convertArgs.override(p.convertArgs)
 		mergeRunner(&dst.runner, &p.runner)
 	}
 	mergeRunner(&l.runner, &src.runner)

@@ -268,3 +268,32 @@ func TestNextStateRecordsRevisions(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestCandidateUsesPreparedCatalogFormat(t *testing.T) {
+	for _, tc := range []struct {
+		name, prepared string
+		want           int
+	}{
+		{name: "default v2", want: 2},
+		{name: "explicit v3", prepared: "3", want: 3},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			format := 0
+			if tc.prepared != "" {
+				format = 3
+			}
+			plan := &Plan{set: &prepare.Set{Document: prepare.Document{CatalogFormat: format}}}
+			if got := plan.candidate().FormatVersion; got != tc.want {
+				t.Fatalf("candidate formatVersion = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestV3PlanRequiresMetadataForEveryCatalogEntry(t *testing.T) {
+	set := loadSet(t, writeSet(t, baseSchemas()))
+	set.Document.CatalogFormat = 3
+	if _, err := NewPlan(set, nil); err == nil || !strings.Contains(err.Error(), "has no compatibility metadata") {
+		t.Fatalf("NewPlan() error = %v, want missing compatibility metadata", err)
+	}
+}

@@ -81,6 +81,30 @@
       ],
       "type": "object"
     },
+    "skippedV3": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "description": "Stable classification; current values are unmatched, outside-workspace, catalog-ambiguous, catalog-format-unavailable and unsupported-processor. Future values are preserved.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "file": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "file",
+        "reason",
+        "category"
+      ],
+      "type": "object"
+    },
     "stream": {
       "additionalProperties": false,
       "oneOf": [
@@ -196,7 +220,39 @@
   "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/report.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "The reportVersion 2 document emitted by schepherd run --json. Consumer output is retained as bounded, lossless prefixes; paths identify actual invocations, not inferred diagnostic locations.",
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "skipped": {
+            "items": {
+              "$ref": "#/$defs/skipped"
+            }
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "reportVersion": {
+            "const": 3
+          }
+        },
+        "required": [
+          "reportVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "skipped": {
+            "items": {
+              "$ref": "#/$defs/skippedV3"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "description": "Attributed reportVersion 2 and 3 documents emitted by schepherd run --json. Version 3 categorizes skipped inputs; version 2 retains its original closed shape. Consumer output is retained as bounded, lossless prefixes; paths identify actual invocations, not inferred diagnostic locations.",
   "properties": {
     "error": {
       "$ref": "#/$defs/error"
@@ -209,12 +265,12 @@
       "$ref": "#/$defs/mode"
     },
     "reportVersion": {
-      "const": 2
+      "enum": [
+        2,
+        3
+      ]
     },
     "skipped": {
-      "items": {
-        "$ref": "#/$defs/skipped"
-      },
       "type": "array"
     },
     "tasks": {

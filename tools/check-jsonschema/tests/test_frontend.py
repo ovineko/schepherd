@@ -47,6 +47,11 @@ class FrontendTests(unittest.TestCase):
     frontend = pathlib.Path(schepherd_check_jsonschema.__file__)
     expected = {
       "frontend": {"sha256": hashlib.sha256(frontend.read_bytes()).hexdigest()},
+      "dependency_lock": {
+        "sha256": hashlib.sha256(
+          (pathlib.Path(sys.prefix).parent / "uv.lock").read_bytes()
+        ).hexdigest()
+      },
       "runtime": {
         "name": "python",
         "version": sys.version,
@@ -69,6 +74,37 @@ class FrontendTests(unittest.TestCase):
     }
     self.assertEqual(json.loads(stdout), expected)
     self.assertNotIn(str(frontend.parent), stdout)
+
+  def test_identity_tracks_dependency_lock_without_prefix_paths(self) -> None:
+    prefixes = [self.root / "first" / "venv", self.root / "relocated" / "venv"]
+    for prefix in prefixes:
+      prefix.mkdir(parents=True)
+      (prefix.parent / "uv.lock").write_text(
+        "locked transitive dependencies\n",
+        encoding="utf-8",
+      )
+
+    identities = []
+    for prefix in prefixes:
+      with mock.patch.object(sys, "prefix", str(prefix)):
+        code, stdout, stderr = self.invoke("identity")
+      self.assertEqual((code, stderr), (0, ""))
+      self.assertNotIn(str(prefix.parent), stdout)
+      identities.append(json.loads(stdout))
+    self.assertEqual(identities[0], identities[1])
+
+    (prefixes[1].parent / "uv.lock").write_text(
+      "changed transitive dependency\n",
+      encoding="utf-8",
+    )
+    with mock.patch.object(sys, "prefix", str(prefixes[1])):
+      code, stdout, stderr = self.invoke("identity")
+    self.assertEqual((code, stderr), (0, ""))
+    changed = json.loads(stdout)
+    self.assertNotEqual(changed["dependency_lock"], identities[1]["dependency_lock"])
+    del changed["dependency_lock"]
+    del identities[1]["dependency_lock"]
+    self.assertEqual(changed, identities[1])
 
   def test_programming_errors_are_not_misreported_as_invalid_schemas(self) -> None:
     with (
@@ -111,6 +147,42 @@ class FrontendTests(unittest.TestCase):
     self.assertEqual(error["path"], "$.name")
     self.assertNotIn("line", error)
     self.assertNotIn("column", error)
+
+  def test_draft07_dependency_arrays_are_not_schema_resources(self) -> None:
+    schema = self.write(
+      "schema.json",
+      json.dumps(
+        {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "$ref": "#/definitions/entity-dependencies",
+          "definitions": {
+            "entity-dependencies": {
+              "dependencies": {
+                "$ref": {"required": []},
+                "if": ["then"],
+                "then": ["if"],
+                "else": ["if", "then"],
+              }
+            }
+          },
+        }
+      ),
+    )
+    code, stdout, stderr = self.invoke("probe", schema)
+    self.assertEqual((code, json.loads(stdout), stderr), (0, {"supported": True}, ""))
+
+  def test_builtin_metaschema_references_resolve_without_closure_reentry(self) -> None:
+    schema = self.write(
+      "schema.json",
+      json.dumps(
+        {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "http://json-schema.org/draft-04/schema#",
+        }
+      ),
+    )
+    code, stdout, stderr = self.invoke("probe", schema)
+    self.assertEqual((code, json.loads(stdout), stderr), (0, {"supported": True}, ""))
 
   def test_json_yaml_toml_json5_jsonc(self) -> None:
     schema = self.write(
@@ -179,6 +251,8 @@ class FrontendTests(unittest.TestCase):
       "{",
       "null",
       '"schema"',
+      "[]",
+      "12",
       '{"type":12}',
       '{"$schema":12}',
       '{"$schema":"relative"}',
@@ -195,6 +269,18 @@ class FrontendTests(unittest.TestCase):
         self.assertEqual(code, 4)
         self.assertEqual(stdout, "")
         self.assertTrue(stderr)
+
+  def test_explicit_jsonc_format_accepts_extensionless_inputs(self) -> None:
+    schema = self.write("schema.json", '{"type":"object","required":["port"]}')
+    for name in (".cspell.json", "cspell.config"):
+      with self.subTest(name=name):
+        instance = self.write(name, '{// comment\n"port": 12,}')
+        code, stdout, stderr = self.invoke("validate", schema, instance, "--format", "jsonc")
+        self.assertEqual((code, stderr), (0, ""))
+        self.assertEqual(
+          json.loads(stdout),
+          {"status": "ok", "errors": [], "parse_errors": []},
+        )
 
   def test_external_references_never_retrieve_network_or_local_files(self) -> None:
     sibling = self.write("private.json", '{"type":"string"}')
@@ -225,7 +311,7 @@ class FrontendTests(unittest.TestCase):
     for content in (
       '{"$schema":"https://schemas.example/custom","type":"object"}',
       '{"$vocabulary":{"https://schemas.example/custom":true}}',
-      '{"$defs":{"other":{"$schema":"https://schemas.example/custom"}}}',
+      '{"$defs":{"other":{"$schema":"https://json-schema.org/draft/2020-12/schema","$vocabulary":{"https://schemas.example/custom":true}}}}',
     ):
       with self.subTest(content=content):
         schema = self.write("schema.json", content)
@@ -284,7 +370,7 @@ class FrontendTests(unittest.TestCase):
   def test_annotations_that_look_like_schemas_are_not_compiled(self) -> None:
     schema = self.write(
       "schema.json",
-      '{"default":{"$ref":"https://schemas.example/nope","pattern":"["},"type":"integer"}',
+      '{"default":{"$schema":"https://schemas.example/custom","$ref":"https://schemas.example/nope","pattern":"["},"type":"integer"}',
     )
     code, stdout, stderr = self.invoke("probe", schema)
     self.assertEqual((code, json.loads(stdout), stderr), (0, {"supported": True}, ""))
@@ -344,6 +430,47 @@ class FrontendTests(unittest.TestCase):
     code, stdout, stderr = self.invoke("validate", schema, instance)
     self.assertEqual((code, stderr), (1, ""))
     self.assertEqual(json.loads(stdout)["errors"][0]["path"], "$")
+
+  def test_nested_resource_uses_its_declared_dialect(self) -> None:
+    schema = self.write(
+      "schema.json",
+      json.dumps(
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$defs": {
+            "legacy": {
+              "$id": "legacy.json",
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "type": "integer",
+              "minimum": 10,
+              "exclusiveMinimum": True,
+            }
+          },
+        }
+      ),
+    )
+    code, stdout, stderr = self.invoke("probe", schema)
+    self.assertEqual((code, json.loads(stdout), stderr), (0, {"supported": True}, ""))
+
+  def test_nested_resource_invalid_under_its_declared_dialect_is_rejected(self) -> None:
+    schema = self.write(
+      "schema.json",
+      json.dumps(
+        {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "$defs": {
+            "legacy": {
+              "$id": "legacy.json",
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "exclusiveMinimum": 1,
+            }
+          },
+        }
+      ),
+    )
+    code, stdout, stderr = self.invoke("probe", schema)
+    self.assertEqual((code, stdout), (4, ""))
+    self.assertIn("SchemaError", stderr)
 
   def test_similar_unknown_dialect_uris_are_not_aliases(self) -> None:
     for dialect in (

@@ -75,7 +75,7 @@ func (s Spec) Uses(name string) bool {
 }
 
 var (
-	anywhere   = []string{interp.Schema, interp.SchemaID, interp.SchemaRef, interp.File, interp.Workspace, interp.Cache}
+	anywhere   = []string{interp.Schema, interp.SchemaID, interp.SchemaRef, interp.File, interp.Format, interp.Workspace, interp.Cache}
 	fixedPaths = []string{interp.Workspace, interp.Cache}
 )
 

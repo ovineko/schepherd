@@ -76,14 +76,26 @@ var catalogShape = func() *shape {
 		"sourceDigest": text(),
 	}, "source")
 
+	profile := object(map[string]*shape{
+		"processor": text(), "reason": text(), "result": text(), "settingsDigest": text(), "tool": text(),
+	}, "processor", "result", "settingsDigest", "tool")
+
+	sourceFormat := object(map[string]*shape{
+		"extensions": list(text(), fixed(maxSourceFormatMatches)),
+		"filenames":  list(text(), fixed(maxSourceFormatMatches)),
+		"format":     text(),
+	}, "extensions", "filenames", "format")
+
+	metadata := object(map[string]*shape{
+		"profiles":      list(profile, fixed(maxProfilesPerEntry)),
+		"schemaDigest":  text(),
+		"sourceFormats": list(sourceFormat, fixed(maxSourceFormats)),
+	}, "profiles", "schemaDigest", "sourceFormats")
+
 	entry := object(map[string]*shape{
-		"artifact":    descriptor,
-		"description": text(),
-		"dialect":     text(),
-		"fileMatch":   list(text(), fixed(maxPatternsPerEntry)),
-		"id":          text(),
-		"name":        text(),
-		"provenance":  provenance,
+		"artifact": descriptor, "description": text(), "dialect": text(),
+		"fileMatch": list(text(), fixed(maxPatternsPerEntry)), "id": text(),
+		"metadata": metadata, "name": text(), "provenance": provenance,
 	}, "artifact", "id", "name")
 
 	schemas := list(entry, func(l Limits) int { return l.MaxEntries })

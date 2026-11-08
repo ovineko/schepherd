@@ -55,8 +55,9 @@ responses and timeouts fail the run. Once document validation starts, its result
 final: an invalid document is not retried with another validator.
 
 `runner.unsupported` defaults to `"error"` (usage error, exit 2). `"skip"` records each
-unsupported file with its reason in the machine report and prints the skip in raw mode.
-It does not hide invalid documents, ambiguous mappings or infrastructure errors.
+unsupported file with its reason and `unsupported-processor` category in the version 3
+machine report; raw mode prints the skip. It does not hide invalid documents, ambiguous
+mappings or infrastructure errors.
 
 ## Fields
 
@@ -70,7 +71,8 @@ It does not hide invalid documents, ambiguous mappings or infrastructure errors.
 | `output`        | `sourcemeta-json`, `check-jsonschema-json`, `ajv-json` or `raw`; defaults to the typed JSON format, `raw` for custom. |
 | `args`          | Required for `custom`; arbitrary runner argument templates. Typed presets reject overrides.                           |
 | `mode`          | Custom runner mode: `batch`, `per-file`, `stdin`; default `per-file`. Typed presets reject overrides.                 |
-| `convert`       | Optional explicitly bound yq executable for the formats listed in `formats`.                                          |
+| `convert`       | Optional explicitly configured converter executable for source formats listed in `formats`.                           |
+| `convert_args`  | Required argv templates when `convert` is set; passed literally without a shell.                                      |
 | `formats`       | With `convert`, source formats to convert. For custom without conversion, an optional input allowlist.                |
 
 `runner.timeout`, `jobs`, `fail_fast` and `max_args_bytes` remain common execution
@@ -116,36 +118,48 @@ Python has no portable serialized validator here: only its capability check is c
 the document process still constructs a validator. No pickle or input-generated code
 is loaded as a substitute.
 
+Catalog compatibility profiles require input-independent processor settings. The publisher
+rejects processor environment templates containing `{file}`, `{schema}`, `{schema-id}` or
+`{schema-ref}`. At runtime those processors bypass recorded profiles and probe each input
+separately, so one file's compatibility cannot determine another's.
+
 ## Prepared compiler artifacts
 
-`materialize --compile` prepares the configured processors while the source catalog
+`materialize --compile` strictly prepares the configured processors while the source catalog
 is being installed. `--compile-schema` can restrict this to reviewed catalog IDs.
-The stored recipe includes schema SHA-256, executable SHA-256, frontend/runtime
-identity, explicit processor settings, the compiler recipe version and platform.
-Changing any of them creates a new entry. Artifact size and SHA-256 are verified
-before use; writes are atomic and locked across processes. Known incompatibilities
-are cached, but a compiler crash, timeout or unavailable executable never becomes one.
-Publication rechecks a recipe after acquiring its lock and serializes shared artifact
-bytes by their digest before installing metadata. Waiting writers keep the first
-verified result; cancellation never leaves a partial compilation record.
-Sourcemeta's generated file URI for an anonymous schema snapshot is replaced with
-a content-derived `urn:schepherd:schema:<sha256>` diagnostic base. This preserves
-instance locations and messages without embedding temporary or installation paths
-in a relocated compiled artifact. Explicit schema identifiers remain unchanged.
+`materialize --compile-persistable` prepares every compilation whose schema and processor
+settings can safely be persisted; invocation-local schemas are reported in the JSON summary
+with per-reason counts and are not treated as missing artifacts. The stored recipe includes
+schema SHA-256, executable SHA-256, frontend/runtime identity, explicit processor settings,
+the compiler recipe version and platform. Changing any of them creates a new entry. Artifact
+size and SHA-256 are verified before use; writes are atomic and locked across processes.
+Known incompatibilities are cached, but a compiler crash, timeout or unavailable executable
+never becomes one. Sourcemeta's Draft 7-or-earlier top-level `$ref` sibling incompatibility is
+recognized only by its exact native compiler diagnostic; other exit-1 failures stay fatal.
+An unresolved internal reference is a negative capability, not a successful validation:
+the catalog entry stays visible, and a `run` for it fails with each selected processor's
+reason if none supports it.
+Publication rechecks a recipe after acquiring its lock and serializes shared artifact bytes by
+their digest before installing metadata. Waiting writers keep the first verified result;
+cancellation never leaves a partial compilation record.
 
-Run against a writable cache can compile an absent entry locally without network.
-A complete cache can be relocated and read-only; `materialize --offline --compile`
-only verifies it. Local schemas use persistent compilation only when an explicit
-cache directory is configured and no external reference can introduce an unhashed
-dependency. A custom `$schema`, including one nested in another schema, also keeps
-compilation invocation-local: its dialect or vocabulary can change independently
-of the root document. Only the built-in standard dialects need no dependency hash.
-This check applies to catalog schemas too. Original schema files stay in place.
-Every document is still validated on every run; these are compilation caches,
-never cached validation results.
-Catalog preparation refuses schemas whose dependencies cannot be closed safely;
-it never counts an invocation-local temporary template as a prepared artifact.
-Use `--compile-schema` to prepare the reviewed safe catalog subset. A literal
+Sourcemeta's generated file URI for an anonymous schema snapshot is replaced with a
+content-derived `urn:schepherd:schema:<sha256>` diagnostic base. This preserves instance
+locations and messages without embedding temporary or installation paths in a relocated
+compiled artifact. Explicit schema identifiers remain unchanged.
+
+Run against a writable cache can compile an absent persistable catalog entry locally without
+network. A complete cache can be relocated and read-only; `materialize --offline --compile`
+and `materialize --offline --compile-persistable` only verify persisted entries. Local schemas
+always compile in invocation-local temporary storage so edits remain visible; offline local
+validation still invokes the compiler but never reads or writes a persistent compiler cache.
+Catalog schemas with external references or a custom `$schema`, including one nested in another
+schema, remain invocation-local until their dependency graph is part of the recipe. Original
+schema files stay in place. Every document is still validated on every run; these are compilation
+caches, never cached validation results.
+
+A strict catalog preparation with `--compile` refuses invocation-local schemas; use
+`--compile-persistable` to prepare the safe subset and review the reported reasons. A literal
 property named `$schema` remains ordinary instance data, not a dialect declaration.
 
 Probes and converters have a 30-second timeout. Probe/conversion output is bounded
@@ -158,24 +172,20 @@ validator with project-specific flags; its compatibility and output declaration 
 explicitly the author's responsibility. The legacy `runner.command` path remains
 unchanged and is reported as `custom`/`raw`; executable names are not guessed.
 
-## Explicit yq conversion
+## Explicit conversion
 
-There is no automatic conversion. To opt in, bind the exact yq executable and list the
-source formats:
+There is no automatic conversion. Native formats are preferred unless conversion is explicitly configured for a listed source format. Configure the exact converter executable and argument vector; the example uses yq:
 
 ```toml
 [processors.native]
 type = "sourcemeta"
 command = "${JSONSCHEMA_BIN}"
 convert = "${YQ_BIN}"
+convert_args = ["-p={format}", "-o=json", "-I=0", "{file}"]
 formats = ["toml"]
 ```
 
-Supported format names are `json`, `yaml`, `toml`, `json5`, `jsonc`. yq is invoked as
-`yq -p=<format> -o=json -I=0 <original-input>`. That executable must actually support
-the requested source format; a conversion failure is not permission to skip validation.
-The output must be exactly one strict UTF-8 JSON document, without duplicate keys.
-Multiple documents are rejected rather than silently selecting one.
+`convert_args` is passed literally without a shell and supports `{file}` and `{format}` templates. The converter must actually support each requested source format; a conversion failure is not permission to skip validation. The output must be exactly one strict UTF-8 JSON document, without duplicate keys. Multiple documents are rejected rather than silently selecting one.
 
 Converted inputs are private temporary files, removed after the run. Machine tasks retain
 original input names in `files` and the actual validator inputs in `paths`. Diagnostics
@@ -186,5 +196,4 @@ including during compilation and after conversion. Argument templates still name
 the actual JSON input the validator must read. This keeps input-dependent compiler
 settings identical to the validation settings without losing source attribution.
 
-Unknown or extensionless inputs are unsupported for typed processors rather than guessed
-as JSON. Use a custom processor if its own parser intentionally owns format detection.
+Catalog `sourceFormats` metadata can identify exact filenames, including extensionless ones; known JSONC filenames and recognized extensions are also detected conservatively. Conflicting metadata and unknown extensionless inputs remain unsupported instead of being guessed as JSON. Use a custom processor if its own parser intentionally owns format detection.

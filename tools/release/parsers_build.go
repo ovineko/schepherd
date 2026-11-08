@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
@@ -95,14 +97,24 @@ func parserBuildEnvironment(environ []string) []string {
 	return result
 }
 
-func checkParserModule(ctx context.Context, module []byte, version string, environ []string) error {
+func checkParserModule(ctx context.Context, module []byte, version string, environ []string) (parserCapabilities, error) {
 	cmd := parserCommand(ctx, "", environ, "node", "--input-type=module", "-e", parserSmokeScript, version)
 	cmd.Stdin = bytes.NewReader(module)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fault.New(fault.Integrity, "parser ABI smoke failed: %v: %s", err, strings.TrimSpace(string(output)))
+		return parserCapabilities{}, fault.New(fault.Integrity, "parser ABI smoke failed: %v: %s", err, strings.TrimSpace(string(output)))
 	}
-	return nil
+	var capabilities parserCapabilities
+	if err := json.Unmarshal(output, &capabilities); err != nil {
+		return parserCapabilities{}, fault.Wrap(fault.Integrity, err, "decode WASM parser capabilities")
+	}
+	if capabilities.SchemaVersion < 1 || capabilities.ABI != 2 || capabilities.Module != "schepherd-parsers" || capabilities.Version != version {
+		return parserCapabilities{}, fault.New(fault.Integrity, "WASM parser capabilities do not match module ABI or version")
+	}
+	if slices.Contains(capabilities.Features, "input-skips") {
+		return capabilities, nil
+	}
+	return parserCapabilities{}, fault.New(fault.Integrity, "WASM parser capabilities omit input-skips")
 }
 
 const parserSmokeScript = `
@@ -133,11 +145,12 @@ function parse(tool, stdout, exitCode) {
   finally { for (const [pointer, length] of allocations) e.dealloc(pointer, length); e.reset(); }
 }
 const capabilities = result(e.describe());
-assert.equal(capabilities.schemaVersion, 3);
+assert.ok(Number.isSafeInteger(capabilities.schemaVersion) && capabilities.schemaVersion > 0);
 assert.equal(capabilities.abi, 2);
 assert.equal(capabilities.module, 'schepherd-parsers');
 assert.equal(capabilities.version, process.argv[1]);
 assert.deepEqual(capabilities.tools.map(t => t.name).sort(), ['ajv','check_jsonschema','schepherd','sourcemeta']);
+assert.ok(capabilities.features.includes('input-skips'));
 const errors = JSON.stringify([{instancePath:'/name',schemaPath:'#/properties/name/type',keyword:'type',params:{type:'string'},message:'must be string'}]);
 const direct = parse('ajv', errors, 1);
 assert.equal(direct.abi, 2);
@@ -149,5 +162,10 @@ const report = {reportVersion:2,workspace:'/workspace',mode:'per-file',exitCode:
 const attributed = parse('schepherd', JSON.stringify(report), 1);
 assert.equal(attributed.recognized, true);
 assert.ok(attributed.diagnostics.some(d => d.file === file));
+const skipped = parse('schepherd', JSON.stringify({...report, reportVersion:3, exitCode:0, tasks:[], skipped:[{file:'/workspace/skip.json',reason:'ambiguous',category:'catalog-ambiguous'}]}), 0);
+assert.deepEqual(skipped.skipped, [{file:'/workspace/skip.json',reason:'ambiguous',category:'catalog-ambiguous'}]);
+assert.equal(skipped.partial, true);
+assert.equal(skipped.extractionPartial, false);
 assert.equal(parse('schepherd', '{}', 0).recognized, false);
+process.stdout.write(JSON.stringify(capabilities));
 `

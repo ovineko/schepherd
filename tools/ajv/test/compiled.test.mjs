@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
-import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -36,7 +35,11 @@ async function fixture(run) {
 }
 
 function invoke(...args) {
-  const result = spawnSync(process.execPath, [entrypoint, ...args], {
+  return invokeAt(entrypoint, ...args);
+}
+
+function invokeAt(script, ...args) {
+  const result = spawnSync(process.execPath, [script, ...args], {
     encoding: "utf8",
     env: { ...process.env, HTTP_PROXY: "http://127.0.0.1:9", HTTPS_PROXY: "http://127.0.0.1:9" },
     timeout: 10_000,
@@ -243,25 +246,52 @@ test("schema and document strings are data rather than executable artifact sourc
   });
 });
 
-test("identity contains exact dependencies, runtime and frontend digest without paths", async () => {
-  const result = invoke("identity");
-  assert.equal(result.code, 0);
-  assert.deepEqual(result, invoke("identity"));
-  assert.deepEqual(result.report, {
-    dependencies: Object.fromEntries(
-      ["ajv", "ajv-draft-04", "ajv-formats"].map((name) => [
-        name,
-        frontendRequire(`${name}/package.json`).version,
-      ]),
-    ),
-    frontend: {
-      sha256: createHash("sha256")
-        .update(await readFile(entrypoint))
-        .digest("hex"),
-    },
-    runtime: { abi: process.versions.modules, name: "node", version: process.version },
+test("identity follows transitive locks but not installation paths", async () => {
+  await fixture(async ({ root }) => {
+    const source = await readFile(entrypoint);
+    const lock = await readFile(new URL("../../../pnpm-lock.yaml", import.meta.url), "utf8");
+    const roots = Object.keys(frontendRequire("./package.json").dependencies);
+    const entries = [];
+    for (const name of ["first location", "second[location]"]) {
+      const directory = join(root, name);
+      const modules = join(directory, "node_modules");
+      await mkdir(modules, { recursive: true });
+      for (const dependency of roots) {
+        await symlink(
+          dirname(frontendRequire.resolve(`${dependency}/package.json`)),
+          join(modules, dependency),
+          "junction",
+        );
+      }
+      const script = join(directory, "frontend.mjs");
+      await writeFile(script, source);
+      await writeFile(join(directory, "pnpm-lock.yaml"), lock);
+      entries.push({ directory, script });
+    }
+    const first = invokeAt(entries[0].script, "identity");
+    const relocated = invokeAt(entries[1].script, "identity");
+    assert.equal(first.code, 0);
+    assert.deepEqual(first, relocated);
+    assert.ok(!JSON.stringify(first.report).includes(root));
+
+    const dependency = Object.keys(frontendRequire("ajv/package.json").dependencies).find(
+      (name) => !roots.includes(name),
+    );
+    const requireFromAjv = createRequire(frontendRequire.resolve("ajv/package.json"));
+    const version = requireFromAjv(`${dependency}/package.json`).version;
+    const updatedLock = lock.replaceAll(
+      `${dependency}@${version}`,
+      `${dependency}@${version}-identity-test`,
+    );
+    assert.notEqual(updatedLock, lock);
+    await writeFile(join(entries[1].directory, "pnpm-lock.yaml"), updatedLock);
+    const changed = invokeAt(entries[1].script, "identity");
+    assert.equal(changed.code, 0);
+    const { dependencyLocks: before, ...beforeTool } = first.report;
+    const { dependencyLocks: after, ...afterTool } = changed.report;
+    assert.deepEqual(beforeTool, afterTool);
+    assert.notDeepEqual(before, after);
   });
-  assert.ok(!JSON.stringify(result.report).includes(entrypoint));
 });
 
 test("rejects malformed compiled and identity command arguments", () => {

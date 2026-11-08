@@ -2,10 +2,13 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/ovineko/schepherd/internal/config"
+	"github.com/ovineko/schepherd/internal/digest"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/processor"
 	"github.com/ovineko/schepherd/internal/runner"
@@ -19,15 +22,21 @@ type (
 	}
 )
 
+type processorIdentity struct {
+	tool     string
+	settings string
+}
+
 type processorPlanner struct {
-	cfg      *config.Config
-	schemas  map[string]runner.SchemaInfo
-	opts     runner.Options
-	compiler *processor.Compiler
-	compiled map[processorProbeKey]processor.Prepared
-	contents map[string][]byte
-	probes   map[processorProbeKey]string
-	temp     string
+	cfg        *config.Config
+	schemas    map[string]runner.SchemaInfo
+	opts       runner.Options
+	compiler   *processor.Compiler
+	compiled   map[processorProbeKey]processor.Prepared
+	contents   map[string][]byte
+	probes     map[processorProbeKey]string
+	identities map[string]processorIdentity
+	temp       string
 }
 
 func buildCompiledProcessorPlan(ctx context.Context, cfg *config.Config, inputs []runner.Input, schemas map[string]runner.SchemaInfo, opts runner.Options, compiler *processor.Compiler) (*runner.Plan, []runner.Skipped, func(), error) {
@@ -41,7 +50,7 @@ func buildCompiledProcessorPlan(ctx context.Context, cfg *config.Config, inputs 
 		}
 		return plan, nil, nil, nil
 	}
-	p := processorPlanner{cfg: cfg, schemas: schemas, opts: opts, probes: map[processorProbeKey]string{}, compiler: compiler, compiled: map[processorProbeKey]processor.Prepared{}, contents: map[string][]byte{}}
+	p := processorPlanner{cfg: cfg, schemas: schemas, opts: opts, probes: map[processorProbeKey]string{}, compiler: compiler, compiled: map[processorProbeKey]processor.Prepared{}, contents: map[string][]byte{}, identities: map[string]processorIdentity{}}
 	groups, skipped, err := p.selectInputs(ctx, inputs)
 	if err != nil {
 		p.cleanup()
@@ -83,6 +92,13 @@ func (p *processorPlanner) checkSchema(id string) error {
 	return nil
 }
 
+func withProcessorInput(err error, path string) error {
+	if existing, ok := errors.AsType[*runFilesError](err); ok && (existing.file != "" || len(existing.files) > 0) {
+		return err
+	}
+	return &runFilesError{err: err, file: path, files: []string{path}}
+}
+
 func (p *processorPlanner) selectInputs(ctx context.Context, inputs []runner.Input) ([]processorSelection, []runner.Skipped, error) {
 	groups := []processorSelection{}
 	skipped := []runner.Skipped{}
@@ -96,16 +112,16 @@ func (p *processorPlanner) selectInputs(ctx context.Context, inputs []runner.Inp
 		seen[input.Path] = true
 		if !checked[input.SchemaID] {
 			if err := p.checkSchema(input.SchemaID); err != nil {
-				return nil, skipped, err
+				return nil, skipped, withProcessorInput(err, input.Path)
 			}
 			checked[input.SchemaID] = true
 		}
 		name, actual, reason, err := p.selectInput(ctx, input)
 		if err != nil {
-			return nil, skipped, err
+			return nil, skipped, withProcessorInput(err, input.Path)
 		}
 		if name == "" {
-			skipped = append(skipped, runner.Skipped{File: input.Path, Reason: reason})
+			skipped = append(skipped, runner.Skipped{File: input.Path, Reason: reason, Category: runner.SkipUnsupportedProcessor})
 			continue
 		}
 		index, exists := groupIndex[name]
@@ -129,20 +145,49 @@ func (p *processorPlanner) selectInput(ctx context.Context, input runner.Input) 
 		names = []string{explicit}
 	}
 	reasons := []string{}
+	multiDocumentYAML := false
+	sourceFormat := processor.FormatFor(input.Path, p.schemas[input.SchemaID].SourceFormats)
+	input.Format = sourceFormat
+	if sourceFormat == "yaml" {
+		count, err := processor.YAMLDocumentCount(input.Path)
+		if err != nil {
+			return "", input, "", fault.Wrap(fault.Usage, err, "parse YAML input %s", input.Path)
+		}
+		multiDocumentYAML = count > 1
+	}
 	for _, name := range names {
 		definition := p.cfg.Processors[name]
-		accepts, convert := definition.Accepts(input.Path)
-		if !accepts {
-			reasons = append(reasons, fmt.Sprintf("%s does not support input format %q", name, processor.Format(input.Path)))
+		format := sourceFormat
+		if multiDocumentYAML && definition.Type == "sourcemeta" {
+			reasons = append(reasons, name+" does not support multi-document YAML")
 			continue
 		}
-		reason, err := p.probe(ctx, name, input, definition)
+		accepts, convert := definition.AcceptsFormat(format)
+		if !accepts {
+			reasons = append(reasons, fmt.Sprintf("%s does not support input format %q", name, format))
+			continue
+		}
+		reason, trusted, err := p.profile(ctx, name, input, definition)
 		if err != nil {
 			return "", input, "", err
 		}
-		if reason != "" {
+		if trusted && reason != "" {
 			reasons = append(reasons, name+": "+reason)
 			continue
+		}
+		if trusted && definition.Type == "check-jsonschema" {
+			key := probeKey(input.SchemaID, name, input.Path, definition)
+			p.probes[key] = ""
+			p.compiled[key] = processor.Prepared{}
+		} else {
+			reason, err = p.probe(ctx, name, input, definition)
+			if err != nil {
+				return "", input, "", err
+			}
+			if reason != "" {
+				reasons = append(reasons, name+": "+reason)
+				continue
+			}
 		}
 		if convert {
 			input, err = p.convert(ctx, input, definition)
@@ -157,6 +202,56 @@ func (p *processorPlanner) selectInput(ctx context.Context, input runner.Input) 
 		return "", input, "", fault.Wrap(fault.Usage, err, "processor selection")
 	}
 	return "", input, err.Error(), nil
+}
+
+func (p *processorPlanner) profile(ctx context.Context, name string, input runner.Input, definition processor.Definition) (string, bool, error) {
+	if processor.InputDependent(definition) {
+		return "", false, nil
+	}
+	schema := p.schemas[input.SchemaID]
+	if schema.Origin != originCatalog || schema.SchemaDigest == "" || digest.FromBytes(p.contents[input.SchemaID]) != schema.SchemaDigest {
+		return "", false, nil
+	}
+	candidates := 0
+	for _, profile := range schema.ProcessorProfiles {
+		if profile.Processor == definition.Type {
+			candidates++
+		}
+	}
+	if candidates == 0 {
+		return "", false, nil
+	}
+	identity, ok := p.identities[name]
+	if !ok {
+		plan, err := p.plan([]runner.Input{input}, definition.Spec)
+		if err != nil {
+			return "", false, err
+		}
+		task := plan.Tasks[0]
+		tool, settings, err := processor.Identity(ctx, definition, task)
+		if err != nil {
+			return "", false, fault.Wrap(fault.ConsumerStart, err, "processor %s identity", name)
+		}
+		identity = processorIdentity{tool: tool, settings: settings}
+		p.identities[name] = identity
+	}
+	var matched *runner.ProcessorProfile
+	for i := range schema.ProcessorProfiles {
+		profile := &schema.ProcessorProfiles[i]
+		if profile.Processor == definition.Type && profile.Tool == identity.tool && profile.SettingsDigest == identity.settings {
+			if matched != nil {
+				return "", false, fault.New(fault.Integrity, "ambiguous processor profiles for schema %s and processor %s", input.SchemaID, definition.Type)
+			}
+			matched = profile
+		}
+	}
+	if matched == nil {
+		return "", false, nil
+	}
+	if matched.Result == "unsupported" {
+		return matched.Reason, true, nil
+	}
+	return "", matched.Result == "supported", nil
 }
 
 func (p *processorPlanner) plan(inputs []runner.Input, spec runner.Spec) (*runner.Plan, error) {
@@ -196,7 +291,9 @@ func (p *processorPlanner) convert(ctx context.Context, input runner.Input, defi
 		p.temp = directory
 	}
 	spec := definition.Spec
+	spec.Mode = runner.ModePerFile
 	spec.Command = definition.Convert
+	spec.Args = slices.Clone(definition.ConvertArgs)
 	converter, err := p.plan([]runner.Input{input}, spec)
 	if err != nil {
 		return input, err
@@ -208,6 +305,7 @@ func (p *processorPlanner) convert(ctx context.Context, input runner.Input, defi
 	}
 	input.OriginalPath = input.Path
 	input.Path = converted
+	input.Format = "json"
 	return input, nil
 }
 
@@ -223,6 +321,13 @@ func (p *processorPlanner) buildGroups(groups []processorSelection) (*runner.Pla
 		}
 		for i := range selected.Tasks {
 			task := &selected.Tasks[i]
+			if task.Processor.Type == "check-jsonschema" && len(task.Files) > 0 {
+				format := processor.FormatFor(task.Files[0], p.schemas[task.SchemaID].SourceFormats)
+				if len(task.Paths) > 0 && task.Paths[0] != task.Files[0] {
+					format = "json"
+				}
+				task.Args = append(task.Args, "--format", format)
+			}
 			key := probeKey(task.SchemaID, group.name, task.Files[0], p.cfg.Processors[group.name])
 			p.compiled[key].Apply(task)
 		}

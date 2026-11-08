@@ -7,13 +7,64 @@ import Ajv2020 from "ajv/dist/2020.js";
 import draft06 from "ajv/dist/refs/json-schema-draft-06.json" with { type: "json" };
 import standaloneCode from "ajv/dist/standalone/index.js";
 import { createHash } from "node:crypto";
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { createRequire } from "node:module";
-import { resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { Script } from "node:vm";
 
 const frontendRequire = createRequire(import.meta.url);
 const MAX_DOCUMENT_BYTES = 64 * 1024 * 1024;
+const DEPENDENCIES = ["ajv", "ajv-draft-04", "ajv-formats"];
+
+function dependencyLocks() {
+  const fingerprints = new Set();
+  for (const name of DEPENDENCIES) {
+    const moduleDirectory = frontendRequire.resolve
+      .paths(name)
+      ?.find((directory) => existsSync(join(directory, name, "package.json")));
+    if (!moduleDirectory) {
+      throw artifactError(name, "could not locate the installed dependency context");
+    }
+    let directory = moduleDirectory;
+    let found = false;
+    while (true) {
+      const candidates = [];
+      for (const filename of ["pnpm-lock.yaml", "package-lock.json", "bun.lock", "bun.lockb"]) {
+        candidates.push(join(directory, filename));
+      }
+      if (basename(directory) === ".pnpm") {
+        candidates.push(join(directory, "lock.yaml"));
+      }
+      if (basename(directory) === "node_modules") {
+        candidates.unshift(
+          join(directory, ".package-lock.json"),
+          join(directory, ".pnpm", "lock.yaml"),
+        );
+      }
+      const lock = candidates.find((candidate) => existsSync(candidate));
+      if (lock) {
+        if (statSync(lock).size > MAX_DOCUMENT_BYTES) {
+          throw artifactError(name, "dependency lock exceeds the identity input limit");
+        }
+        fingerprints.add(createHash("sha256").update(readFileSync(lock)).digest("hex"));
+        found = true;
+        break;
+      }
+      const parent = dirname(directory);
+      if (parent === directory) {
+        break;
+      }
+      directory = parent;
+    }
+    if (!found) {
+      throw artifactError(
+        name,
+        "a dependency lockfile is required for a reproducible AJV identity",
+      );
+    }
+  }
+  return [...fingerprints].sort();
+}
 const DIALECTS = new Map([
   ["http://json-schema.org/draft-04/schema", AjvDraft04],
   ["http://json-schema.org/draft-06/schema", Ajv],
@@ -171,17 +222,19 @@ function main(args) {
     emit(
       {
         dependencies: Object.fromEntries(
-          ["ajv", "ajv-draft-04", "ajv-formats"].map((name) => [
-            name,
-            frontendRequire(`${name}/package.json`).version,
-          ]),
+          DEPENDENCIES.map((name) => [name, frontendRequire(`${name}/package.json`).version]),
         ),
+        dependencyLocks: dependencyLocks(),
         frontend: {
           sha256: createHash("sha256")
             .update(readFileSync(new URL(import.meta.url)))
             .digest("hex"),
         },
-        runtime: { abi: process.versions.modules, name: "node", version: process.version },
+        runtime: {
+          abi: process.versions.modules,
+          name: process.versions.bun ? "bun" : "node",
+          version: process.versions.bun ?? process.version,
+        },
       },
       0,
     );

@@ -31,12 +31,25 @@ schepherd-publisher publish --prepared ./prepared --repository registry.example/
 schepherd-publisher latest --repository registry.example/org/schemas --state catalog/state.json --json
 ```
 
-| Command   | Flags                                                                                                                                                                                                                        |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prepare` | `--source` (required), `--out` (required; missing or empty), `--policy` (required for SchemaStore), `--ids`, `--state`, `--snapshot-dir`, `--jsonschema`, `--jobs`, `--refresh <id>` (repeatable), `--refresh-all`, `--json` |
-| `diff`    | `--prepared`, `--state` (both required), `--json`                                                                                                                                                                            |
-| `publish` | `--prepared`, `--repository` (both required), `--state`, `--state-out`, `--registry-config`, `--update-latest`, `--now YYYYMMDD.HHMM` (tests and replays), `--json`                                                          |
-| `latest`  | `--repository`, `--state` (both required; the file must exist), `--check`, `--registry-config`, `--json`                                                                                                                     |
+| Command   | Flags                                                                                                                                                                                                                                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prepare` | `--source` (required), `--out` (required; missing or empty), `--policy` (required for SchemaStore), `--ids`, `--state`, `--snapshot-dir`, `--jsonschema`, `--jobs`, `--refresh <id>` (repeatable), `--refresh-all`, `--catalog-format` (2 default; 3 opt-in), `--processors-config` (required for 3), `--json` |
+| `diff`    | `--prepared`, `--state` (both required), `--json`                                                                                                                                                                                                                                                              |
+| `publish` | `--prepared`, `--repository` (both required), `--state`, `--state-out`, `--registry-config`, `--update-latest`, `--now YYYYMMDD.HHMM` (tests and replays), `--json`                                                                                                                                            |
+| `latest`  | `--repository`, `--state` (both required; the file must exist), `--check`, `--registry-config`, `--json`                                                                                                                                                                                                       |
+
+Catalog format 2 remains the default and retains its existing byte shape. Format 3 is an explicit
+maintainer opt-in with `--catalog-format 3 --processors-config <client.toml>`. Do not publish format
+3 until the released Schepherd reader accepts metadata format 3; updating this source tree alone
+does not make older clients compatible. The named client configuration must define the real
+Sourcemeta, check-jsonschema and AJV processors: missing tools and probe crashes fail preparation,
+while a validator's explicit unsupported result is recorded with its reason.
+
+During migration from format 2, or when a validator identity/settings digest changes, preparation
+automatically rebuilds schemas whose stored bytes cannot be profiled under the current identity.
+The profile cache avoids probes only when the schema digest, tool identity and settings digest all
+match. A schema that cannot be rebuilt remains held; publication refuses a format 3 catalog without
+profiles for every schema it contains.
 
 `--quiet` prints only errors. A missing `--state` file means that nothing has
 been published yet.
@@ -134,12 +147,12 @@ variants) are not published; `report.json` keeps them per record.
 
 Output of `prepare --out <dir>`:
 
-| File                   | Content                                                                                                                                                                                                                                                                                                                                                                                 |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prepared.json`        | The upstream commit and tarball digest, the recipe (with the bundler version), entries sorted by ID with metadata, content digests, provenance (source and dependency digests) and license decision (allowing rules, pinned detections and redirects), plus the held and excluded published schemas ([schema](https://github.com/ovineko/schepherd/blob/main/api/prepared.schema.json)) |
-| `schemas/<id>.json`    | Prepared schema bytes (none for a reused entry)                                                                                                                                                                                                                                                                                                                                         |
-| `notices/<sha256>.txt` | License notices (none for a reused entry)                                                                                                                                                                                                                                                                                                                                               |
-| `report.json`          | Every record with its status, reason, license, license detections, verification and, for SchemaStore, its file in the snapshot (`snapshotPath`), the held and excluded published schemas, and `totals`; the only file with a timestamp (`generatedAt`)                                                                                                                                  |
+| File                   | Content                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prepared.json`        | The upstream commit and tarball digest, recipe, entries sorted by ID with content digests, provenance and license decision, plus held/excluded schemas. In opt-in format 3 it also records `catalogFormat: 3`, processor compatibility profiles and source-format matches ([schema](https://github.com/ovineko/schepherd/blob/main/api/prepared.schema.json)) |
+| `schemas/<id>.json`    | Prepared schema bytes (none for a reused entry)                                                                                                                                                                                                                                                                                                               |
+| `notices/<sha256>.txt` | License notices (none for a reused entry)                                                                                                                                                                                                                                                                                                                     |
+| `report.json`          | Every record with its status, reason, license, license detections, verification and, for SchemaStore, its file in the snapshot (`snapshotPath`), the held and excluded published schemas, and `totals`; the only file with a timestamp (`generatedAt`)                                                                                                        |
 
 `report.json` accounts for every upstream record. Its `held` (`[{id,
 reason}]`) and `excluded` (`[{id, rule}]`) repeat those of `prepared.json`,

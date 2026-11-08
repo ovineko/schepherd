@@ -146,17 +146,17 @@ credentials.
 
 ## Attributed JSON output
 
-`--json` replaces consumer stdout and stderr with exactly one `reportVersion: 2`
+`--json` replaces consumer stdout and stderr with exactly one `reportVersion: 3`
 document on stdout, on success and on failure. Schepherd's own logs are suppressed
 in this mode. The process still returns the real run exit code. The schema is
 [`api/report.schema.json`](https://github.com/ovineko/schepherd/blob/main/api/report.schema.json).
 Without this flag, execution and the version 1 file report are unchanged.
-Combining it with `--report <file>` writes version 1 to that file and version 2
-to stdout.
+Combining it with `--report <file>` writes version 1 to that file and version 3
+to stdout. The parser continues to accept existing version 2 envelopes.
 
 ```json
 {
-  "reportVersion": 2,
+  "reportVersion": 3,
   "workspace": "/abs/project",
   "mode": "per-file",
   "exitCode": 1,
@@ -184,6 +184,12 @@ to stdout.
   "skipped": []
 }
 ```
+
+Version 3 skipped inputs require a `category` alongside `file` and `reason`.
+Current categories are `unmatched`, `outside-workspace`, `catalog-ambiguous`,
+`catalog-format-unavailable` and `unsupported-processor`; consumers should preserve
+unknown future values. Version 2 remains accepted with its original closed
+`file` and `reason` skip shape, and version 1 file reports are unchanged.
 
 Machine mode starts one consumer task per original input. A batch runner's
 single `{files...}` argument becomes `{file}` and the actual reported mode is

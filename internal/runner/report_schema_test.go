@@ -47,6 +47,29 @@ func TestCapturedSuccessFailureAndEarlyErrorConformToReportSchema(t *testing.T) 
 		assertReportSchema(t, schema, report)
 	}
 	assertReportSchema(t, schema, &Report{ReportVersion: 2, Mode: ModePerFile, ExitCode: 2, Error: &ReportError{Kind: "usage", Message: "invalid configuration"}})
+	assertReportSchema(t, schema, &Report{ReportVersion: 3, Mode: ModePerFile, ExitCode: 0, Skipped: []Skipped{{File: "/work/a.toml", Reason: "no capable processor", Category: SkipCatalogFormatUnavailable}}})
+	v2WithInternalCategory, err := marshalReport(&Report{ReportVersion: 2, Mode: ModePerFile, ExitCode: 0, Skipped: []Skipped{{File: "/work/a.toml", Reason: "no capable processor", Category: SkipCatalogFormatUnavailable}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(v2WithInternalCategory, []byte(`"category"`)) {
+		t.Fatalf("version-two serializer exposed a category: %s", v2WithInternalCategory)
+	}
+	legacy, err := jsonschema.UnmarshalJSON(bytes.NewReader(v2WithInternalCategory))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := schema.Validate(legacy); err != nil {
+		t.Fatalf("version-two serialization changed: %v", err)
+	}
+	invalidV2 := []byte(`{"reportVersion":2,"workspace":"","mode":"per-file","exitCode":0,"tasks":[],"skipped":[{"file":"/work/a.toml","reason":"no capable processor","category":"catalog-format-unavailable"}]}`)
+	document, err = jsonschema.UnmarshalJSON(bytes.NewReader(invalidV2))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := schema.Validate(document); err == nil {
+		t.Fatal("version-two schema accepted a version-three skip category")
+	}
 }
 
 func assertReportSchema(t *testing.T, schema *jsonschema.Schema, report *Report) {

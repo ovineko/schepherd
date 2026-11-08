@@ -181,6 +181,10 @@
           "$ref": "#/$defs/licenseDecision",
           "description": "What the license in provenance rests on: the allowing rules, the findings of automatic license detection and the redirects that served documents of the schema. Absent when it names none of them (a license a local source file declares for documents served without a redirect)."
         },
+        "metadata": {
+          "$ref": "#/$defs/metadata",
+          "description": "Catalog v3 compatibility profiles and source document format matches."
+        },
         "name": {
           "$ref": "#/$defs/singleLineText",
           "description": "Display name: at most 512 UTF-8 bytes, a single line with at least one visible character.",
@@ -312,6 +316,34 @@
       },
       "type": "object"
     },
+    "metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/profile"
+          },
+          "maxItems": 16,
+          "type": "array"
+        },
+        "schemaDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceFormats": {
+          "items": {
+            "$ref": "#/$defs/sourceFormat"
+          },
+          "maxItems": 64,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaDigest",
+        "profiles",
+        "sourceFormats"
+      ],
+      "type": "object"
+    },
     "multiLineText": {
       "description": "Text without control characters other than line feed and tab; U+2028 and U+2029 are allowed as line breaks.",
       "pattern": "^[^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f]*$",
@@ -332,6 +364,72 @@
           }
         ]
       }
+    },
+    "profile": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "unsupported"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "supported"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "reason"
+              ]
+            }
+          }
+        }
+      ],
+      "properties": {
+        "processor": {
+          "$ref": "#/$defs/singleLineText",
+          "maxLength": 512
+        },
+        "reason": {
+          "$ref": "#/$defs/multiLineText",
+          "maxLength": 8192,
+          "minLength": 1
+        },
+        "result": {
+          "enum": [
+            "supported",
+            "unsupported"
+          ]
+        },
+        "settingsDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "tool": {
+          "$ref": "#/$defs/singleLineText",
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "processor",
+        "tool",
+        "settingsDigest",
+        "result"
+      ],
+      "type": "object"
     },
     "provenance": {
       "additionalProperties": false,
@@ -461,6 +559,56 @@
         }
       ]
     },
+    "sourceFormat": {
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "properties": {
+            "extensions": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "filenames": {
+              "minItems": 1
+            }
+          }
+        }
+      ],
+      "properties": {
+        "extensions": {
+          "items": {
+            "$ref": "#/$defs/singleLineText",
+            "pattern": "^\\.[^/\\\\*?\\[\\]{}!]+$"
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "filenames": {
+          "items": {
+            "$ref": "#/$defs/singleLineText",
+            "not": {
+              "pattern": "[/\\\\*?\\[\\]{}!]"
+            }
+          },
+          "maxItems": 256,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "format": {
+          "$ref": "#/$defs/singleLineText"
+        }
+      },
+      "required": [
+        "format",
+        "extensions",
+        "filenames"
+      ],
+      "type": "object"
+    },
     "uri": {
       "description": "An absolute URI of at most 4096 characters without user information.",
       "format": "uri",
@@ -476,8 +624,37 @@
   "$id": "https://raw.githubusercontent.com/ovineko/schepherd/main/api/prepared.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "catalogFormat": {
+            "const": 3
+          }
+        },
+        "required": [
+          "catalogFormat"
+        ]
+      },
+      "then": {
+        "properties": {
+          "entries": {
+            "items": {
+              "required": [
+                "metadata"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
   "description": "prepared.json of a prepared schema set written by 'schepherd-publisher prepare' and read by 'schepherd-publisher publish'. The file is canonical: members in the order prepare writes them, two-space indentation, a final newline. Entries, held and excluded together account for every schema the publisher state lists in its catalog, each id in one of them only. Constraints JSON Schema cannot express are enforced by the publisher: entries, held and excluded sorted by id in strictly ascending byte order and disjoint, schema equal to schemas/<id>.json, the digests of the schema and notice files, valid fileMatch glob syntax, SPDX license expression grammar, sorted license decision rules and detections, text limits counted in UTF-8 bytes and no Unicode bidirectional controls in text.",
   "properties": {
+    "catalogFormat": {
+      "const": 3,
+      "description": "Optional catalog format selection; 3 requests v3 compatibility metadata publication. Absent means format 2."
+    },
     "entries": {
       "description": "Schemas of the next catalog sorted by id in strictly ascending byte order.",
       "items": {

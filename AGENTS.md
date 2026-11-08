@@ -49,6 +49,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   `pnpm dm exec task` provisions Task, not the `uv` executable that its commands invoke.
   Clean CI jobs must also run `pnpm dm init` after `pnpm install --frozen-lockfile` and before
   `pnpm dm check`; package installation alone does not render `.datamitsu/configs/`.
+- Real publisher compatibility regression: `pnpm dm exec task -- test:publisher-profiles` provisions the
+  pinned validator prerequisites and exercises the actual publisher with Sourcemeta, check-jsonschema and AJV.
 
 ### Rules specific to this project
 
@@ -170,11 +172,22 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   templates, AJV standalone code and Python capability decisions under schema/tool/settings recipe
   digests; `run` must pass those exact verified artifacts to validators. Keep compiler failures fatal
   and source validation enabled on every run. `--compile-schema` limits the prepared set explicitly.
-- Compilation metadata uses `internal/cache` rooted I/O, blob digests, atomic staging and per-key locks.
-  Offline materialize verifies compiler artifacts without invoking compilers or writing. Local schemas
-  with external references or nonstandard root/nested `$schema` remain invocation-local until their
-  dependency graph is part of the key. `internal/metaschema` owns the standard dialect allowlist
-  shared by compilation safety and publisher license decisions; never import publisher code into the client.
+  Custom-only processors have no compiler artifacts and must not open a compiler cache. Runs that use only local
+  schemas must not open or create the source compiler cache, even for typed processors; their compilations are invocation-local.
+  `materialize --compile` remains strict, while `--compile-persistable` skips only the `processor.Persistability`
+  reasons and reports their counts. A valid immutable cache is prepared online with that mode, then used by `run --offline`;
+  missing persistable artifacts fail without creating service directories or compiling elsewhere.
+  Compilation cache entries belong only to persistable catalog schemas. Local schemas are always compiled in temporary
+  storage so edits remain visible; offline local validation may still invoke the compiler but never the cache.
+  Catalog schemas with external dependencies or nonstandard root/nested `$schema` remain invocation-local until their
+  dependency graph is part of the key. `internal/metaschema` owns the standard dialect allowlist shared by compilation
+  safety and publisher license decisions; never import publisher code into the client.
+  The managed check-jsonschema frontend reports its backend runtime/dependencies in `identity`; only the exact
+  `${CHECK_JSONSCHEMA_BIN}` locator binding is omitted from settings digests, never the selected backend identity.
+- Catalog v3 profiles are trusted only when the materialized schema digest and the active processor's
+  tool and settings identities match. Missing or stale profiles must re-probe; profiles never cache
+  document validation results. Historical unsupported profiles must not remove discovery globs.
+  Compatibility profiles apply only to schema-dependent support. Input-dependent definitions are rejected by the publisher and always use per-input runtime probing.
 - Compilation publication uses a separate per-recipe lock, then the artifact's raw digest lock,
   and rechecks after waiting. Keep both until metadata is installed; replacing an identical blob
   during another writer's verification can otherwise quarantine healthy metadata. `LoadCompilation`
@@ -229,6 +242,8 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   commits it, and Go code goes through `internal/publisher/state`. The bot refuses to commit over a state that changed
   on `main` since its run started, and a finish run stops (`schepherd-publisher latest --check`, exit 5) when the
   registry does not hold exactly the recorded catalog.
+- Catalog format 2 remains the publisher default. Format 3 requires explicit `prepare --catalog-format 3`
+  and `--processors-config`; release a reader supporting its metadata before publishing that catalog.
 - `catalog/state.json` is exempt from every datamitsu tool (`.datamitsuignore`: `catalog/state.json: *`) and from typos
   (`.typos.toml` `extend-exclude`); keep both, or yq-json `sort_keys`, prettier, eslint or oxfmt rewrite it into a form
   `state.Parse` refuses (CI's `git diff --exit-code` turns red, the weekly job stops).
@@ -286,6 +301,9 @@ Packages and tools are described in `docs/architecture.md` and `docs/testing.md`
   one license of `acceptedLicenses` (MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause) and a PATENTS file the Go patent
   grant. Any other license file (a `LICENSE-MIT`/`LICENSE-APACHE` pair included) fails `notices generate`: review the
   license and add its SPDX ID to `acceptedLicenses` in `classify.go`.
+- The reviewed `go.yaml.in/yaml/v3 v3.0.5` combined license is the exact-content exception: its C-derived
+  files are MIT and its remaining files Apache-2.0 (`MIT AND Apache-2.0`). `classify.go` accepts only the
+  recorded normalized SHA-256; modified license text still requires review.
 - `THIRD_PARTY_NOTICES.md` ships in every archive and covers only what Schepherd distributes: the modules the client
   links and the catalog's schemas. Maintainer and test tooling (`schepherd-publisher`, `tools/pins`, container images,
   Python requirements) is never listed, so bumping it never changes the notices. Editing the `reason` of a

@@ -238,11 +238,11 @@ The JSON Schema of the document is [`api/catalog.schema.json`](https://github.co
 }
 ```
 
-- `formatVersion` must be `2`. Once the document is well-formed JSON (UTF-8,
-  valid syntax, unique member names), another positive integer version (1,
-  or 3 and later) is refused before anything else is inspected, with exit
-  code 2 (unsupported format). A missing or non-integer `formatVersion` is an invalid artifact
-  (exit code 5).
+- `formatVersion` 2 is the published format. Readers also accept version 3, which
+  adds required compatibility metadata to every entry; publishers keep writing
+  v2 until the v3 reader release is available. Other positive versions are
+  refused after well-formedness checks, with exit code 2. Missing or malformed
+  versions are invalid artifacts (exit code 5).
 - `revision` is the catalog revision `YYYYMMDD.HHMM`, the UTC minute of the
   publication: a real date from 2000 to 9999 and a time from 00:00 to 23:59
   (see [Versioning](versioning.md#catalog-revisions)). Any other form is an
@@ -257,6 +257,13 @@ The JSON Schema of the document is [`api/catalog.schema.json`](https://github.co
   never contains credentials, local paths or timestamps.
   `provenance.dependencies` is sorted by `source` without duplicates.
 - `fileMatch` patterns must be valid in the [matching dialect](matching.md).
+- V3 `metadata.schemaDigest` identifies the exact schema bytes used by its
+  capability probes. `profiles` are keyed by processor, tool identity and
+  settings digest; each result is `supported` or `unsupported`, with a stable
+  reason on unsupported results. These are compatibility results, not document
+  validation results. `sourceFormats` records the format, extension matches
+  and exact filenames, including JSONC and extensionless config names, without
+  treating extensions as proof that every filename has the same format.
 - Size limits: `name` 512 bytes, `description` 8192, a pattern 1024 and at most
   256 per entry, `license` 256, URIs 4096, at most 1024 dependencies.
 - Unknown members are rejected; new members require a new `formatVersion`.

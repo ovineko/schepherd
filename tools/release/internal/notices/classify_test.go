@@ -2,6 +2,7 @@ package notices
 
 import (
 	_ "embed"
+	"os"
 	"strings"
 	"testing"
 
@@ -195,6 +196,22 @@ func TestClassifyRecognizesEachLicense(t *testing.T) {
 				t.Errorf("classify = %q, %v; want %q", got, err, tc.want)
 			}
 		})
+	}
+}
+
+func TestClassifyRecognizesReviewedGoYAMLLicenseHash(t *testing.T) {
+	data, err := os.ReadFile("testdata/go-yaml-v3.0.5-LICENSE.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := classify(string(data))
+	if err != nil || got != "MIT AND Apache-2.0" {
+		t.Fatalf("classify = %q, %v; want %q", got, err, "MIT AND Apache-2.0")
+	}
+
+	if _, err := classify(string(data) + "\nAdditional clause."); err == nil {
+		t.Fatal("classify accepted modified reviewed license text")
 	}
 }
 

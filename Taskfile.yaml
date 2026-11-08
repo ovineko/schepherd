@@ -104,6 +104,13 @@ tasks:
           done
         done
     desc: Run every fuzz target for FUZZTIME (default 20s)
+  test:publisher-profiles:
+    cmds:
+      - go run ./tools/install-jsonschema
+      - go test -tags realvalidators -count=1 -run '^TestPrepareV3RetainsSourcemetaCompileExclusion$' ./cmd/schepherd-publisher
+    deps:
+      - test:frontends
+    desc: Prepare the alternate-supported schema with all three real validators and verify v3 compatibility profiles
   test:race:
     cmds:
       - go test -race ./...

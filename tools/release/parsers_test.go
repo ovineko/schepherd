@@ -12,9 +12,13 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+func testParserCapabilities(version string) parserCapabilities {
+	return parserCapabilities{SchemaVersion: 4, Module: "schepherd-parsers", Version: version, ABI: 2, Features: []string{"tools", "input-skips"}}
+}
+
 func TestParserArtifactPinsExactPayloadAndManifest(t *testing.T) {
 	module := []byte{0, 'a', 's', 'm', 1, 0, 0, 0, 0}
-	metadata, manifest, err := parserArtifact(module, "1.2.3-rc.1")
+	metadata, manifest, err := parserArtifact(module, "1.2.3-rc.1", testParserCapabilities("1.2.3-rc.1"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,6 +29,9 @@ func TestParserArtifactPinsExactPayloadAndManifest(t *testing.T) {
 	if decoded.ArtifactType != parserArtifactType || decoded.MediaType != ocispec.MediaTypeImageManifest || decoded.SchemaVersion != 2 {
 		t.Fatalf("incompatible OCI manifest: %s", manifest)
 	}
+	if metadata.CapabilitySchema != testParserCapabilities("1.2.3-rc.1").SchemaVersion {
+		t.Fatalf("capability schema = %d", metadata.CapabilitySchema)
+	}
 	if len(decoded.Layers) != 1 || decoded.Layers[0].MediaType != "application/wasm" || decoded.Layers[0].Digest.String() != metadata.Hash || decoded.Layers[0].Size != int64(len(module)) {
 		t.Fatalf("wrong WASM layer: %+v", decoded.Layers)
 	}
@@ -34,12 +41,12 @@ func TestParserArtifactPinsExactPayloadAndManifest(t *testing.T) {
 	if metadata.URL != "https://github.com/ovineko/schepherd/releases/download/v1.2.3-rc.1/schepherd-parsers.wasm" {
 		t.Fatalf("release asset URL: %s", metadata.URL)
 	}
-	_, repeated, err := parserArtifact(module, "1.2.3-rc.1")
+	_, repeated, err := parserArtifact(module, "1.2.3-rc.1", testParserCapabilities("1.2.3-rc.1"))
 	if err != nil || !bytes.Equal(manifest, repeated) {
 		t.Fatalf("manifest is not deterministic: %v", err)
 	}
 	changed := append(bytes.Clone(module), 1)
-	other, _, err := parserArtifact(changed, "1.2.3-rc.1")
+	other, _, err := parserArtifact(changed, "1.2.3-rc.1", testParserCapabilities("1.2.3-rc.1"))
 	if err != nil || other.OCI.Digest == metadata.OCI.Digest || other.Hash == metadata.Hash {
 		t.Fatal("changed payload retained a pin")
 	}
@@ -48,7 +55,7 @@ func TestParserArtifactPinsExactPayloadAndManifest(t *testing.T) {
 func TestParserMetadataRejectsTampering(t *testing.T) {
 	dir := t.TempDir()
 	module := []byte{0, 'a', 's', 'm', 1, 0, 0, 0, 0}
-	metadata, manifest, err := parserArtifact(module, "1.2.3")
+	metadata, manifest, err := parserArtifact(module, "1.2.3", testParserCapabilities("1.2.3"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,23 +99,22 @@ func TestParserCommandsDoNotRequireRustForHelp(t *testing.T) {
 	}
 }
 
-func TestPublishedParserCommandRejectsUnverifiedReleaseMetadata(t *testing.T) {
+func TestParserCommandRejectsInvalidWasmBeforeReturningSubject(t *testing.T) {
 	dir := t.TempDir()
 	module := []byte{0, 'a', 's', 'm', 1, 0, 0, 0, 0}
-	metadata, manifest, err := parserArtifact(module, "1.2.3")
+	metadata, manifest, err := parserArtifact(module, "1.2.3", testParserCapabilities("1.2.3"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, parserFilename), module, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	metadata.Hash = parserHash([]byte("substituted module"))
 	if err := writeParserMetadata(dir, metadata, manifest); err != nil {
 		t.Fatal(err)
 	}
 	var stdout, stderr bytes.Buffer
 	code := run(context.Background(), []string{"parsers", "verify-published", "--dir", dir, "--version", "1.2.3"}, &stdout, &stderr, []string{})
-	if code == 0 || stdout.Len() != 0 || !strings.Contains(stderr.String(), "does not match module and version") {
-		t.Fatalf("unverified metadata returned an OCI subject: exit %d, stdout %q, stderr %q", code, stdout.String(), stderr.String())
+	if code == 0 || stdout.Len() != 0 || !strings.Contains(stderr.String(), "parser ABI smoke failed") {
+		t.Fatalf("invalid WASM returned an OCI subject: exit %d, stdout %q, stderr %q", code, stdout.String(), stderr.String())
 	}
 }

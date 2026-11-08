@@ -140,6 +140,21 @@ function getConfig(input) {
           },
         },
       },
+      trivy: {
+        ...input.tools.trivy,
+        operations: {
+          ...input.tools.trivy.operations,
+          lint: {
+            ...input.tools.trivy.operations.lint,
+            args: [
+              ...input.tools.trivy.operations.lint.args.slice(0, -1),
+              "--skip-dirs",
+              ".claude/worktrees,.tools,parsers/target,tools/check-jsonschema/.venv",
+              input.tools.trivy.operations.lint.args.at(-1),
+            ],
+          },
+        },
+      },
     },
   };
 }

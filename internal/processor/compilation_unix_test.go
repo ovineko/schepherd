@@ -53,6 +53,55 @@ func newCompilationFixture(t *testing.T) *compilationFixture {
 	return f
 }
 
+func TestSourcemetaDraft7ReferenceSiblingFailureIsNarrowlyUnsupported(t *testing.T) {
+	schema := filepath.Join(t.TempDir(), "schema.json")
+	if err := os.WriteFile(schema, []byte(`{"$schema":"http://json-schema.org/draft-07/schema#"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	run := func(diagnostic string) (string, error) {
+		t.Helper()
+		executable := filepath.Join(t.TempDir(), "jsonschema")
+		script := "#!/bin/sh\nprintf '%s\\n' '" + diagnostic + "' >&2\nexit 1\n"
+		if err := os.WriteFile(executable, []byte(script), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		definition := Definition{Type: "sourcemeta", Spec: runner.Spec{Name: "native"}}
+		task := runner.Task{Path: executable, Dir: filepath.Dir(executable)}
+		return Probe(t.Context(), definition, task, schema)
+	}
+	known := "unexpected error: A schema with a top-level `$ref` in JSON Schema Draft 7 and older dialects ignores every sibling keywords (like identifiers and meta-schema declarations) and therefore many operations, like bundling, are not possible without undefined behavior"
+	reason, err := run(known)
+	if err != nil || !strings.Contains(reason, "Draft 7-or-earlier") {
+		t.Fatalf("known capability incompatibility: reason=%q err=%v", reason, err)
+	}
+	if reason, err := run("unexpected error: compiler service unavailable"); err == nil || reason != "" || fault.KindOf(err) != fault.ConsumerStart {
+		t.Fatalf("unrelated exit-1 failure was treated as unsupported: reason=%q err=%v", reason, err)
+	}
+	reason, err = run("unexpected error: Could not resolve schema reference")
+	if err != nil || !strings.Contains(reason, "could not resolve a schema reference") {
+		t.Fatalf("unresolved reference was not classified as unsupported: reason=%q err=%v", reason, err)
+	}
+}
+
+func TestCompilerPrepareRetainsSourcemetaDraft7SiblingReason(t *testing.T) {
+	schema := filepath.Join(t.TempDir(), "schema.json")
+	executable := filepath.Join(t.TempDir(), "jsonschema")
+	diagnostic := "unexpected error: A schema with a top-level `$ref` in JSON Schema Draft 7 and older dialects ignores every sibling keywords (like identifiers and meta-schema declarations) and therefore many operations, like bundling, are not possible without undefined behavior"
+	script := "#!/bin/sh\nprintf '%s\\n' '" + diagnostic + "' >&2\nexit 1\n"
+	if err := os.WriteFile(executable, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	definition := Definition{Type: "sourcemeta", Spec: runner.Spec{Name: "native"}}
+	task := runner.Task{Path: executable, Dir: filepath.Dir(executable)}
+	data := []byte(`{"$schema":"http://json-schema.org/draft-07/schema#","$ref":"#/definitions/root","definitions":{"root":{"type":"object"}}}`)
+	compiler := &Compiler{}
+	defer compiler.Close()
+	prepared, err := compiler.Prepare(t.Context(), definition, task, schema, data, true)
+	if err != nil || !strings.Contains(prepared.Reason, "Draft 7-or-earlier") {
+		t.Fatalf("compiler did not retain unsupported reason: prepared=%+v err=%v", prepared, err)
+	}
+}
+
 func writeCompilationFile(t *testing.T, path string, data []byte, mode fs.FileMode) {
 	t.Helper()
 	if err := os.WriteFile(path, data, mode); err != nil {
@@ -151,7 +200,7 @@ func openCompilationCache(t *testing.T, dir string, readOnly bool) *cache.Cache 
 	return c
 }
 
-func (f *compilationFixture) prepare(t *testing.T, c *cache.Cache, verifyOnly bool) (Prepared, error) {
+func (f *compilationFixture) prepare(t *testing.T, c *cache.Cache, verifyOnly bool, catalogSchema ...bool) (Prepared, error) {
 	t.Helper()
 	data, err := os.ReadFile(f.schema)
 	if err != nil {
@@ -159,7 +208,11 @@ func (f *compilationFixture) prepare(t *testing.T, c *cache.Cache, verifyOnly bo
 	}
 	compiler := &Compiler{Cache: c, VerifyOnly: verifyOnly}
 	t.Cleanup(compiler.Close)
-	return compiler.Prepare(context.Background(), f.definition, f.task, f.schema, data, false)
+	catalog := true
+	if len(catalogSchema) > 0 {
+		catalog = catalogSchema[0]
+	}
+	return compiler.Prepare(context.Background(), f.definition, f.task, f.schema, data, catalog)
 }
 
 func (f *compilationFixture) count(t *testing.T, want int) {
@@ -467,15 +520,15 @@ func TestCompilationLocalExternalReferencesStayInvocationLocal(t *testing.T) {
 	writeCompilationFile(t, f.schema, []byte(`{"$ref":"number.json"}`), 0o600)
 	reference := filepath.Join(f.dir, "number.json")
 	writeCompilationFile(t, reference, []byte(`{"const":7}`), 0o600)
-	c := openCompilationCache(t, f.cacheDir, false)
-	first, err := f.prepare(t, c, false)
+	c := openCompilationCache(t, f.cacheDir, true)
+	first, err := f.prepare(t, c, false, false)
 	if err != nil {
 		t.Fatalf("compile must preserve the original local reference base: %v", err)
 	}
 	assertCompilationTemplate(t, first, 7, "one", "strict")
 	f.validate(t, first, "7", true)
 	writeCompilationFile(t, reference, []byte(`{"const":8}`), 0o600)
-	second, err := f.prepare(t, c, false)
+	second, err := f.prepare(t, c, false, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -483,13 +536,13 @@ func TestCompilationLocalExternalReferencesStayInvocationLocal(t *testing.T) {
 	f.validate(t, second, "7", false)
 	f.validate(t, second, "8", true)
 	f.count(t, 2)
-	before := compilationTree(t, f.cacheDir)
-	if result, err := f.prepare(t, c, true); err == nil || result.Path != "" {
-		t.Fatalf("verify-only accepted unproven local reference dependencies: %+v %v", result, err)
+	prepared, err := f.prepare(t, c, true, false)
+	if err != nil || prepared.Path == "" {
+		t.Fatalf("offline local validation did not compile invocation-locally: %+v %v", prepared, err)
 	}
-	f.count(t, 2)
-	if after := compilationTree(t, f.cacheDir); !reflect.DeepEqual(before, after) {
-		t.Fatal("verify-only wrote an invocation-local compilation")
+	f.count(t, 3)
+	if _, err := os.Stat(f.cacheDir); !os.IsNotExist(err) {
+		t.Fatalf("offline invocation-local compilation created compiler cache: %v", err)
 	}
 }
 

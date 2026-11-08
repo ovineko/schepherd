@@ -15,6 +15,8 @@ import (
 	"github.com/ovineko/schepherd/internal/catalog"
 	"github.com/ovineko/schepherd/internal/fault"
 	"github.com/ovineko/schepherd/internal/match"
+	"github.com/ovineko/schepherd/internal/processor"
+	"github.com/ovineko/schepherd/internal/runner"
 	"github.com/ovineko/schepherd/internal/store"
 )
 
@@ -109,15 +111,30 @@ type localListItem struct {
 type catalogPatternItem struct {
 	catalog.PatternItem
 
-	Origin string `json:"origin"`
+	Metadata      *catalog.Metadata      `json:"metadata,omitempty"`
+	SourceFormats []catalog.SourceFormat `json:"sourceFormats,omitempty"`
+	Covering      *coveringInfo          `json:"covering,omitempty"`
+	Origin        string                 `json:"origin"`
+}
+type coveringInfo struct {
+	Validators        []string            `json:"validators"`
+	Globs             []string            `json:"globs"`
+	RecordedSupported []string            `json:"recordedSupported,omitempty"`
+	RecordedExcluded  []coveringExclusion `json:"recordedExcluded,omitempty"`
+}
+
+type coveringExclusion struct {
+	Processor string `json:"processor"`
+	Reason    string `json:"reason"`
 }
 
 type localPatternItem struct {
-	ID         string   `json:"id"`
-	FileMatch  []string `json:"fileMatch"`
-	Origin     string   `json:"origin"`
-	SchemaPath string   `json:"schemaPath"`
-	Shadows    bool     `json:"shadows"`
+	ID         string        `json:"id"`
+	FileMatch  []string      `json:"fileMatch"`
+	Origin     string        `json:"origin"`
+	SchemaPath string        `json:"schemaPath"`
+	Shadows    bool          `json:"shadows"`
+	Covering   *coveringInfo `json:"covering,omitempty"`
 }
 
 // listed is one line of list or patterns: the JSON item and its text form.
@@ -230,13 +247,21 @@ func (a *app) newListCmd() *cobra.Command {
 }
 
 func (a *app) newPatternsCmd() *cobra.Command {
-	var asJSON bool
+	var asJSON, covering bool
+	var validators string
 
 	cmd := &cobra.Command{
 		Use:   "patterns",
 		Short: "Print fileMatch patterns with their schema IDs and artifact descriptors or local files",
 		Args:  exactArgs(0, "no arguments"),
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			if strings.TrimSpace(validators) != "" && !covering {
+				return fault.New(fault.Usage, "--validators requires --covering")
+			}
+			selectedValidators, err := parseValidators(validators)
+			if err != nil {
+				return err
+			}
 			return a.withSources(cmd, func(ctx context.Context, src *sources) error {
 				cat, err := src.catalogOrEmpty(ctx)
 				if err != nil {
@@ -250,7 +275,11 @@ func (a *app) newPatternsCmd() *cobra.Command {
 						continue
 					}
 
-					e := listed{id: it.ID, item: catalogPatternItem{PatternItem: it, Origin: originCatalog}}
+					row := catalogPatternItem{PatternItem: it, Metadata: it.Metadata, SourceFormats: it.SourceFormats, Origin: originCatalog}
+					if covering {
+						row.Covering = recordedCovering(it.Metadata, selectedValidators, it.FileMatch)
+					}
+					e := listed{id: it.ID, item: row}
 					for _, p := range it.FileMatch {
 						e.lines = append(e.lines, it.ID+"\t"+p)
 					}
@@ -264,10 +293,11 @@ func (a *app) newPatternsCmd() *cobra.Command {
 					}
 
 					shadows := inCatalog(cat, ls.ID)
-					e := listed{
-						id:   ls.ID,
-						item: localPatternItem{ID: ls.ID, FileMatch: slices.Clone(ls.FileMatch), Origin: originLocal, SchemaPath: ls.Path, Shadows: shadows},
+					localItem := localPatternItem{ID: ls.ID, FileMatch: slices.Clone(ls.FileMatch), Origin: originLocal, SchemaPath: ls.Path, Shadows: shadows}
+					if covering {
+						localItem.Covering = &coveringInfo{Validators: slices.Clone(selectedValidators), Globs: coveringPatterns(ls.FileMatch)}
 					}
+					e := listed{id: ls.ID, item: localItem}
 
 					for _, p := range ls.FileMatch {
 						e.lines = append(e.lines, ls.ID+"\t"+p+"\t"+localMarker(shadows))
@@ -280,9 +310,88 @@ func (a *app) newPatternsCmd() *cobra.Command {
 			})
 		},
 	}
+	cmd.Flags().StringVar(&validators, "validators", "", "comma-separated validator identities to include")
+	cmd.Flags().BoolVar(&covering, "covering", false, "include validator coverage metadata")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "machine-readable output")
 
 	return cmd
+}
+
+func recordedCovering(metadata *catalog.Metadata, validators, patterns []string) *coveringInfo {
+	result := &coveringInfo{Validators: slices.Clone(validators), Globs: coveringPatterns(patterns)}
+	if metadata == nil || len(validators) == 0 {
+		return result
+	}
+	for _, validator := range validators {
+		found := []catalog.Profile{}
+		for _, profile := range metadata.Profiles {
+			if profile.Processor == validator {
+				found = append(found, profile)
+			}
+		}
+		if len(found) != 1 {
+			continue
+		}
+		profile := found[0]
+		switch profile.Result {
+		case "supported":
+			result.RecordedSupported = append(result.RecordedSupported, validator)
+		case "unsupported":
+			result.RecordedExcluded = append(result.RecordedExcluded, coveringExclusion{Processor: validator, Reason: profile.Reason})
+		}
+	}
+	return result
+}
+
+func parseValidators(value string) ([]string, error) {
+	if strings.TrimSpace(value) == "" {
+		return []string{}, nil
+	}
+	seen := map[string]bool{}
+	out := []string{}
+	for name := range strings.SplitSeq(value, ",") {
+		name = strings.TrimSpace(name)
+		if name != "sourcemeta" && name != "check-jsonschema" && name != "ajv" {
+			return nil, fault.New(fault.Usage, "unknown validator %q", name)
+		}
+		if seen[name] {
+			return nil, fault.New(fault.Usage, "duplicate validator %q", name)
+		}
+		seen[name] = true
+		out = append(out, name)
+	}
+	return out, nil
+}
+
+func coveringPatterns(patterns []string) []string {
+	out := make([]string, 0, len(patterns))
+	seen := map[string]bool{}
+	appendGlob := func(glob string) {
+		if !seen[glob] {
+			seen[glob] = true
+			out = append(out, glob)
+		}
+	}
+	for _, raw := range patterns {
+		if strings.HasPrefix(raw, "!") {
+			continue
+		}
+		pattern := strings.TrimPrefix(raw, "!")
+		anchored := false
+		if rest, ok := strings.CutPrefix(pattern, "./"); ok {
+			pattern = rest
+			anchored = true
+		} else if rest, ok := strings.CutPrefix(pattern, "/"); ok {
+			pattern = rest
+			anchored = true
+		}
+		if !anchored && !strings.Contains(pattern, "/") {
+			appendGlob("**/" + pattern)
+			continue
+		}
+		appendGlob(pattern)
+	}
+	return out
 }
 
 // resolution is "resolve --json": Artifact for a catalog schema, SchemaPath
@@ -301,14 +410,24 @@ type resolution struct {
 // fileMatch. The catalog is loaded only when the first two levels match
 // nothing, and its entries shadowed by local schemas take no part.
 type resolver struct {
-	src       *sources
-	mappings  *match.Set
-	local     *match.Set
-	catalog   *match.Set
-	workspace string
+	src            *sources
+	mappings       *match.Set
+	local          *match.Set
+	catalog        *match.Set
+	catalogFormats map[string][]runner.DocumentFormat
+	workspace      string
+	safeCatalog    bool
+}
+type safeCatalogUnavailableError struct {
+	cause    error
+	category string
 }
 
-func newResolver(src *sources) (*resolver, error) {
+func (e *safeCatalogUnavailableError) Error() string        { return e.cause.Error() }
+func (e *safeCatalogUnavailableError) Unwrap() error        { return e.cause }
+func (e *safeCatalogUnavailableError) Is(target error) bool { return target == match.ErrNoMatch }
+
+func newResolver(src *sources, safeCatalog bool) (*resolver, error) {
 	rules := make([]match.Rule, 0, len(src.cfg.Mappings))
 	for _, m := range src.cfg.Mappings {
 		rules = append(rules, match.Rule{SchemaID: m.Schema, Patterns: m.FileMatch})
@@ -331,7 +450,7 @@ func newResolver(src *sources) (*resolver, error) {
 		return nil, fault.Wrap(fault.Usage, err, "schemas")
 	}
 
-	return &resolver{src: src, mappings: mappings, local: local, workspace: src.cfg.Workspace}, nil
+	return &resolver{src: src, mappings: mappings, local: local, workspace: src.cfg.Workspace, safeCatalog: safeCatalog}, nil
 }
 
 func (r *resolver) catalogSet(ctx context.Context) (*match.Set, error) {
@@ -344,6 +463,17 @@ func (r *resolver) catalogSet(ctx context.Context) (*match.Set, error) {
 		return nil, err
 	}
 
+	formats := make(map[string][]runner.DocumentFormat, len(cat.Schemas))
+	for _, entry := range cat.Schemas {
+		if entry.Metadata == nil {
+			continue
+		}
+		for _, format := range entry.Metadata.SourceFormats {
+			formats[entry.ID] = append(formats[entry.ID], runner.DocumentFormat{
+				Format: format.Format, Extensions: slices.Clone(format.Extensions), Filenames: slices.Clone(format.Filenames),
+			})
+		}
+	}
 	rules := cat.Rules()
 	rules = slices.DeleteFunc(rules, func(rule match.Rule) bool { return r.src.shadowedBy(rule.SchemaID) })
 
@@ -352,9 +482,27 @@ func (r *resolver) catalogSet(ctx context.Context) (*match.Set, error) {
 		return nil, fault.Wrap(fault.Integrity, err, "catalog fileMatch")
 	}
 
+	r.catalogFormats = formats
 	r.catalog = set
 
 	return set, nil
+}
+
+func (r *resolver) supportsCatalogFormat(path, schemaID string) bool {
+	if len(r.src.cfg.Processors) == 0 {
+		return true
+	}
+	format := processor.FormatFor(path, r.catalogFormats[schemaID])
+	for _, name := range r.src.cfg.ProcessorOrder {
+		definition, ok := r.src.cfg.Processors[name]
+		if !ok {
+			continue
+		}
+		if supported, _ := definition.AcceptsFormat(format); supported {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *resolver) resolve(ctx context.Context, file string) (string, match.Resolution, error) {
@@ -362,30 +510,35 @@ func (r *resolver) resolve(ctx context.Context, file string) (string, match.Reso
 	if err != nil {
 		return "", match.Resolution{}, fault.Wrap(fault.Usage, err, "path %q", file)
 	}
-
 	rel, err := match.RelativePath(r.workspace, abs)
 	if err != nil {
 		return "", match.Resolution{}, fault.Wrap(fault.NotFound, err, "cannot match %s automatically (workspace %s); pass --schema", abs, r.workspace)
 	}
-
 	res, err := match.ResolveFirst(rel, r.mappings, r.local)
+	catalogPhase := false
 	if errors.Is(err, match.ErrNoMatch) {
 		set, catalogErr := r.catalogSet(ctx)
 		if catalogErr != nil {
 			return rel, res, catalogErr
 		}
-
 		res, err = match.ResolveFirst(rel, set)
+		catalogPhase = true
 	}
-
 	if err != nil {
-		if _, ambiguous := errors.AsType[*match.AmbiguousError](err); ambiguous {
+		if ambiguous, ok := errors.AsType[*match.AmbiguousError](err); ok {
+			if r.safeCatalog && catalogPhase && ambiguous.Origin == match.OriginCatalog {
+				cause := fault.Wrap(fault.NotFound, err, "safe-catalog association is unavailable; add a [[mappings]] entry")
+				return rel, res, &safeCatalogUnavailableError{cause: cause, category: runner.SkipCatalogAmbiguous}
+			}
 			return rel, res, fault.Wrap(fault.NotFound, err, "ambiguous match; add a [[mappings]] entry or pass --schema")
 		}
-
 		return rel, res, fault.Wrap(fault.NotFound, err, "workspace %s (pass --schema or add a [[mappings]] entry)", r.workspace)
 	}
-
+	if r.safeCatalog && catalogPhase && res.Origin == match.OriginCatalog && !r.supportsCatalogFormat(abs, res.SchemaID) {
+		format := processor.FormatFor(abs, r.catalogFormats[res.SchemaID])
+		cause := fault.New(fault.NotFound, "safe-catalog association is unavailable: no configured processor supports input format %q for schema %q", format, res.SchemaID)
+		return rel, res, &safeCatalogUnavailableError{cause: cause, category: runner.SkipCatalogFormatUnavailable}
+	}
 	return rel, res, nil
 }
 
@@ -405,7 +558,7 @@ func (a *app) newResolveCmd() *cobra.Command {
 			}
 
 			return a.withSources(cmd, func(ctx context.Context, src *sources) error {
-				r, err := newResolver(src)
+				r, err := newResolver(src, false)
 				if err != nil {
 					return err
 				}

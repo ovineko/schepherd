@@ -273,7 +273,6 @@ func TestWeeklyRoundTrip(t *testing.T) {
 	if text.stdout != "catalog changes: false\nadded: 0\nchanged: 0\nmetadata changed: 0\nheld: 0\nexcluded: 0\nunchanged: 4\n" {
 		t.Errorf("unchanged diff = %q", text.stdout)
 	}
-
 	writes, requests := reg.writeCount(), reg.requestCount()
 
 	noop := decode[publish.Result](t, runCLI(t, publishArgs(again, "20260930.0300", "--update-latest")...).want(t, 0))
@@ -281,8 +280,6 @@ func TestWeeklyRoundTrip(t *testing.T) {
 		t.Errorf("unchanged publication = %+v, %d writes", noop, reg.writeCount()-writes)
 	}
 
-	// catalog-latest already points at the state's catalog; resolving it is
-	// the only request.
 	if n := reg.requestCount() - requests; n > 3 {
 		t.Errorf("the noop sent %d registry requests", n)
 	}
@@ -292,7 +289,6 @@ func TestWeeklyRoundTrip(t *testing.T) {
 	}
 
 	changed := prepareDir(t, changedGamma(t), "--state", stateFile)
-
 	d = decode[publish.Diff](t, runCLI(t, "diff", "--prepared", changed, "--state", stateFile, "--json").want(t, 0))
 	if !d.HasChanges || !slices.Equal(d.Changed, []string{"gamma"}) || d.Unchanged != 3 {
 		t.Errorf("diff after the change = %+v", d)
@@ -312,6 +308,26 @@ func TestWeeklyRoundTrip(t *testing.T) {
 	plain := runCLI(t, "publish", "--prepared", changed, "--repository", repo, "--registry-config", config, "--state", stateFile).want(t, 0)
 	if !strings.HasPrefix(plain.stdout, "status: noop\n") {
 		t.Errorf("text output = %q", plain.stdout)
+	}
+}
+
+func TestPrepareRefreshAllFlagReprocessesUnchangedEntries(t *testing.T) {
+	stateFile := filepath.Join(t.TempDir(), "state.json")
+	source := filepath.Join(localBasic, "source.toml")
+	prepared := prepareDir(t, source, "--state", stateFile)
+	reg := newTestRegistry(t)
+	config := plainHTTPConfig(t, reg)
+	runCLI(t, "publish", "--prepared", prepared, "--repository", reg.host()+"/org/schemas", "--registry-config", config,
+		"--now", "20260923.0300", "--state", stateFile, "--state-out", stateFile, "--json").want(t, 0)
+	out := filepath.Join(t.TempDir(), "refreshed")
+	result := decode[prepare.Result](t, runCLI(t, "prepare", "--quiet", "--source", source, "--out", out,
+		"--jsonschema", bundler(t), "--state", stateFile, "--refresh-all", "--json").want(t, 0))
+	set, err := prepare.Load(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Totals.Reused != 0 || len(set.Schemas) != 4 {
+		t.Fatalf("--refresh-all must reprocess all four unchanged entries: result=%+v schemas=%d", result, len(set.Schemas))
 	}
 }
 

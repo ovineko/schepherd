@@ -43,6 +43,13 @@ type parserMetadata struct {
 		Digest string `json:"digest"`
 	} `json:"oci"`
 }
+type parserCapabilities struct {
+	SchemaVersion int      `json:"schemaVersion"`
+	Module        string   `json:"module"`
+	Version       string   `json:"version"`
+	ABI           int      `json:"abi"`
+	Features      []string `json:"features"`
+}
 
 func newParsersCommand(environ []string) *cobra.Command {
 	cmd := &cobra.Command{Use: "parsers", Short: "Build, inspect and publish the Schepherd WASM parsers", Args: cobra.ArbitraryArgs, RunE: requireSubcommand}
@@ -75,27 +82,23 @@ func runParserAction(cmd *cobra.Command, action, dir, version string, environ []
 	if err != nil {
 		return err
 	}
-	metadata, manifest, err := parserArtifact(module, version)
+	capabilities, err := checkParserModule(cmd.Context(), module, version, environ)
+	if err != nil {
+		return err
+	}
+	metadata, manifest, err := parserArtifact(module, version, capabilities)
 	if err != nil {
 		return fault.Wrap(fault.Internal, err, "parser artifact")
 	}
 	if action == "build" || action == "metadata" {
-		if err := checkParserModule(cmd.Context(), module, version, environ); err != nil {
-			return err
-		}
 		return writeParserMetadata(dir, metadata, manifest)
 	}
-	return checkParserAction(cmd, action, dir, module, manifest, metadata, environ)
+	return checkParserAction(cmd, action, dir, module, manifest, metadata)
 }
 
-func checkParserAction(cmd *cobra.Command, action, dir string, module, manifest []byte, metadata parserMetadata, environ []string) error {
+func checkParserAction(cmd *cobra.Command, action, dir string, module, manifest []byte, metadata parserMetadata) error {
 	if err := checkParserFiles(dir, metadata, manifest); err != nil {
 		return err
-	}
-	if action != "verify-published" {
-		if err := checkParserModule(cmd.Context(), module, metadata.Version, environ); err != nil {
-			return err
-		}
 	}
 	if action != "check" {
 		if _, err := semver.ParseRelease(metadata.Version); err != nil {
@@ -115,8 +118,8 @@ func checkParserAction(cmd *cobra.Command, action, dir string, module, manifest 
 	return nil
 }
 
-func parserArtifact(module []byte, version string) (parserMetadata, []byte, error) {
-	m := parserMetadata{Version: version, ABI: 2, CapabilitySchema: 3, File: parserFilename, Hash: parserHash(module), Size: len(module), URL: "https://github.com/ovineko/schepherd/releases/download/v" + version + "/" + parserFilename}
+func parserArtifact(module []byte, version string, capabilities parserCapabilities) (parserMetadata, []byte, error) {
+	m := parserMetadata{Version: version, ABI: capabilities.ABI, CapabilitySchema: capabilities.SchemaVersion, File: parserFilename, Hash: parserHash(module), Size: len(module), URL: "https://github.com/ovineko/schepherd/releases/download/v" + version + "/" + parserFilename}
 	m.OCI.Ref = parserRepository
 	manifest := ocispec.Manifest{
 		SchemaVersion: 2, MediaType: ocispec.MediaTypeImageManifest, ArtifactType: parserArtifactType,

@@ -140,7 +140,7 @@ fn sourcemeta(value: &Value, response: &mut Response) -> bool {
         response.push(d);
       }
       if errors.len() > crate::limits::MAX_DIAGNOSTICS {
-        response.partial = true;
+        response.mark_partial();
       }
     }
     if response.diagnostics.len() == start {
@@ -201,7 +201,7 @@ fn check_jsonschema(value: &Value, response: &mut Response) -> bool {
       ));
     }
     if entries.len() > crate::limits::MAX_DIAGNOSTICS {
-      response.partial = true;
+      response.mark_partial();
     }
   }
   if status == "fail" && response.diagnostics.len() == start {
@@ -281,7 +281,7 @@ fn ajv(value: &Value, response: &mut Response) -> bool {
     response.push(diagnostic("ajv", &message, path, Some(keyword), true));
   }
   if errors.len() > crate::limits::MAX_DIAGNOSTICS {
-    response.partial = true;
+    response.mark_partial();
   }
   true
 }
