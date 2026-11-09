@@ -8,8 +8,8 @@
   },
   "recipe": "schepherd-prepare/2+sourcemeta-jsonschema-16.12.0",
   "catalog": {
-    "revision": "20261108.1214",
-    "digest": "sha256:684e9119065ec220ab84429474476725f19e61c1f2dc6396332ce951df6ab014",
+    "revision": "20261109.1057",
+    "digest": "sha256:952688be35470f2361b05d8f66fdb77afa6b33f2db6e397338a792d101f355f6",
     "size": 161635
   },
   "schemas": [
@@ -10122,15 +10122,15 @@
     },
     {
       "id": "dipdup-3.0",
-      "contentDigest": "sha256:a5feb65f51ba3146200d8d60933edcd7f9641554fa41ad6d24057a42c40a4c9a",
+      "contentDigest": "sha256:9ff48f11214ce311cb39d7126f1129326f84fd1e371bcfb7a5f0ea67d652c21f",
       "noticeDigest": "sha256:70cd3cfafee2de6f1829c051b9800061339439b247ecdfc86a544b88a60b96c9",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261109.1057",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/dipdup-io/dipdup/next/schemas/dipdup-3.0.json",
-            "source": "github:dipdup-io/dipdup@9aa5b2b2e56d999ee8935546389b18a9659a6191",
+            "source": "github:dipdup-io/dipdup@8af7753b99a9270ef917d78bd327b2ac01d4dcd7",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:2fe737aff497e8ad46f605ed8eb53503797b90197f1d864accfca01b5f2845f5",
@@ -10140,7 +10140,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:4d13b5c14c6a0f6a2900b0a97b1882ed17819a63dedb54fcf101ac804c7561bc",
+          "digest": "sha256:61d662954af51cc0b7f602aa2c4cb9dfb117b7a6e651e68f9172c72f19593119",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -10157,7 +10157,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/dipdup-io/dipdup/next/schemas/dipdup-3.0.json",
-          "sourceDigest": "sha256:8462d6aec57820f2ac1765fa88064f4239327928bd2f8725af350c3b78359460"
+          "sourceDigest": "sha256:d16a0d19cbd8f0a3e11c8b9332990782b32f99b07c70ac550aa7e20298380aba"
         }
       }
     },
@@ -14913,15 +14913,15 @@
     },
     {
       "id": "glsec",
-      "contentDigest": "sha256:72308abd525e551cebe03863764a2329790407ca360dd9c5c729e618f0f90f9f",
+      "contentDigest": "sha256:c195d0ef850ea31acfda3d1a4c9f3c38374346581361e637c47544fa482ededd",
       "noticeDigest": "sha256:663812e3a32b52f654a99cbdaa6450c13c47e474c59ef16c13f643bb7cdfbe4a",
       "firstRevision": "20261102.1037",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261109.1057",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/glsec/glsec/main/schema/glsec.schema.json",
-            "source": "github:glsec/glsec@10f9b77a306f034063ff55dfdff62e886ce7378c",
+            "source": "github:glsec/glsec@8872e59e6678ec4b5c02d7efe4b6439cbba37502",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -14931,7 +14931,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:a0fd3ae6bc4aa22da86fa41186b12955e42f18e529400cc86576b2bc4a06414e",
+          "digest": "sha256:461ddbc323a8ef9b1d3d2d319b35bdd2d28d001e5c63a95c9d51545fbed60cec",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -14945,7 +14945,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/glsec/glsec/main/schema/glsec.schema.json",
-          "sourceDigest": "sha256:b1ca8e6b42b2aaac33435009a4f59490b66229914fd66dda4fe1bc7890ea76e2"
+          "sourceDigest": "sha256:ffdf9019033f1dc909f2b3fcb94212c15bde815bc14dd205490fb4f5055512d8"
         }
       }
     },

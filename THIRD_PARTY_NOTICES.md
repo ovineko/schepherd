@@ -51,7 +51,7 @@ and each catalog entry records its source, source digest and license. The licens
 published schemas is [`sources/licenses.toml`](sources/licenses.toml); see
 [Publishing](docs/publishing.md#licenses).
 
-Catalog revision `20261108.1214` (manifest `sha256:684e9119065ec220ab84429474476725f19e61c1f2dc6396332ce951df6ab014`), prepared from the SchemaStore catalog at commit `ef1aebf6867f458791b9a31fbec74257d470affd`, lists 1055 schemas. Each schema is listed under every source of its content: its own document and every dependency bundled into it.
+Catalog revision `20261109.1057` (manifest `sha256:952688be35470f2361b05d8f66fdb77afa6b33f2db6e397338a792d101f355f6`), prepared from the SchemaStore catalog at commit `ef1aebf6867f458791b9a31fbec74257d470affd`, lists 1055 schemas. Each schema is listed under every source of its content: its own document and every dependency bundled into it.
 
 ### SchemaStore repository (Apache-2.0)
 
@@ -1425,7 +1425,7 @@ License detected from `LICENSE` at commit `2568944140c38aa941390d0f8e941534bf88f
 
 ### GitHub repository `dipdup-io/dipdup` (MIT)
 
-License detected from `LICENSE` at commit `9aa5b2b2e56d999ee8935546389b18a9659a6191`.
+License detected from `LICENSE` at commit `8af7753b99a9270ef917d78bd327b2ac01d4dcd7`.
 
 1 schema:
 
@@ -1625,7 +1625,7 @@ License detected from `LICENSE` at commit `2fabf99bfd18f6ddc4e80e23f970df4ce3de9
 
 ### GitHub repository `glsec/glsec` (Apache-2.0)
 
-License detected from `LICENSE` at commit `10f9b77a306f034063ff55dfdff62e886ce7378c`.
+License detected from `LICENSE` at commit `8872e59e6678ec4b5c02d7efe4b6439cbba37502`.
 
 1 schema:
 
