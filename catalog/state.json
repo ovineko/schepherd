@@ -3,14 +3,14 @@
   "source": {
     "kind": "schemastore",
     "repository": "https://github.com/SchemaStore/schemastore",
-    "commit": "202f2efd45e52dcd83acdf3f684489fa78868338",
-    "tarballDigest": "sha256:9d10263a593a36eea2ee9835c51bb24496d36ed2a454e01b329103a6569d35f3"
+    "commit": "af26ac7e94ec248966b90cd5bb6dee8b1ff59bce",
+    "tarballDigest": "sha256:20c976dd1f969d3260c412216aec95920478f0d4e79aa4f284856ca7e83ef52b"
   },
   "recipe": "schepherd-prepare/2+sourcemeta-jsonschema-16.12.0",
   "catalog": {
-    "revision": "20261116.1043",
-    "digest": "sha256:2e0ede3984d5b4cda038867d9ef93984bdc44cccebfb92577c74c931461b3840",
-    "size": 162859
+    "revision": "20261123.1151",
+    "digest": "sha256:b7523c2ead97f5f519326b6b5637d4b1eb724313deb4ddb227f58deb12f84b36",
+    "size": 163624
   },
   "schemas": [
     {
@@ -262,10 +262,10 @@
     },
     {
       "id": "abtop",
-      "contentDigest": "sha256:19491b99adf303054a15374c15c10c82d4ed2035c3c9f4c5f28eb22729ab6a6e",
+      "contentDigest": "sha256:d07aa587ac195b8a8e58fd6e6e2c949b1060a563ca1caea652d5b4b0a66e29b5",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -273,7 +273,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:0ecbaa36842efb840f4695e943dbbafb8cb39d99b4d628419dd40aa005ded72e",
+          "digest": "sha256:6d64f25b6676a2ccd8dc71dd9e42cc57672fce00560ac6f8d17088ca9c20edf7",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 887
         },
@@ -287,7 +287,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/abtop.json",
-          "sourceDigest": "sha256:ba4d137d57e573bb9f544026de5f9dfd4f33b266d2e7d20679c7db039a355cf3"
+          "sourceDigest": "sha256:a0b6dfdfa8636b9e1f4ba33069570640c24af87dd9b6592bd0e32039ffa41f43"
         }
       }
     },
@@ -447,10 +447,10 @@
     },
     {
       "id": "actionlint",
-      "contentDigest": "sha256:7633385d93de98c09bc08b978387133c510d7c6310d5e018a6ed946b32365da0",
+      "contentDigest": "sha256:1c9f3556b711c5dcc81baee0b7733acaaf31661766c32398028fe638ab9d57a8",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -458,7 +458,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:5b9f66b483c8e42c0dbca3d0d75089d4313c14ca9852d4b42ccf085b75a02aaa",
+          "digest": "sha256:e0f1315b44064df4cec3eaaddb9ca03eebc0a741d6033da3aa58c6dcffb3419e",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 887
         },
@@ -473,7 +473,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/actionlint.json",
-          "sourceDigest": "sha256:ca85d127aa23341bc0e6f4dd2a37140f4db2d781fb10872fb5d863274de9fd22"
+          "sourceDigest": "sha256:2554b7508f3db06e062905639bf6c7be368c482d78ac2a980e5f5b6268402e18"
         }
       }
     },
@@ -774,6 +774,88 @@
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/agripparc-1.4.json",
           "sourceDigest": "sha256:4296b38b130e3f2456afcb25fda14de3d955aa9d11770c4abf06fcd9655b369b"
+        }
+      }
+    },
+    {
+      "id": "ai-bom",
+      "contentDigest": "sha256:a2eb76981bc390d4cd14bea26ee570917adfb05d55281b46fff3d02a3b518c95",
+      "noticeDigest": "sha256:a860e99926fe72a6ea421b1d91c2d076a4a63b880ef1bae1a63e6f92d979e219",
+      "firstRevision": "20261123.1151",
+      "lastChangedRevision": "20261123.1151",
+      "licenseDecision": {
+        "detections": [
+          {
+            "url": "https://raw.githubusercontent.com/Presencis-com/bom-schemas/main/schemas/ai-bom.schema.json",
+            "source": "github:presencis-com/bom-schemas@07ca43c61f924dede2256fef8c68f8f83f52a73a",
+            "license": "Apache-2.0",
+            "licenseFile": "LICENSE",
+            "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "verdict": "allow"
+          }
+        ]
+      },
+      "entry": {
+        "artifact": {
+          "digest": "sha256:9c7d22b5c17bda07849fda19cd9367052bb1209b1ba56fd16f5eecd8bef8a807",
+          "mediaType": "application/vnd.oci.image.manifest.v1+json",
+          "size": 887
+        },
+        "description": "Presencis AI Bill of Materials (presencis-ai-bom-v1)",
+        "dialect": "https://json-schema.org/draft/2020-12/schema",
+        "fileMatch": [
+          "*.ai-bom.json",
+          "ai-bom.json"
+        ],
+        "id": "ai-bom",
+        "name": "Presencis AI-BOM",
+        "provenance": {
+          "license": "Apache-2.0",
+          "source": "https://raw.githubusercontent.com/Presencis-com/bom-schemas/main/schemas/ai-bom.schema.json",
+          "sourceDigest": "sha256:1a957705a74dd31dc2e37a8ac570ada8701ea91e83290bf21e2f75c463c3ca9e"
+        }
+      }
+    },
+    {
+      "id": "ai-policy",
+      "contentDigest": "sha256:08fc5821517892227042e99876f2931168dfc39be87ed9cd4725fc335962cc6f",
+      "noticeDigest": "sha256:686f500445796e3dfbfb8ddf5b7597c82d79d8893872c90304a393dcfb7fc98c",
+      "firstRevision": "20261123.1151",
+      "lastChangedRevision": "20261123.1151",
+      "licenseDecision": {
+        "detections": [
+          {
+            "url": "https://raw.githubusercontent.com/thanhtrieunguyen/ai-policy-kit/main/schema/v0.1/ai-policy.schema.json",
+            "source": "github:thanhtrieunguyen/ai-policy-kit@01dfa66ebe4110e6aa0f07a235491001f79d9d5f",
+            "license": "MIT",
+            "licenseFile": "LICENSE",
+            "licenseDigest": "sha256:b44bf9fb94ba127d44faff991138796bde8027e9d0d7fece17fd57f74ac178d2",
+            "verdict": "allow"
+          }
+        ]
+      },
+      "entry": {
+        "artifact": {
+          "digest": "sha256:c504b13fc15472a2d9a286dabb4edb74cbf350554be44d01ec5a6dd7795ad432",
+          "mediaType": "application/vnd.oci.image.manifest.v1+json",
+          "size": 914
+        },
+        "description": "AI contribution policy configuration for software repositories (ai-policy-kit)",
+        "dialect": "http://json-schema.org/draft-07/schema#",
+        "fileMatch": [
+          "ai-policy.yml",
+          "ai-policy.yaml",
+          "ai-policy.json",
+          "**/.github/ai-policy.yml",
+          "**/.github/ai-policy.yaml",
+          "**/.github/ai-policy.json"
+        ],
+        "id": "ai-policy",
+        "name": "AI Policy",
+        "provenance": {
+          "license": "MIT",
+          "source": "https://raw.githubusercontent.com/thanhtrieunguyen/ai-policy-kit/main/schema/v0.1/ai-policy.schema.json",
+          "sourceDigest": "sha256:54a258d6129ff513385c5dddac95083c56b60e982b52883e581d12adc6b3b859"
         }
       }
     },
@@ -2421,6 +2503,45 @@
       }
     },
     {
+      "id": "atago",
+      "contentDigest": "sha256:eb678a91cdf044a664af84155a629ded492e0a4898e6ee7de9379748cdad4ced",
+      "noticeDigest": "sha256:d21bd023879ae54ab588526061f6577b2ee76cc3983b079d20d51305140dd0a2",
+      "firstRevision": "20261123.1151",
+      "lastChangedRevision": "20261123.1151",
+      "licenseDecision": {
+        "detections": [
+          {
+            "url": "https://raw.githubusercontent.com/nao1215/atago/refs/heads/main/schema/atago.schema.json",
+            "source": "github:nao1215/atago@c963f89f8aa6d6e9de384b18674759484dd3586e",
+            "license": "MIT",
+            "licenseFile": "LICENSE",
+            "licenseDigest": "sha256:192d385e901927e0e4f6c16540c61525f334a732020f010d04e462fae0f8104d",
+            "verdict": "allow"
+          }
+        ]
+      },
+      "entry": {
+        "artifact": {
+          "digest": "sha256:235b1f9fd7a2a31652113c2955f9ad26f1ce6a208bf0b9120cd2e333bf2f0851",
+          "mediaType": "application/vnd.oci.image.manifest.v1+json",
+          "size": 916
+        },
+        "description": "atago black-box behavior spec files",
+        "dialect": "https://json-schema.org/draft/2020-12/schema",
+        "fileMatch": [
+          "*.atago.yaml",
+          "*.atago.yml"
+        ],
+        "id": "atago",
+        "name": "atago",
+        "provenance": {
+          "license": "MIT",
+          "source": "https://raw.githubusercontent.com/nao1215/atago/refs/heads/main/schema/atago.schema.json",
+          "sourceDigest": "sha256:f8da6854e66e9592888799e52059fc6d985dc2455733963a9ea9afa137e48463"
+        }
+      }
+    },
+    {
       "id": "attw",
       "contentDigest": "sha256:120699956d779a288853e4b6f5b0cc5f0268000a374aba3dc27bcd0733ef1e98",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
@@ -2487,10 +2608,10 @@
     },
     {
       "id": "ava",
-      "contentDigest": "sha256:9eeef879ceb1023f11371f34c17279c20efedb052d1442cda8c4ce63d4ed3ea3",
+      "contentDigest": "sha256:e50c86ea05be0d1ea8ec0685e31f9bee89af8f87cac6ae93c8ae786ea16c0128",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -2498,7 +2619,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:d9ab1b11988d707ec31009286dcf8dc729b395d2b1adbbfe172bc820c017bd59",
+          "digest": "sha256:6ce4fef931dac463bdd8f37cac9c5c61e0da0d79308263e771fbafd9b7a05739",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -2512,7 +2633,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/ava.json",
-          "sourceDigest": "sha256:3c02652299c240b152d8d30bc476dfa4bda7854132632dc9595afe53ac12ee0a"
+          "sourceDigest": "sha256:3ed729a14b7c7ac8807e8e6aef9de1a722a74b9a24bee479b969c91dde1e5e37"
         }
       }
     },
@@ -3427,15 +3548,15 @@
     },
     {
       "id": "bitmovin-encoding-template",
-      "contentDigest": "sha256:7269d61a6f4e09ca8ac3e85506471fe9b62f7a16dc287991bdc8f8632bc1c3d9",
+      "contentDigest": "sha256:ea275f2a9cba43c9c8346defd85b016d1322303101878977b83a97d3520ef705",
       "noticeDigest": "sha256:21ef9a82d5ae05c3236957cabaa8f30d6adda3ae1330d10cb283f0e60aba6a0d",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/bitmovin/bitmovin-api-sdk-examples/main/bitmovin-encoding-template.json",
-            "source": "github:bitmovin/bitmovin-api-sdk-examples@9b04628cd178648b6cb00856a2d27ff68bff6b49",
+            "source": "github:bitmovin/bitmovin-api-sdk-examples@bcc9944f72bcfebefcd0653fb21acf88bc5f6e2c",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:a5afec837f51bf18cdb84af241108fac5c06e78beba3583ae6f92ee8ce256dec",
@@ -3445,7 +3566,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:aed6113a354dff93e9d0e07fad6dec91746f73d478d95f3a3d7b788958eb4b61",
+          "digest": "sha256:21de4194db094a5f74faf362d8abb507e650dc77d7d4383e1a794379a96d3440",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -3461,7 +3582,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/bitmovin/bitmovin-api-sdk-examples/main/bitmovin-encoding-template.json",
-          "sourceDigest": "sha256:f6938fbe8ee2d9bf19342e45bdd3d731048403b349c954e11aae0dc1dbc6719f"
+          "sourceDigest": "sha256:dbb7bd15968cd2f6d2b864ee6bd9d80f9258f4a218ad714319369159e3bf6c82"
         }
       }
     },
@@ -4542,10 +4663,10 @@
     },
     {
       "id": "bunfig",
-      "contentDigest": "sha256:ff9e282be87b82c260ce9c97e5bd869ee18827b6d6a8bcd6d3a4a7d6d14e8278",
+      "contentDigest": "sha256:115655d4bd6fad327c2be3b2885eac18dd8295633e3e759edf287d87a72f5fe1",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -4553,7 +4674,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:6a9183ba0dab5fd77652243d53f024bac7cf0a96776f2535c6fbec57e7dc8665",
+          "digest": "sha256:0f244f0e0523fcdbc0820da3cacf519131c0426df07a3558a37a629ecd55e0f7",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -4567,7 +4688,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/bunfig.json",
-          "sourceDigest": "sha256:285fd376c7aa93f162b4e1d180e0488a2e1748db3a6dfe503c07b6730f865a3d"
+          "sourceDigest": "sha256:8db0104b8ae6ac1020beb6280afee6915f321d989ec4e3e3a4b6ab3eb3b7659b"
         }
       }
     },
@@ -4676,15 +4797,15 @@
     },
     {
       "id": "camelyamldsl",
-      "contentDigest": "sha256:5d80759483bfebbef33a6cf173271da1eaae10a08a9ba79077200220b5599ffa",
+      "contentDigest": "sha256:b5b3bbfa27d45d6283c58138eb46398a0971473b1bc6308e58edd3052c8fc75e",
       "noticeDigest": "sha256:0438ad5d15e3379f1a3b231f8c78262cff1858a0f342f294148eb6357b556b94",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/apache/camel/main/dsl/camel-yaml-dsl/camel-yaml-dsl/src/generated/resources/schema/camelYamlDsl.json",
-            "source": "github:apache/camel@12014575a8f2c71174a8f9f4cbef9a61e25439e8",
+            "source": "github:apache/camel@b10327304f15638f52157e48259aa523645e6d01",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE.txt",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -4696,7 +4817,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:140001314be2131424b46bbe2b3dea83df2c634864bf1242cb01b2bf9a57b059",
+          "digest": "sha256:f3537396640774fa8e16f1b9a303338f2cafae6e19ad57933fd77bb1cabb3fc0",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -4713,7 +4834,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/apache/camel/main/dsl/camel-yaml-dsl/camel-yaml-dsl/src/generated/resources/schema/camelYamlDsl.json",
-          "sourceDigest": "sha256:ffa30a06375defbc77b834f6e13b61b8748170a303c843f0fd6aaf90cbedfc70"
+          "sourceDigest": "sha256:e03be4918f31d95d1c2469eb7b7900e673250ef22b1a42622f3f994cc39290da"
         }
       }
     },
@@ -4970,6 +5091,45 @@
           "license": "ISC",
           "source": "https://raw.githubusercontent.com/dwp/schemas/main/exchange/publishing-tools/catalogue-entry-schema.json",
           "sourceDigest": "sha256:7cf0c8111be5fefa76b3a92d11f7832043d1b6c04bd9f3e2494f808d3a592a7c"
+        }
+      }
+    },
+    {
+      "id": "cbom",
+      "contentDigest": "sha256:857dd500823dfdfb440090be4c1d8cfde983f959b1b0b18a39efa601bbddbac6",
+      "noticeDigest": "sha256:a860e99926fe72a6ea421b1d91c2d076a4a63b880ef1bae1a63e6f92d979e219",
+      "firstRevision": "20261123.1151",
+      "lastChangedRevision": "20261123.1151",
+      "licenseDecision": {
+        "detections": [
+          {
+            "url": "https://raw.githubusercontent.com/Presencis-com/bom-schemas/main/schemas/cbom.schema.json",
+            "source": "github:presencis-com/bom-schemas@07ca43c61f924dede2256fef8c68f8f83f52a73a",
+            "license": "Apache-2.0",
+            "licenseFile": "LICENSE",
+            "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "verdict": "allow"
+          }
+        ]
+      },
+      "entry": {
+        "artifact": {
+          "digest": "sha256:228dc984532203bc5965c467154dbf6ae57072c74a6b79799fd7be5f0381b4fc",
+          "mediaType": "application/vnd.oci.image.manifest.v1+json",
+          "size": 887
+        },
+        "description": "Presencis Cryptographic Bill of Materials (presencis-cbom-v1)",
+        "dialect": "https://json-schema.org/draft/2020-12/schema",
+        "fileMatch": [
+          "*.cbom.json",
+          "cbom.json"
+        ],
+        "id": "cbom",
+        "name": "Presencis CBOM",
+        "provenance": {
+          "license": "Apache-2.0",
+          "source": "https://raw.githubusercontent.com/Presencis-com/bom-schemas/main/schemas/cbom.schema.json",
+          "sourceDigest": "sha256:731d08cedc4dd68c80c7eff77d79fc55fb485cbfd7abde2fb7c0aaa8c52af221"
         }
       }
     },
@@ -5920,15 +6080,15 @@
     },
     {
       "id": "clab",
-      "contentDigest": "sha256:e4fc9032f934bf0f707bb02a5213e5d383c076d142782893ba39541039b7bf7e",
+      "contentDigest": "sha256:9f771d524f689e989f7d5fb76adf4d852dffe200b610028ca55cc0458fe340a9",
       "noticeDigest": "sha256:34490bdbcff33f509db99e795bfe85aff162858f4263b702e6343fca615e4aa5",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/srl-labs/containerlab/main/schemas/clab.schema.json",
-            "source": "github:srl-labs/containerlab@80224c6d69f530fc3ce173dc06caa02d25b4ddbf",
+            "source": "github:srl-labs/containerlab@58ef6910e7165169cff3725c29529b635e635e59",
             "license": "BSD-3-Clause",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfa4516b59e739451d86b192c5e4aa15c42108e889e0eeceaa01e4aa956acbb7",
@@ -5938,7 +6098,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:af2a883097d05764c2bcc756fa2ffcd9db6b950c11bef66c43684cfcdc32c745",
+          "digest": "sha256:9edf506d3f0059422b91abc415ac7c55f2819b9498a1eeb374b48272d686093c",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -5955,7 +6115,7 @@
         "provenance": {
           "license": "BSD-3-Clause",
           "source": "https://raw.githubusercontent.com/srl-labs/containerlab/main/schemas/clab.schema.json",
-          "sourceDigest": "sha256:9e47d1ade0422dfb14671715a91805fbc88c282f81e4f719a7df139c5984d536"
+          "sourceDigest": "sha256:8e96192e49ae2b00218cd0623dfc25253aa9f670bc7af12f9161c6b835322613"
         }
       }
     },
@@ -6345,10 +6505,10 @@
     },
     {
       "id": "cloudbuild",
-      "contentDigest": "sha256:5a476d006c5f28a241c492c88da909498e29895178b5a7564c2b1adc17d35341",
+      "contentDigest": "sha256:a28014d02f01a2e1d1345dfcb44677a975712f72b1a7fdd015ae4126debcb0ed",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -6356,7 +6516,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:ef33627dc4a8fcd29e279512658dcfff97396febc25fb287879425298c77c92e",
+          "digest": "sha256:47b7892c16098de668098ca543f40b4bd81085d43ad4bbf4c175660a40c02f3f",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -6375,7 +6535,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/cloudbuild.json",
-          "sourceDigest": "sha256:68524c6a0a83f91767cabe96ec92bd59924c336f114551e5254027d14dbdc1f3"
+          "sourceDigest": "sha256:9c7a5acad40fa4c95e078e0cfd699ece7fe737330a6ef763657716d978caa1c3"
         }
       }
     },
@@ -6671,10 +6831,10 @@
     },
     {
       "id": "codecov",
-      "contentDigest": "sha256:eb68d572a0c12bb556de3c67e737846a4b905948092ba0e3722242cd828ffbd4",
+      "contentDigest": "sha256:7c01f50d8584d568599883ad604dc9bb26472ed494f13d3c177a36b814145f4c",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -6682,7 +6842,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:1c59dc097fb50b8c07ce0567230819a76f6e25c501f06e51145c58362954f403",
+          "digest": "sha256:ec5d09cdcbf5a9062c091a13411e471c02c4d486cf70b3abaea3698abd13e12b",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -6701,7 +6861,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/codecov.json",
-          "sourceDigest": "sha256:b1c166a4d737b85a58c6e20a0063f85a0e279fd0787f1aad2d7926b7e5d49c2c"
+          "sourceDigest": "sha256:a63930e1c1fe07013ee0e2547773dcacec4ee2369476816d1368449ba247b13f"
         }
       }
     },
@@ -7263,15 +7423,15 @@
     },
     {
       "id": "compose-spec",
-      "contentDigest": "sha256:bc5b610363f8c5e5df57fd247ca719ab3384b62af764d77fdc9775afb7177ae8",
+      "contentDigest": "sha256:d6e00e6ec4a23b26397e001eea565f5db58b6176fd50c63b7cbc1a248a25ffb1",
       "noticeDigest": "sha256:31471621ec144087c3ea37d6a0497a726c45b1e5e1c5eb303b47114d65824f07",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/compose-spec/compose-go/master/schema/compose-spec.json",
-            "source": "github:compose-spec/compose-go@6ac9323ede62dd526aaf1bc18f07ee1ce3596d42",
+            "source": "github:compose-spec/compose-go@3423c006297ef92ab8629e491aefd888600c68ff",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:0cf8ecf3c6408cd2728532ce55ac3b5daca4f645d3458e3cc0bfb26dbccd2888",
@@ -7283,7 +7443,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:ce65fac42f64f76bdd0443e0ed2f8eee3d086168b4b55908993bac81559189cd",
+          "digest": "sha256:369847b99852e208ddf8b26d43873b8e24dd47f1ca5fdd8a5f39361ea949e9b7",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -7304,7 +7464,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/compose-spec/compose-go/master/schema/compose-spec.json",
-          "sourceDigest": "sha256:d549057ebc2925f39f62799eab0db7b9e2c18b35b6c00595199116da3ed10e64"
+          "sourceDigest": "sha256:49eb9a1e1de41315949f302f8e6221bb42acd6038977f7c0974e38596ec4cdf6"
         }
       }
     },
@@ -7348,25 +7508,25 @@
     },
     {
       "id": "config-2",
-      "contentDigest": "sha256:87b013ff188c9004cb86c625b31ac41d8a65b50df5bfd9d2d926a70c812589b0",
-      "noticeDigest": "sha256:b2aeaccabbac0a615226f400eb853b263fd0ecaa79d14133ddf14ee7477c188d",
+      "contentDigest": "sha256:9cd5ad4873a1b71d744bb8eb46a6d3a101a009bb50994880fd04b6d4c47eadf2",
+      "noticeDigest": "sha256:fe43c8acad1f62ec0d511db1aa62fc782c90973a31c200c5ec4ac3d7dfff30fc",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/hudson-trading/slang-server/refs/heads/main/clients/vscode/resources/config.schema.json",
-            "source": "github:hudson-trading/slang-server@60857ce8b4a01b6d11443fb1af1eb41c261c702c",
+            "source": "github:hudson-trading/slang-server@4349e86487d3766b77f156a01fbc695e4854007f",
             "license": "MIT",
             "licenseFile": "LICENSE",
-            "licenseDigest": "sha256:58d91ba3f33e833a02a69199a92c1c327000fcb859973e488322317396ddc67a",
+            "licenseDigest": "sha256:b091e882c882e86cfd795490204dde890db180eb3d30a853fb2b181a3053602e",
             "verdict": "allow"
           }
         ]
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:7dd930de061f17d561245ac78e8feed48890e13d18d89277c6e6bc3e6d9bdffe",
+          "digest": "sha256:0e77292caa93ba74c5c0b1f8d7d6d1d7489843eeaf25f346a4ec775a097d8144",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 914
         },
@@ -7381,7 +7541,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/hudson-trading/slang-server/refs/heads/main/clients/vscode/resources/config.schema.json",
-          "sourceDigest": "sha256:860fa8584c7c366482ad88870036fa5bd98860d4560759bdad59fdf5ed459ecc"
+          "sourceDigest": "sha256:f1fbac83d55a76bff89be4ec62f66d11b36a1bbb8fdc0264ecebd9b025e97100"
         }
       }
     },
@@ -7880,15 +8040,15 @@
     },
     {
       "id": "config-schema-4",
-      "contentDigest": "sha256:067195a66c151a57448dfac06b74eef0289868bc33841cb8ed4025cf58ec3e0a",
+      "contentDigest": "sha256:a235ebd917e0e3c763b86f505cb3beec8ee5eaf732169710f7934300aebb6d59",
       "noticeDigest": "sha256:db920bbe63fcefbea589f7e743470823800ca385b26d8d35b8e32af96f7d8626",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261102.1037",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/kometa-team/kometa/nightly/json-schema/config-schema.json",
-            "source": "github:kometa-team/kometa@61fe25869b8ac5d99096213a8f33c9f981c3a11e",
+            "source": "github:kometa-team/kometa@ba967d9f01fde7cdf983ac9f9dc6b1dcd205b3e7",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:ec4e791bbefa93c524a162a29c1ccb7cefb182225c0372aa913182874afaccb5",
@@ -7898,7 +8058,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:42cc6bda21ead23506d259d123ef3331c4c3e7c78a1de44ce814c31367435139",
+          "digest": "sha256:f242383d81ed5b4e64bde14b812646d15719de280cb3fd710697b566b132ff20",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -7909,21 +8069,21 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/kometa-team/kometa/nightly/json-schema/config-schema.json",
-          "sourceDigest": "sha256:6cd916473c10b9a938e61b272429f60bd6053f5a3913d291aa8c0bb4e4d8692e"
+          "sourceDigest": "sha256:e04d262a1b8c3db9bd6e9ba770f739fdc0af8208584baa6e347a53f9d8913b60"
         }
       }
     },
     {
       "id": "config-schema-5",
-      "contentDigest": "sha256:239ac906cfc6408721d35bb238dcaef2e04240fb3327bad7ef84c0c3681ecb16",
+      "contentDigest": "sha256:fe8c2641893742cfa3e96956645c977f74b752d839ad77a35f51b4aa0ae57888",
       "noticeDigest": "sha256:d70e2d0e68b84df9ba5e988dd6025d35a654fe5d15932f2c26e7b40ee234ba3f",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/shopware/platform/trunk/config-schema.json",
-            "source": "github:shopware/platform@74b3dd0e4c0d553eda28c2acb0218fb702728088",
+            "source": "github:shopware/platform@cd82d5c58f8bafc8757655f12f573f0127ab544e",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:8f1a984e0b8e22a4f4e0bab9f50e56ee24f02a817b49bcd8dfba014d7e9d0c6f",
@@ -7933,7 +8093,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:695462438d5cc36fad78ac2754bd5b92b74e891dffb78749e2b48ba0e91a8404",
+          "digest": "sha256:b8b0a5a117d0a9e3c2eaf5beeb079dfc7720fdc659fa2f94f9b031416a1fa400",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -7948,7 +8108,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/shopware/platform/trunk/config-schema.json",
-          "sourceDigest": "sha256:745ed0188455ea646b37e0d7b1afe32d07399dc05fd3ecd45c4c51124236489a"
+          "sourceDigest": "sha256:c82afc2725978c3ab260894b26bcc58b87ffd5f18e2f50268ccbbd129e617f3a"
         }
       }
     },
@@ -8223,15 +8383,15 @@
     },
     {
       "id": "configuration_schema",
-      "contentDigest": "sha256:08d35ecee560737c4e9f16a56e675f0eb1036bb33bfe2d88f5f5b3bfdf9d90ea",
+      "contentDigest": "sha256:68f5f2a6d945122db007bd88337d104cb60e8d82ccad6bf2576665a407b65e39",
       "noticeDigest": "sha256:402d2314357b73fda5447c4faab8e9c5a7a49c3c111c5c9b6655e9eeffe39de0",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261012.1017",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/oxc-project/oxc/refs/heads/main/npm/oxfmt/configuration_schema.json",
-            "source": "github:oxc-project/oxc@1e4c6ee7761148c25c36aa6119fe110f3b4c4f4c",
+            "source": "github:oxc-project/oxc@91608e6dc7687839515388e56f87b3a822d3545d",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3",
@@ -8241,7 +8401,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:9993919bf8fdf3f7ecaf7abd9ff49d22793398dc7f3be8a6c229706a784a3f17",
+          "digest": "sha256:efc26af3b7ec4efc2ab5d9a97bdc58f133ca89f4c64ba09560e822718ce25859",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -8256,21 +8416,21 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/oxc-project/oxc/refs/heads/main/npm/oxfmt/configuration_schema.json",
-          "sourceDigest": "sha256:6598c0dbf74d88da4ae2dc275522aeb980e15173f7a9993a1fa06f1c9792d034"
+          "sourceDigest": "sha256:5dbc317529e4ad09024c564ca266fcc6e9bf6c4f70bea6de8aff1b19ae1f0fb8"
         }
       }
     },
     {
       "id": "configuration_schema-raw-githubusercontent-com",
-      "contentDigest": "sha256:5377ca37c862b17af61f412b2f9d6421a5ed7bf84826233703398edc70c79372",
+      "contentDigest": "sha256:2e281ffbfa4c4f67dd51e00b4bf99e9ca8c894eedbef769c79e00a44097ecefb",
       "noticeDigest": "sha256:402d2314357b73fda5447c4faab8e9c5a7a49c3c111c5c9b6655e9eeffe39de0",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/oxc-project/oxc/refs/heads/main/npm/oxlint/configuration_schema.json",
-            "source": "github:oxc-project/oxc@8f095171420356fd5c32007a523387c939fb1496",
+            "source": "github:oxc-project/oxc@91608e6dc7687839515388e56f87b3a822d3545d",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3",
@@ -8280,7 +8440,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:0c923ac36dd942435813336f5eb4f46b0cf4d6d47aec6d943a7043858ee963f0",
+          "digest": "sha256:8041fbaf1db3b35be3558dbf734d6d918e9d00ed2247ff5ebc23e088693a3e8b",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -8295,7 +8455,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/oxc-project/oxc/refs/heads/main/npm/oxlint/configuration_schema.json",
-          "sourceDigest": "sha256:800d41e2130d85de1719f5d14be941a6cf3b5ab70090e0293318791639ae3701"
+          "sourceDigest": "sha256:16cf965d84ad3c7ab4bd228daa72ba7698b463aaf7305f235cc8a5a9cb5ce82c"
         }
       }
     },
@@ -8651,10 +8811,10 @@
     },
     {
       "id": "crucible-code-schema",
-      "contentDigest": "sha256:f759c552ab53ae9f55c750808f3dc3633d4c1517aef0df27c608b8321dad98b0",
+      "contentDigest": "sha256:5a7511407bb091d92a58f9f074d8ba201cac1314dd5058c9714785cc1a880b70",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -8662,7 +8822,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:f83bcbe1dafb1b29a0f887eebe579d86d9fdfe5e7c5035e9341a0ce434bdb7a3",
+          "digest": "sha256:92a7d662eb57728a5e13ee82c753194bb2c124d5c3e9c56a6fed631ea7bcb625",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -8677,7 +8837,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/crucible-code-schema.json",
-          "sourceDigest": "sha256:a01d702e9855ade3173fc58a41c226d5ecd806efeee2e741836afd1a3ff01fd5"
+          "sourceDigest": "sha256:d19fddbbbb8e7441af39f714f6ddee2f7f39743db970bfd11d89451830c6dcc9"
         }
       }
     },
@@ -9771,10 +9931,10 @@
     },
     {
       "id": "dependabot-2.0",
-      "contentDigest": "sha256:67e74f0a09b5d6fe67fb78a2fd8b918540fcee748f556439903ba9eb18f7447c",
+      "contentDigest": "sha256:a3f32f226012e4f359e71cd2288a3198d2dadfeabb0c4dd400c710ea47a6ece7",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -9782,7 +9942,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:6f6ef9d4bfc0e82a923541f39babdeb85834d1e11ce340c178c7c59449d10f69",
+          "digest": "sha256:87323bea4b4aff6f6ab22c479d58b174a957669457883807b83b1e7a81dd77f3",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -9799,7 +9959,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/dependabot-2.0.json",
-          "sourceDigest": "sha256:f310bfb4960eea6a5fb7d75de54ab49ba36f947757c8f4d5de88d3ea8ac51d3f"
+          "sourceDigest": "sha256:891027089ecaeaf235ba78fa6ec255542a49465e6cb71ffb92606a2d9edbc1ea"
         }
       }
     },
@@ -10236,10 +10396,10 @@
     },
     {
       "id": "docker-bake",
-      "contentDigest": "sha256:9a7bf7b3a80a02111c438fcba744cc53ba6e2f5e707789cfbe6bf6c9e99c30c9",
+      "contentDigest": "sha256:dc310c7db954e43caa1da550ccc15da82b5744d008416b50fb18a69099702f9b",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -10247,9 +10407,9 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:75f027d8a1dd3c29843f7b1bd0998f80a2db7fa58cb2e0fb1267e50780defae7",
+          "digest": "sha256:8fc0fd762c2adcacebc0d541845c263006eb5b4f85cf3c376a8fbef3775a752f",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
-          "size": 915
+          "size": 916
         },
         "description": "Docker Bake configuration file. Documentation: https://docs.docker.com/build/bake/reference",
         "dialect": "http://json-schema.org/draft-07/schema#",
@@ -10262,7 +10422,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/docker-bake.json",
-          "sourceDigest": "sha256:386955285af14c13ac84818d49b6306e9a62827f458b55fa3950ea5053cb250e"
+          "sourceDigest": "sha256:69d2f55caa7c3850a9d92bf817b8dd9d45882842441f266b42cf0446b58de1af"
         }
       }
     },
@@ -13201,15 +13361,15 @@
     },
     {
       "id": "firebase-config",
-      "contentDigest": "sha256:01f6e9d1f3bbbe05f553707bd286cb6efaeb3e4a55a8e3f8a55ae6f91ef1a716",
+      "contentDigest": "sha256:466ca5e88d01b0c0bfec725fdfe3edd18a5ec9277295437474a1c1ec39a2ce2d",
       "noticeDigest": "sha256:987a8cd1a9f7ed68065c0f988e69b4b21d7d444634930b8d539cc249ddb442f1",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261005.1004",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
-            "source": "github:firebase/firebase-tools@7f7747228cc583ecdaf053ac44f238bffc77f6f0",
+            "source": "github:firebase/firebase-tools@a134d3f8cc868955b92115e7ec14eea4ac261e1d",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:e8d835c0d2deb1a9e05dab921fd932fba100f1c60fda849af35b09ea2e3212a5",
@@ -13219,7 +13379,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:220d17e62da4a04d586b02efaf1545e03f2620d4aa72e9502cc4467c8960cb25",
+          "digest": "sha256:162e6ae614b228d400651036e68d2fa51950dbae4073bf2083a2a39cef1054d2",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -13233,7 +13393,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
-          "sourceDigest": "sha256:91f322c3c86517c195606e47e42440ecdc284715a82adba618adf9e17effbeb6"
+          "sourceDigest": "sha256:f7bd0ff19767b2d115adea1b6caf1163b1ff144fa10a79b9392997025b005f4e"
         }
       }
     },
@@ -13344,15 +13504,15 @@
     },
     {
       "id": "fleet.yaml",
-      "contentDigest": "sha256:cb74669993f004dc964f592c975a272d1a847e5d80724f1c3b124aa4bde91593",
+      "contentDigest": "sha256:98e344c2a197c5c2ff47c907aaa76ced435ffeeebae24a19fd9c452941fc62bb",
       "noticeDigest": "sha256:9b9a0abf13475bea3f5afda2bf2c4e9078c5ec93745ef045051c82a3ebd3b36f",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/rancher/fleet/main/schemas/fleet.yaml.json",
-            "source": "github:rancher/fleet@032a89d755b5f686d257a7525cbf11bd9e16ae3b",
+            "source": "github:rancher/fleet@cf57d83cff28d9096c3793be8f9d538717ff320d",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0",
@@ -13362,7 +13522,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:5263575e5cf0625c2f3bf13c97b9ebf826030ca96f0ba7b48d465a16a9ebbc65",
+          "digest": "sha256:4c126d0de5813d9c0d0b2057d0c8ed9eb0fd24c0d5752adfd85d14cd352674b8",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -13376,7 +13536,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/rancher/fleet/main/schemas/fleet.yaml.json",
-          "sourceDigest": "sha256:d34749fd2385ad3ff08403641b679d06ff721fe73a489bd6ef75505c00cd9b8b"
+          "sourceDigest": "sha256:1611920aaa569b17faadd135033a154bd8aedb94bb8d34049bf765660ad86ede"
         }
       }
     },
@@ -14717,10 +14877,10 @@
     },
     {
       "id": "github-workflow",
-      "contentDigest": "sha256:f508d8de0ebfb2eec577de5ff775b3d9ec3757b76c7bbc8b337bcac48cae881e",
+      "contentDigest": "sha256:33b1af040eac7d1be7f346604143ed65149f1bbf7c7c7e0ba0bf0790e9118ad3",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -14728,7 +14888,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:6b33bad2b0e142c4256eb1b5ddece62eee7e41adc31eea67d569887bb2b08bc7",
+          "digest": "sha256:fbb7362fabb2b99ed2c1f97cdd19569a5d450991b0a80a29ae986ee46bb5688f",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -14747,7 +14907,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/github-workflow.json",
-          "sourceDigest": "sha256:0528a890c1a6f4209444c421dbb752888a934a540f2a677146d78ed7f2321cbf"
+          "sourceDigest": "sha256:dc7058e3ec7d8bd25530d63120544f2b0b8331c0ca34db0ec0850fe8e8aa5560"
         }
       }
     },
@@ -14955,15 +15115,15 @@
     },
     {
       "id": "glsec",
-      "contentDigest": "sha256:84253985391798b8c4d1f7b884d3e2326628800d9baf62ba0e8b1d59ec63868d",
+      "contentDigest": "sha256:2f5d9bfbe43b5e1d08e08507179d7ddb6f49d03c8cd7d2061a8d8532ade436f3",
       "noticeDigest": "sha256:663812e3a32b52f654a99cbdaa6450c13c47e474c59ef16c13f643bb7cdfbe4a",
       "firstRevision": "20261102.1037",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/glsec/glsec/main/schema/glsec.schema.json",
-            "source": "github:glsec/glsec@f7c43ea7ab9da01306e020e800ea6a82b1a6701b",
+            "source": "github:glsec/glsec@2bcb531f34345d57c1dc1b922ddc4413bfae39c6",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -14973,7 +15133,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:0e0d2f283cda478f8926ebe3ec397e119de234a71b92753b37f85ab06c0c77e6",
+          "digest": "sha256:7f90b8dd5bf512b28e9d9f4094e366eb730b1cfbe7b006d2710b2934b6188731",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -14987,7 +15147,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/glsec/glsec/main/schema/glsec.schema.json",
-          "sourceDigest": "sha256:d91a862e5b43a7867c5433bd67229552c6f4a46a3114c050e1d86738499ecf4e"
+          "sourceDigest": "sha256:6cb946ef8591fb1a9208ca543e19ffa0a4325d20b6ab91935c9e85e8462f6703"
         }
       }
     },
@@ -15919,15 +16079,15 @@
     },
     {
       "id": "hassette",
-      "contentDigest": "sha256:41918c2fd868a9ee2aa875a45aec515633c8ec7413124d901fbbd44c13454cb1",
+      "contentDigest": "sha256:461ad85808f4f9cb6ff3b86c73c985e19ef45547d9effec43583905b9e5c5ecf",
       "noticeDigest": "sha256:2b7172789a7e5603bc99c14d4b536e637c09b10217a4d98570096b1809a50c01",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/NodeJSmith/hassette/main/hassette.schema.json",
-            "source": "github:nodejsmith/hassette@4c84f493d4d39596d66e0ef863772794ce0ba31e",
+            "source": "github:nodejsmith/hassette@9c1c9732b2e2ad10afe3aecfc2fad0604550a996",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:1552e7db2180c54a37bad4201531149d6daed98f8a21b8b1e24929ad6355cd06",
@@ -15937,7 +16097,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:459c03528cd1570408c3e4a191200829c655c8d474c77745305722b284b8f179",
+          "digest": "sha256:1b42f0ce06947e261a2ebefaa172c823f9360f8e0367e50a774fd09a0995ce5f",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -15951,7 +16111,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/NodeJSmith/hassette/main/hassette.schema.json",
-          "sourceDigest": "sha256:f514861a7b18cf2335c2493983aba7a1def322006c7eb96ef094f31a1d5e3469"
+          "sourceDigest": "sha256:f0860c6fa9835cb6532db5378546f4e202981bc3c2bd5cf05a39d6d959aacf2a"
         }
       }
     },
@@ -16676,15 +16836,15 @@
     },
     {
       "id": "io-package",
-      "contentDigest": "sha256:a36e5d5afec6cdc1313ca53e27961696ff3212d84d7054fa0f51e390215c0079",
+      "contentDigest": "sha256:807a9c9375e38d1274fd7f8881f869d7bed377005b79cd25a73f689d1351b2ba",
       "noticeDigest": "sha256:00f03e3d6cfad8168dcf6f82fa4c78e177dae19a34e1362168cae5a8f0a067f3",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/ioBroker/ioBroker.js-controller/master/schemas/io-package.json",
-            "source": "github:iobroker/iobroker.js-controller@b0cc1fafe2aef029f3e5796e6fa4d41c4e9bae0f",
+            "source": "github:iobroker/iobroker.js-controller@4860153a4430a5e8e0885ba242b5552f4c9c30ed",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:315fb419f7d7f93e32f19e78fb84dabe20e39a5e5b9fa1ed7f5abd2c30204780",
@@ -16694,7 +16854,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:4411e9b7f1108b495057fb3347e6663b2cde1c0c7606d85fc96a2f31f5d87793",
+          "digest": "sha256:ee1beb08b656ef92e49255002ace09009052c39e1c12cd010c276cfba29f6d8b",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -16708,7 +16868,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/ioBroker/ioBroker.js-controller/master/schemas/io-package.json",
-          "sourceDigest": "sha256:5e87dc9219ef473716867acda21ce1a2035cecedd780c3a7499772a3392712a0"
+          "sourceDigest": "sha256:196bd3d85165c7a8847a031b44aeccbf953df38e7ad940cbc0ce29a5a6bb97f9"
         }
       }
     },
@@ -17258,10 +17418,10 @@
     },
     {
       "id": "jscpd",
-      "contentDigest": "sha256:dc4f0f1c5e05c5b6f101a5373bfc57cae81640d161ed7f963bc7c9dbe9c42702",
+      "contentDigest": "sha256:f8dfb672ddac8e082efa4c1e32ba2f62295a6132621142b06579096ce98717b5",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -17269,7 +17429,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:0a4ee098029d0514ffd87f0299eec0b2cb50e340e1c4738dc8e8d8fdb9803dc5",
+          "digest": "sha256:e2c757f8902754ef2729a89d00d285ae38ba8475b032d86edc458e8b04e65a0b",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -17283,7 +17443,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/jscpd.json",
-          "sourceDigest": "sha256:c4451c972dd7c5040375d01279d1e777f1cf672f0e227e2ea92e3ac4b106cfd7"
+          "sourceDigest": "sha256:57a29676d1a84d660803b8e5b6cdcee02400169c66d7589df4965dda83edc1f4"
         }
       }
     },
@@ -17449,15 +17609,15 @@
     },
     {
       "id": "jsonconfig",
-      "contentDigest": "sha256:5ac372813c065a023d1aa8ee527ef600d8cff42722adfca6e4a40e6e7d1dc30e",
+      "contentDigest": "sha256:0cc88d37226e041477fcc24171e595b697a10a34ed808aded32299175891028f",
       "noticeDigest": "sha256:1630ae82e37d576cc4255c710d01fe2ddd99128144ab11dceb60180ddb90ba35",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/ioBroker/json-config/main/schemas/jsonConfig.json",
-            "source": "github:iobroker/json-config@7c355a7868bdb1aa0b31fc1d1a33a8d6dbf33a16",
+            "source": "github:iobroker/json-config@0addf3510038c6d962b27f401d5a1f6ce2faf3ce",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:4f1d8e2a6ad41e799b296288cf457da642ba75e1f2f04853b2e06fb2547236f9",
@@ -17467,7 +17627,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:c35137a1d7d83b339ab9c8637f5eafb239fd03c1eb4251570223377c587ab9d2",
+          "digest": "sha256:ffa2a1408a564fd4f2fdc87f4a0f64bf276153fc6d18b228171490af51a36b2d",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -17483,7 +17643,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/ioBroker/json-config/main/schemas/jsonConfig.json",
-          "sourceDigest": "sha256:6efdd1da0fae2aece5116087a075448c3fb8fa8e59c306840639b2b05ffca41f"
+          "sourceDigest": "sha256:ff69980fce1a1f603a9eebe10d11356d9bc55eaa5358da731235bc77e296d1c9"
         }
       }
     },
@@ -17712,10 +17872,10 @@
     },
     {
       "id": "karakum-schema",
-      "contentDigest": "sha256:0166e35276633e9da2096760be76bc7e8748231e600c61ad68496ceb45b32db7",
+      "contentDigest": "sha256:59ad392fd69ef47aae64e6d6aa935a4be064b2533cfe4f54c676dab163fc8ba6",
       "noticeDigest": "sha256:e3e1867fb2cf22d1d1986c6d86895d30d0a2b25ec3564ade745d6747582de949",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -17723,7 +17883,7 @@
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/karakum-team/karakum/master/karakum-schema/karakum-schema.json",
-            "source": "github:karakum-team/karakum@82dd0900e688a4af2109c9a4b79343ace7715fdb",
+            "source": "github:karakum-team/karakum@64c35307615e4a8b45af736cbb1a2c6afbf8861c",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
@@ -17733,7 +17893,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:114e1b7698c7f8fe27b78d2f8ce0ec7422efa917bfa082a6e8472a8136db7c07",
+          "digest": "sha256:013ad83cdf8dcf7de1612da7d1c1f1064c0333553c2cd1795af545f512dcea5c",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -17747,7 +17907,7 @@
         "provenance": {
           "dependencies": [
             {
-              "digest": "sha256:9e9599c2e6021574483e3a802eb075c872be1f5b4185ad45da03d33edce3c2b1",
+              "digest": "sha256:71ad60f305bfc680085c45e4b2fe2bad01dd8a9994ac7eb55f10b53dc37209bc",
               "source": "https://json.schemastore.org/tsconfig"
             }
           ],
@@ -19557,15 +19717,15 @@
     },
     {
       "id": "markdownlint-config-schema",
-      "contentDigest": "sha256:6e2df3ac6b43636e3d95aea33a6a0767cb1d015346c17d519c2a5537277f47fc",
+      "contentDigest": "sha256:b81c2b2518cdfd6bce42e80e47638a4808997e73b5c436c501c6cb3f7796b1a4",
       "noticeDigest": "sha256:5155ca1fb7b3e2c8785f944ba98bab0ac9b1b94e169706ec98b59011d4556e40",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
-            "source": "github:davidanson/markdownlint@bf7bd390f813485e46d0386af8e2d7f99781272f",
+            "source": "github:davidanson/markdownlint@92992da11c2da77f8c4261378563098f3dc77f80",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cdc3c1fb00ee139442c915e98afac039223569a00527e9f7aefc54f92019aec4",
@@ -19575,7 +19735,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:98d3c5504333d3577b96a31d454d1451e30633e02431c6979d3fff3820553487",
+          "digest": "sha256:cebbda0b0f280d06cf1133b1d76d6db38996b4a4ff1ef7822c16869f45b4dd00",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -19593,7 +19753,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/DavidAnson/markdownlint/main/schema/markdownlint-config-schema.json",
-          "sourceDigest": "sha256:762d8bed9b4d0aaa65ca652f0f04b7056ea62dce50635964f064974fcf782c1f"
+          "sourceDigest": "sha256:2b71a94f5e70e89d455d017f89d3d8063c9261650928fb444e6c108fd28cbfba"
         }
       }
     },
@@ -19965,15 +20125,15 @@
     },
     {
       "id": "meta-schema-raw-githubusercontent-com",
-      "contentDigest": "sha256:1410e77445457a7cfdd83410f2e2030a505a17f9d0f99ee1193dfc68f46ef25a",
+      "contentDigest": "sha256:08b229f3ba0ad43240c53fd4f640bbe6a707ec89ecaa058a032b68fa86de4240",
       "noticeDigest": "sha256:bc25a9c56cc297f63c6173ed507fe609a73edecc616a1a91a41306c4d4e58a8d",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json",
-            "source": "github:nf-core/modules@ed980491ca81929e5adc438923e7beef7e251d14",
+            "source": "github:nf-core/modules@02e51c74857608c8d30af2282e7aa42146a5784f",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:0227425f8337b6dd85ddeb2de77d1a028dc0df4ca213dd1bdc8abd4f455fba7c",
@@ -19983,7 +20143,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:449ecd76691de59bd931fca049e4820da06b6bda005eef6adf85489d2d29f44f",
+          "digest": "sha256:76429bc41b321e1aa3eba4cdf0c8b9fdde3b429ec9438de3910c4479a3473b76",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 914
         },
@@ -19997,7 +20157,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json",
-          "sourceDigest": "sha256:44a48b9ca9bf1642e50d2b6d64411dcd60f8ddb63398fc0a2790f4e56c63108a"
+          "sourceDigest": "sha256:9edbae588c192aa81298acb164fa70357883cc7b7b5c5f0bde981424dfdc9c56"
         }
       }
     },
@@ -22024,10 +22184,10 @@
     },
     {
       "id": "mtaext",
-      "contentDigest": "sha256:8ebcbc35f4010c03c26375c41ffb571ffab34732f67cdf647ca4db178351a903",
+      "contentDigest": "sha256:edea51cd70b20de0a7d52ba356f773f7ac71470aef808be3004bd74e4642c999",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -22035,7 +22195,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:57e07456100bff3c92c74c53f5868eee9556e5de71db8c1aef46a23db68499f4",
+          "digest": "sha256:a22c0d68a63455a38d7f0d59df014f6c556d26f68d9863a0844ca2adf7e14eb6",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -22055,7 +22215,7 @@
           ],
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/mtaext.json",
-          "sourceDigest": "sha256:bbf0e49439d78c9c25523f5411228d1115da815dc27e813b7430e1f6073ea37c"
+          "sourceDigest": "sha256:08878b76970dbde16432f55cb31136d4317ecdbdc23bbc3b354876d8a657f2f1"
         }
       }
     },
@@ -22165,10 +22325,10 @@
     },
     {
       "id": "netlify",
-      "contentDigest": "sha256:115fccc4bbc1073db988bf6353704b6fa53504bddc79133b0d69311454f00089",
+      "contentDigest": "sha256:b734bcb34aba0849a61f5fc6a40ebf031af7998200063e4b60925db6399e39ec",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -22176,7 +22336,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:9198ee9fb9f9390360080d7f034662c740093fd3202d941b338baa38332774ef",
+          "digest": "sha256:5fd2f75ce5c23add973408817ebcdcd8cc0c78a5090aa5be4e2e65809e2016ca",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -22190,7 +22350,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/netlify.json",
-          "sourceDigest": "sha256:1db06068bfe7c60312d9731c45e2538d6c4ad10ccb2f4c62f93a332aee5e5f8d"
+          "sourceDigest": "sha256:9beb26137b92ad980ff7571afa036ac75778a01968598d46c9adef6706e92490"
         }
       }
     },
@@ -23827,10 +23987,10 @@
     },
     {
       "id": "package",
-      "contentDigest": "sha256:22a60974aa9288e9bbd0a19521f014b822dd27d43aae52c5a5e6aac045ff05eb",
+      "contentDigest": "sha256:b915fd4da67e28db559ba5b906dfd8eadbc11d4b4bf8c49e78bbc00457d05bf1",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -23838,7 +23998,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:d2de03a5f16494147897ea75d0f608f6e4af5f3c21556e16a000128eaa19321c",
+          "digest": "sha256:737de81027eb1d9904d8a35383b0ca26be9cc075e570193301d748160965545e",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -23853,7 +24013,7 @@
         "provenance": {
           "dependencies": [
             {
-              "digest": "sha256:3c02652299c240b152d8d30bc476dfa4bda7854132632dc9595afe53ac12ee0a",
+              "digest": "sha256:3ed729a14b7c7ac8807e8e6aef9de1a722a74b9a24bee479b969c91dde1e5e37",
               "source": "https://json.schemastore.org/ava.json"
             },
             {
@@ -23861,7 +24021,7 @@
               "source": "https://json.schemastore.org/eslintrc.json"
             },
             {
-              "digest": "sha256:c4451c972dd7c5040375d01279d1e777f1cf672f0e227e2ea92e3ac4b106cfd7",
+              "digest": "sha256:57a29676d1a84d660803b8e5b6cdcee02400169c66d7589df4965dda83edc1f4",
               "source": "https://json.schemastore.org/jscpd.json"
             },
             {
@@ -23895,7 +24055,7 @@
           ],
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/package.json",
-          "sourceDigest": "sha256:76767b4e0b941f048f20d6de3eef2b8dd5f2b09816913a26b4bbf1afbd31fd79"
+          "sourceDigest": "sha256:49b18d1292dff6b5ab88f083f6070ad9701deec69dacd2dee58571c6493c918c"
         }
       }
     },
@@ -25172,10 +25332,10 @@
     },
     {
       "id": "pnpm-workspace",
-      "contentDigest": "sha256:d09a4d2e9196a98ae50a84f6ea6b183ac0ab90dc1a8648ba7352fab4f4ecc2c9",
+      "contentDigest": "sha256:56a67b44322496b76655ae134ce6102f44e210053b5b7c849249e0342dab9c1a",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -25183,7 +25343,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:ef4ae41f32c4dffd037108a8c3f57e7e22c7912aa5fb366ab5cfb15c2d886dd1",
+          "digest": "sha256:52a844831bd45ee9d1dcf29c7b901397f75563f518ad603ad906403460718bf1",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -25197,7 +25357,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/pnpm-workspace.json",
-          "sourceDigest": "sha256:b92d15c3291ab432ad34dbee8751864564bf948a61bbae93dc0b343bb1ca7d61"
+          "sourceDigest": "sha256:57d0cf4bcd00e1ec2e77d45fa3e0ac23a204939d93d6902c63590f5f983edf53"
         }
       }
     },
@@ -25234,10 +25394,10 @@
     },
     {
       "id": "podman-desktop-extension",
-      "contentDigest": "sha256:aa1e02bc3c0e09cac4d347b6131877fda2971f6ef1f05ee58cfb27b45ee8bb3a",
+      "contentDigest": "sha256:63fe528c95293125199033de8b238695b281f21fce931ad34adcb5e7a3143ab1",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -25245,7 +25405,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:19d2a2a067566a11f3e57fcd52b5e90861fcface46344c6de4ff14907e82cdb9",
+          "digest": "sha256:b20b50062fd9c0b28e14fd3a9b92ff8e7c7726b29594e853e9aaef6173762d86",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -25256,7 +25416,7 @@
         "provenance": {
           "dependencies": [
             {
-              "digest": "sha256:3c02652299c240b152d8d30bc476dfa4bda7854132632dc9595afe53ac12ee0a",
+              "digest": "sha256:3ed729a14b7c7ac8807e8e6aef9de1a722a74b9a24bee479b969c91dde1e5e37",
               "source": "https://json.schemastore.org/ava.json"
             },
             {
@@ -25264,7 +25424,7 @@
               "source": "https://json.schemastore.org/eslintrc.json"
             },
             {
-              "digest": "sha256:c4451c972dd7c5040375d01279d1e777f1cf672f0e227e2ea92e3ac4b106cfd7",
+              "digest": "sha256:57a29676d1a84d660803b8e5b6cdcee02400169c66d7589df4965dda83edc1f4",
               "source": "https://json.schemastore.org/jscpd.json"
             },
             {
@@ -25276,7 +25436,7 @@
               "source": "https://json.schemastore.org/nodemon.json"
             },
             {
-              "digest": "sha256:76767b4e0b941f048f20d6de3eef2b8dd5f2b09816913a26b4bbf1afbd31fd79",
+              "digest": "sha256:49b18d1292dff6b5ab88f083f6070ad9701deec69dacd2dee58571c6493c918c",
               "source": "https://json.schemastore.org/package.json"
             },
             {
@@ -25681,10 +25841,10 @@
     },
     {
       "id": "prisma",
-      "contentDigest": "sha256:feed3e025f759378c29c01d0a64716329f470f96df50d84c87e092667efec1a4",
+      "contentDigest": "sha256:4b83adcfa2f313cc19d8e4ec411ee7522ddf23ea028565b5647d7d2843cbf980",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -25692,7 +25852,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:5545a716ab203bb8fde2869f8424d1a78ff32ef4ae1fa728c98642ca7139d661",
+          "digest": "sha256:51e9607c361becc0489c0471315f87903bd7e8d7a8e96ff2d7cb21a299c1a5c4",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -25712,7 +25872,7 @@
           ],
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/prisma.json",
-          "sourceDigest": "sha256:c8120c5ce118d4f388ebb1692e5b8e8a0f0fe880679abea00c4336c82ed5d69b"
+          "sourceDigest": "sha256:4e51bbccc662b9c3639bbbcacaddcd252621a7ca9a0b059e1ffa62c7a8ca135e"
         }
       }
     },
@@ -25994,15 +26154,15 @@
     },
     {
       "id": "project-2",
-      "contentDigest": "sha256:25970429386b031355a8604ee370057fa148fc96fe12ad8fb8e8a99d624b8a58",
+      "contentDigest": "sha256:894a6b91d0fa1ece676ec77f99ed408e7be5d7386ea793ad8f2d7a6b9c0375da",
       "noticeDigest": "sha256:d3a9044c88d84d47a9fa88cb29cdd95dd675e4351b2298b84be6b83d36eb7118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261012.1017",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/project.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -26014,7 +26174,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:4386e2f513f862077a3ecc6c4cf03f3b4e54d54e0190581120be65cd3af81237",
+          "digest": "sha256:1c59e5fd51f4e270ac3e702a5a978097592d06e3830d5d7f4c4f711487f3aeff",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -26028,7 +26188,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/project.schema.json",
-          "sourceDigest": "sha256:0266474d3ee546693d273f693df5ab089de0ad05641d966325504297c9ed8a7a"
+          "sourceDigest": "sha256:5cbe068545a13c671e1f6bdb0da3567d115b49f038c48491caaf3b15425bf8fe"
         }
       }
     },
@@ -27916,10 +28076,10 @@
     },
     {
       "id": "rumdl",
-      "contentDigest": "sha256:96edd84f6fc0e58efc4f3f5b4b8a1d4133cb16d58704b7473fbb2921d1b880c2",
+      "contentDigest": "sha256:28985ce7e0231468e53d0b0bd7ef627114a3ac00bbfdbf43f4672c0dd19a35b4",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -27927,9 +28087,9 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:f92a6d08d2a5528d41a218c58428542d7540a02cd9505dbf8efa00b030df5a04",
+          "digest": "sha256:dddcd9eb0ef92e0285ec241776f9f402280ab107f5a57ddc04acd7293f55abb5",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
-          "size": 916
+          "size": 918
         },
         "description": "Configuration file for rumdl, a fast Markdown linter and formatter",
         "dialect": "http://json-schema.org/draft-07/schema#",
@@ -27942,7 +28102,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/rumdl.json",
-          "sourceDigest": "sha256:3e787b98f02c6533c01410a74064340fc30feb00f26c21288ae7f4b8f6fff68e"
+          "sourceDigest": "sha256:fec0bd14e8d8acc14aa3281c0089bfc3c312a5b6d2e10aa83698920d14c54b5f"
         }
       }
     },
@@ -27979,10 +28139,10 @@
     },
     {
       "id": "rust-toolchain",
-      "contentDigest": "sha256:3a2526f416734ebecdd8d82550e76aa49e7860376c66fc1aa7c6155e898157d9",
+      "contentDigest": "sha256:5bb013599105039cadb0780b3043084b30574d6977a316079443b5a35c99cb9c",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -27990,7 +28150,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:5872b91d873aae97506f9b62d912e35d487c97ad4550d33c42d2f789cf32a624",
+          "digest": "sha256:9d87664d3649cddf4ab71b2e14addca73653aa068b8fae3e62e35775b11201e6",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -28004,16 +28164,16 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/rust-toolchain.json",
-          "sourceDigest": "sha256:0997e48e232d9f53e69e21b256b2c6ed1a98597153a702ceb54cc3757b0d8e69"
+          "sourceDigest": "sha256:a0473ea84b12cf2508c061ff6977407aed8b63fb22d33e6e0c0a502265d0afc4"
         }
       }
     },
     {
       "id": "ryl",
-      "contentDigest": "sha256:3760c7e7fd387af5068db84623900c13ce23077926f2d2a0f1b1adcbf7c61714",
+      "contentDigest": "sha256:78a85c953fb92f852bf6a0643a1e4f811eeebd003c0bcaea95a6255f5bf4744e",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -28021,7 +28181,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:b37aba57951b65401b292b41eabb617dab42ef7e6ff9a0dd3b1d9a6455007203",
+          "digest": "sha256:a84fe3b716051b50dac57c370b4c73fae420306086abecdd6cfe2ccf6f631a8c",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -28036,7 +28196,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/ryl.json",
-          "sourceDigest": "sha256:317ebe75b18fd5cfa59d540746a182be5050c99b257f163987a4ea5dd806fa14"
+          "sourceDigest": "sha256:1760d1fdbc484e7f71e2276efac5fe2c1ae59b8e00036df6ae8342894730579a"
         }
       }
     },
@@ -28138,15 +28298,15 @@
     },
     {
       "id": "samcli",
-      "contentDigest": "sha256:790b1bf8552bec3a59746f61ac76beae6db2228b724c518573a42daf880073ef",
+      "contentDigest": "sha256:c574a9cac224143b2353af848ef5a6ec4df166f8fd29e4c2c4639a1cd9459e94",
       "noticeDigest": "sha256:1f650bc804240d11826bc936f85f503e2e68eda478bc9abf55b79606839bbed4",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/aws/aws-sam-cli/master/schema/samcli.json",
-            "source": "github:aws/aws-sam-cli@e8607edb1ce4f6179633e74da7d753b7b6f08485",
+            "source": "github:aws/aws-sam-cli@a629563f91538ae9c4be19ca8bc2c1a1016879f1",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:6712007d607ef80acdd4cbe5604346b57f85778e28abdff57d5d8036c7d7f7b6",
@@ -28158,7 +28318,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:99de67da21fb137eef4d81bb414d7a138a7c3d2472f8d89cfdc5290158afa79a",
+          "digest": "sha256:0b0a281d14244a41266b0d6eeb578ce3f4bf197270d94bbab6e310d12ff712a0",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -28174,7 +28334,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/aws/aws-sam-cli/master/schema/samcli.json",
-          "sourceDigest": "sha256:0018b4c18ab4c998f4dc15cba3d0020353a6ae73f22a00f9c3d940816a08f30b"
+          "sourceDigest": "sha256:49fd0c69d14f802359cdee8adfbc74d0d41b49c25db5e3120477238bc4e68855"
         }
       }
     },
@@ -28903,15 +29063,15 @@
     },
     {
       "id": "schema-14",
-      "contentDigest": "sha256:fd9fe6c8f1c0f3c12c61292a1167209fde35995fdeabe3dbb69953ab10ce10a4",
+      "contentDigest": "sha256:cae52dbe7225f1212e6ef464cb26c163e23b50a1ce9d9c663a80d0aead1e0ff2",
       "noticeDigest": "sha256:08cbd62d9bfd7e0bb7c89a2fb35548f2a56117700ddb435bf6f6f3e3f7ae19c9",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261019.0833",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json",
-            "source": "github:argoproj/argo-workflows@556ceb1f98d46a7d0a4f2d77670fb74dafbfaea9",
+            "source": "github:argoproj/argo-workflows@a25c64b80fc9295ebdc5729b4b50b2155c9ff190",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:c996fc213c94f4a4a838407d355b081226caa7b103a4f239bb87fb8f1d8e3a60",
@@ -28921,7 +29081,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:d63d0330aee19ed8bdabb2249e5c913f77cd5fb4a5031f5e89a59568d86ec451",
+          "digest": "sha256:108843433b05576afd4f6f2c8115a2a5eaad2a90ff4dff5b0923cd1ed83b9852",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -28932,21 +29092,21 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/argoproj/argo-workflows/master/api/jsonschema/schema.json",
-          "sourceDigest": "sha256:a5e4697c4813b8166c02c457301ee5bf96f039b039d0f8db49fb1e06840b0a35"
+          "sourceDigest": "sha256:c15e5d1a36692d150b374bd37ac3a468317ba116ab46d12d3a637d6f840cf5fe"
         }
       }
     },
     {
       "id": "schema-15",
-      "contentDigest": "sha256:3810fb3686b4c681bac19bf6b34f445ac361ccf61801703b944e3d4cb246ff33",
+      "contentDigest": "sha256:82804c8c22c6ab812b81a0755eea9028f836a41071c8b63e92f5b9c16ba7d789",
       "noticeDigest": "sha256:f3a4a60b64f289722a19378ea2169dd14bb7e88973c00650e7d67420d9a2474c",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/buildkite/pipeline-schema/main/schema.json",
-            "source": "github:buildkite/pipeline-schema@c4e60d9921cc0cf363ccb6a1c10f152ef6354132",
+            "source": "github:buildkite/pipeline-schema@ff1565a18f36380137bbfe3888af5402d12209ec",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:a76c796fe0ae5f05b43294595dab26e35c29df6740d6673ea11516efbdfd5473",
@@ -28956,7 +29116,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:96f3bbcd5276dc2e2c9b17fcb1ad56a3d64160f47e44c3ab1f7fe3c527e7d95b",
+          "digest": "sha256:1dd432d6791b0ecf3bdb647d45077cdd24fc6db588e22aba5a23baa7c2d722da",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -28981,7 +29141,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/buildkite/pipeline-schema/main/schema.json",
-          "sourceDigest": "sha256:f80bad5db017833d05be80930ce47e9ec5e052a7e15efeaac1503f6435a7a6d4"
+          "sourceDigest": "sha256:2ed7a0c8b2970fd7c16a8006e1ae8888b48f6bb82c3d0763d3462d5b7502e887"
         }
       }
     },
@@ -29150,15 +29310,15 @@
     },
     {
       "id": "schema-2",
-      "contentDigest": "sha256:43581213133b1e73e9d71498d0f8bd3d3292bb9e38631bca622425a0422b7b88",
+      "contentDigest": "sha256:8a1c35ed49ea1aa4d22575cc2bc14d5bdb95cef7f9ae0b14aa3a27a5270cd420",
       "noticeDigest": "sha256:006929a30edfc7d32d8a607b495f289ce177b584853efa82dcf341e16511f3f0",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
-            "source": "github:jandedobbeleer/oh-my-posh@3c03ebf4712f19b7310703a66946786d38c7cd28",
+            "source": "github:jandedobbeleer/oh-my-posh@3e6f04606f72c1118cdedc1966df048a3012733f",
             "license": "MIT",
             "licenseFile": "COPYING",
             "licenseDigest": "sha256:a5308c4e51268229a039ec4ec9a251a4cdb89d9380383e6e13aeba64a74f19ad",
@@ -29168,7 +29328,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:e4e0d79f43de8e9bfe35c6a02cfe4f33af318c7cd92b363abe7ee2eea97c2f9e",
+          "digest": "sha256:8bd8b29b817b7681a9e5f542baf42bd60cb71d48e652a8147353ecea9d9db430",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -29185,7 +29345,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
-          "sourceDigest": "sha256:ef78a27a8165fc8b866de5b69180213dec1b2132e24399effe2f95c3cc919cc5"
+          "sourceDigest": "sha256:f14af3d0f6b0e099f2b6c04d2e269bb4c318006951688710f048f4450727d87f"
         }
       }
     },
@@ -29362,15 +29522,15 @@
     },
     {
       "id": "schema-24",
-      "contentDigest": "sha256:72883d2aaf30bb6230c7f2f20c9dc776b0504c98f1044c81ecbe86fb6cea735d",
+      "contentDigest": "sha256:383a28535018e230c0b193a1539df0569a99efc456689a7526b116926ead43cb",
       "noticeDigest": "sha256:cfd1035d44c23fcd2bfe0bc1565ebdd1296ed0a3303efb18d7ad0def6e99bc8e",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/godatadriven/dbt-bouncer/main/schema.json",
-            "source": "github:godatadriven/dbt-bouncer@e4174c769d96bfef6a8e36ba7f4faf51451b5d2c",
+            "source": "github:godatadriven/dbt-bouncer@39df3954c29794dd8bba26d03feef0994d91469b",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:8065e9e152fffd95a54d68571d18d62669319795fd509ecbee7d5daf65a57ec6",
@@ -29380,7 +29540,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:d27dd3abfd4dde54570944fc460c07f11d9c033480c64fa843124326bc40e41e",
+          "digest": "sha256:2d525b324f50fae5c840a2b18bff530b4d4f727b75dca8055dff9333f17c7de2",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -29395,7 +29555,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/godatadriven/dbt-bouncer/main/schema.json",
-          "sourceDigest": "sha256:a2a65599094ba4a56ef7cab68558083134fee6af5991cffc56fb5f12aee4219b"
+          "sourceDigest": "sha256:1c0699317c6cf5aaa4255f55ce4490eb6384483cd9207477c4ce391214c07082"
         }
       }
     },
@@ -29789,15 +29949,15 @@
     },
     {
       "id": "schema-34",
-      "contentDigest": "sha256:3a76dd9242678d57d577b70f2cf4f5622c095b9f3bffb755f3ca26183e550188",
+      "contentDigest": "sha256:fc4ccd25e20770f4f8e8204130be2a939de14c82ce00f6b24f69930f89e1e696",
       "noticeDigest": "sha256:ef7e3f802d629b31f4d461c2a056d0edac0391b78074e1e319b258f4272291d6",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json",
-            "source": "github:prefix-dev/recipe-format@7be6ba9f7085359eda3c3c18e405fe6247142cf8",
+            "source": "github:prefix-dev/recipe-format@36d941321e358d8a8729cfffd082fdd0d337b5f9",
             "license": "BSD-3-Clause",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:679d42a76b82a6dc20ffd9048ab45fb2e5557a526113aaedc7419e12f3cfab38",
@@ -29807,7 +29967,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:0410302905100119a48955873ffdb8979da99d214aab61d2896604b30a502daf",
+          "digest": "sha256:49875809fbffced635b577f887784c5789f458b3c94da89843844c273a51ffd9",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -29822,7 +29982,7 @@
         "provenance": {
           "license": "BSD-3-Clause",
           "source": "https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json",
-          "sourceDigest": "sha256:b397b07052b42508f00b08578d48ef206570b514f0d55707ef3967648bbf52bd"
+          "sourceDigest": "sha256:a979f71add5ebf329793a4d39b66ee4efd649b0c1f845b421f906a63de8c4e58"
         }
       }
     },
@@ -30106,15 +30266,15 @@
     },
     {
       "id": "schema-41",
-      "contentDigest": "sha256:aedc0eeeb67a35110a3421edcfcce9c7ece7268a0bb3bd8b61c903fc995ffaee",
+      "contentDigest": "sha256:29c54556635926ef15d5c9bf6fca5b52bb8007221a0d8e55bf4b3d9b7b276e9a",
       "noticeDigest": "sha256:56a3105b1db27f9da4516a0869976de44d091e309d37517bdc9af4a5ab9d2cc3",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/woodpecker-ci/woodpecker/main/pipeline/frontend/yaml/linter/schema/schema.json",
-            "source": "github:woodpecker-ci/woodpecker@ae3b942fa228c354927cee0818de28360e9cf7dd",
+            "source": "github:woodpecker-ci/woodpecker@2c1a483c612a6ddde8cdc2e626748e52a2386245",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:a203768e1e09819b88c7671c8f4f7a368fb12dee05a57489fa0cc77245afd264",
@@ -30124,7 +30284,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:d5ffc91ff01f97923220c62c6012935dbbccf0f009e7eccdf89dae9938a270f1",
+          "digest": "sha256:68758d95a4a825d4ae1816b468e25b297a04b4b5b0d921e78daeb800262c25fb",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -30141,7 +30301,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/woodpecker-ci/woodpecker/main/pipeline/frontend/yaml/linter/schema/schema.json",
-          "sourceDigest": "sha256:b448916fea06650f833a355496b33a5672213d6801ca9e3def60bf198c1a492e"
+          "sourceDigest": "sha256:3f00a2a2dc3224cd85152f4362c2668a26b16903ee14ebe13efe5a8d8bffd9c7"
         }
       }
     },
@@ -31475,15 +31635,15 @@
     },
     {
       "id": "settings",
-      "contentDigest": "sha256:f55ab18b46bd59dd57201a2b8b0d164957da49936b793c099e6bec7d1c86137c",
+      "contentDigest": "sha256:081ea4ab12087fc2879a89b04270d4ecc1f1d0a155845fa5621c062535a3d0a5",
       "noticeDigest": "sha256:9c28d91a4517b35b5108952fce4f0a4845a8947d96c85c7ff2f865e11a5982ee",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/PrefectHQ/prefect/refs/heads/main/schemas/settings.schema.json",
-            "source": "github:prefecthq/prefect@21a1f025480406046668edf22705234ce6b1c31f",
+            "source": "github:prefecthq/prefect@b055980caf24955eebcb51fe6c9088522f48208a",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:302c6c9fca2c024cdfc4a0b8082fdd2dc52453c0d92e4ca2859f261acdc08774",
@@ -31493,7 +31653,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:a83d35c0d93f00b918ff570bb83a0f8e7634b3e96de60d194a3f810610b8a0d4",
+          "digest": "sha256:f2301334eaa3f4270db1af35b57448bc204ddceac98d51e958402448c2f3d624",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -31507,7 +31667,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/PrefectHQ/prefect/refs/heads/main/schemas/settings.schema.json",
-          "sourceDigest": "sha256:f63795e87655bd1af2f91ac4f881855b55853219992dd14cdbcbfd81984eb46e"
+          "sourceDigest": "sha256:7301d96be68e02ea1ec65f82e0ab4be490bedfb92aa26657a213c7d3e5fc2c21"
         }
       }
     },
@@ -31661,10 +31821,10 @@
     },
     {
       "id": "sigmacv",
-      "contentDigest": "sha256:71865243e9550742bb5b899307c3a97dc7c04b13378b91477e94132a3adb0e3b",
+      "contentDigest": "sha256:87cf3c960919ee69843a90076fdada312f475c7b2b131258d48d0b2860548739",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -31672,7 +31832,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:90ac5bcb54932668b22be88fa55a0540dc7213645cd2ff3a2be39414dfd27afe",
+          "digest": "sha256:422241cdab137ae9929f562c9a984ea2239bd2ab4739118f64d9388460539441",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -31686,7 +31846,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/sigmacv.json",
-          "sourceDigest": "sha256:49e3bb4f76cbb646c15fba6902b566e73d891efebd2bf9fec6a351b8664c5b92"
+          "sourceDigest": "sha256:99eb6c154716beb7138d786602d699ad2788a535fa958d0fe90270c02130f4a7"
         }
       }
     },
@@ -33168,15 +33328,15 @@
     },
     {
       "id": "task",
-      "contentDigest": "sha256:fcdcc3ac8d99796f5e6601769858f8827868b7a91a7009c606fda7ac9dcc0f4e",
+      "contentDigest": "sha256:8d90215cde04bd02da193600856b20f61a7c8e977f5357b9c8d8cbf63ad40a42",
       "noticeDigest": "sha256:d3a9044c88d84d47a9fa88cb29cdd95dd675e4351b2298b84be6b83d36eb7118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261012.1017",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33186,7 +33346,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.common.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33196,7 +33356,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.datamart.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33206,7 +33366,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.filebasedknowledgemart.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33216,7 +33376,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.knowledgemart.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33226,7 +33386,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.lakehousemirror.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33236,7 +33396,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.lakehousestorage.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33246,7 +33406,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.lakelanding.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33256,7 +33416,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.landing.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33266,7 +33426,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.qvdstorage.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33276,7 +33436,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.registereddata.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33286,7 +33446,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.replicatelanding.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33296,7 +33456,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.replication.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33306,7 +33466,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.storage.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33316,7 +33476,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.streaminglakelanding.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33326,7 +33486,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.streamingtransform.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33336,7 +33496,7 @@
           },
           {
             "url": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.transform.schema.json",
-            "source": "github:qlik-oss/schemas@bfd3181c2bfc480c728f665660ad83129776da68",
+            "source": "github:qlik-oss/schemas@0de8ae66dfcb6b3b1a23d6059ccde8b6c8f0d1fe",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -33348,7 +33508,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:7a23585289f5777a8bba1f024fcc503bfa2e192e7013168083ef6cc12e625ce5",
+          "digest": "sha256:4ea375e7a09a1236679f1e0352f2aa8c47545dc1d7a5fc5e2b3fc1aaf9bce0cb",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 917
         },
@@ -33362,7 +33522,7 @@
         "provenance": {
           "dependencies": [
             {
-              "digest": "sha256:089419541e737f516994f29aa85531a644937c8b875292740149242964de881c",
+              "digest": "sha256:732c39d05c1f5f119d812421c5e9a71ce6f7cfe204bbe965c20cf0d9f31ff63f",
               "source": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.common.schema.json"
             },
             {
@@ -33390,7 +33550,7 @@
               "source": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.lakelanding.schema.json"
             },
             {
-              "digest": "sha256:72419fb2e861f14b79c7d39dce565279bbc2a3932db9467ed81a6135b3e30884",
+              "digest": "sha256:5dc703d5a974e7cd73067ef03e6efd2c87c0e66de825b0cd61011869737f9616",
               "source": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.landing.schema.json"
             },
             {
@@ -33422,7 +33582,7 @@
               "source": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.streamingtransform.schema.json"
             },
             {
-              "digest": "sha256:e7990c431dd21ff5dd1c9cc8c85c7e62ea90fa90aa4b42385aff6ca2f64acd98",
+              "digest": "sha256:daf73f4a930ca2ca6014d214ae864faf76d9e746df1b80bd9d82ffac61cd8652",
               "source": "https://raw.githubusercontent.com/qlik-oss/schemas/refs/heads/main/qtcp/task.settings.transform.schema.json"
             }
           ],
@@ -34758,15 +34918,15 @@
     },
     {
       "id": "transcend-yml-schema-latest",
-      "contentDigest": "sha256:56001101f124f5b59366d9aea5f343831272f3d3605040a514291a75094a855a",
+      "contentDigest": "sha256:65f8a3a88729c507c4025de1a12cae6c27309c5cbb3b1bc10483799b4656bd64",
       "noticeDigest": "sha256:9500e80d0b581cc8f0edbcbc0d7dff648c0ba8d2a065d0ce49b397f5402fe89e",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261102.1037",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/transcend-io/tools/refs/heads/main/packages/cli/schema/transcend-yml-schema-latest.json",
-            "source": "github:transcend-io/tools@7fcc3b2a5a9bc2cc8e0b27ff4e0d45f91de05f86",
+            "source": "github:transcend-io/tools@f4c51c9ade0bc4d776f0c15e7773373d2540de09",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
@@ -34776,9 +34936,9 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:43abec67849bfe1d980d3f01438537e7389b3abb5ccce44f95674b7183c2482a",
+          "digest": "sha256:9ab479ca21bfe45bf37b2772c51a84202ae7fefdccaaabee0b0157526da51c71",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
-          "size": 917
+          "size": 918
         },
         "description": "Configure as Code for Transcend",
         "dialect": "http://json-schema.org/draft-07/schema#",
@@ -34791,7 +34951,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/transcend-io/tools/refs/heads/main/packages/cli/schema/transcend-yml-schema-latest.json",
-          "sourceDigest": "sha256:7408ac80f943d7dc2fec9df58c47f2a1f5e465ce74629d126ab941edda224d6c"
+          "sourceDigest": "sha256:7d9aa9d7e9c1c3457ed036e09be551bcbaf9b8e6d51954c346c2fd3c8f9fc28d"
         }
       }
     },
@@ -34999,10 +35159,10 @@
     },
     {
       "id": "tsconfig",
-      "contentDigest": "sha256:a8a7b633da974c8468d46598b17b4daeec1ceac7f73f129a2c74eafbbff51a4c",
+      "contentDigest": "sha256:723540aca178fbd997353527e5492cca1139cc96f66bbf5c7beee1bae32263f2",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -35010,7 +35170,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:f373cbbc9c9296115289046f4e617c546c46bdd5deb02c47b030c910c3896fb2",
+          "digest": "sha256:f33de582f45d3b12983c4d228fda071a9312748a98ad15b01454b010b140816b",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -35024,7 +35184,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/tsconfig.json",
-          "sourceDigest": "sha256:9e9599c2e6021574483e3a802eb075c872be1f5b4185ad45da03d33edce3c2b1"
+          "sourceDigest": "sha256:71ad60f305bfc680085c45e4b2fe2bad01dd8a9994ac7eb55f10b53dc37209bc"
         }
       }
     },
@@ -35125,10 +35285,10 @@
     },
     {
       "id": "tsoa",
-      "contentDigest": "sha256:01406ac243865094afc8c51539c260d664bf8c833f2837d719d8be72f80ad210",
+      "contentDigest": "sha256:8571e12b3770a0ee59806654e98d0cc3c41f478e0c5eaa25fb6a3719365bc680",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261026.0836",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -35136,7 +35296,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:ae81943b8e7510cae9b4d82760a91d3d1c794c838b7a2e58f674b9db62b983b2",
+          "digest": "sha256:a1a92bf602b039a244826b24878555f6cfd00731a4a38eea5fcf26e29f11eb99",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -35150,7 +35310,7 @@
         "provenance": {
           "dependencies": [
             {
-              "digest": "sha256:9e9599c2e6021574483e3a802eb075c872be1f5b4185ad45da03d33edce3c2b1",
+              "digest": "sha256:71ad60f305bfc680085c45e4b2fe2bad01dd8a9994ac7eb55f10b53dc37209bc",
               "source": "https://json.schemastore.org/tsconfig"
             }
           ],
@@ -35427,10 +35587,10 @@
     },
     {
       "id": "ty",
-      "contentDigest": "sha256:b594b2d8f05d62d99fb1b3bc575f385a710146ac66dace94dba9351912c6b100",
+      "contentDigest": "sha256:8daad8dc8272d83b93bfd3731da581f99ef33f0eaf66c7547c7d45153a04a6ab",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -35438,7 +35598,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:3ba876b725645c51239d2b8babb692976d5ec2f75658001ecfbd9865c79edd4f",
+          "digest": "sha256:1dbd98d0bc75325edbdc304a67697fbdd1625f9ff315b193a19093529ffe5705",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 918
         },
@@ -35452,7 +35612,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/ty.json",
-          "sourceDigest": "sha256:44e666dba979b69c05d55b478dacc55e580e97c983bf6e9764d870a283bc0bac"
+          "sourceDigest": "sha256:d9197ff5da5baee652dd811220af66fa494df9d69be74a9b5d7c5105607d422a"
         }
       }
     },
@@ -35632,10 +35792,10 @@
     },
     {
       "id": "typo3-file-storages",
-      "contentDigest": "sha256:fb51afd8645b6102fe4946532a40e3c293953ff88dc5bcbe11db4b33272c840d",
+      "contentDigest": "sha256:bac6bb95eb61c910cd7b0fc18c31c756ee1429e444d4eb226c45b96965a60557",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20261108.1214",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -35643,7 +35803,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:49c55c7103f9a95f3247309515c9cdb3515304619bb8e9c3f9e3a52c3d3ffae6",
+          "digest": "sha256:a58a02d531e5bf8ce37d795e6f71098a23f8684cd650ff2df7732f2d5e80d2bc",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 887
         },
@@ -35663,16 +35823,16 @@
           ],
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/typo3-file-storages.json",
-          "sourceDigest": "sha256:fe8ff299386ec1ca4b97235bc5c2c70ed287b71200baeba9352d94e91b043df0"
+          "sourceDigest": "sha256:ab47974f400888841bc054996be846cc405179a106dc7e60917f1d5d0eb474c2"
         }
       }
     },
     {
       "id": "typo3-form-config",
-      "contentDigest": "sha256:853469fba1f5110523273174d31dc0143cb11ef8eb58bcb21cf5aff2b20cba46",
+      "contentDigest": "sha256:481c246884312cd66e4980ec6f35f2e4b8e516dd51e65a82a515769ea7e16986",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20261108.1214",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -35680,7 +35840,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:3d1e8a48b35289d061ca6eb2b20b9e3ba8c152f6327a76ceb9eb03fbdf4aa502",
+          "digest": "sha256:bb0a7e8771f394e2c7631b7db8571e967f3202d3687b9f0ba2bda2726befdb50",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 887
         },
@@ -35694,7 +35854,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/typo3-form-config.json",
-          "sourceDigest": "sha256:7a5b8175a64348373e2f3d56e2400374321216fa66bb98329abdc542855aa902"
+          "sourceDigest": "sha256:6642690beeb6b4edbe6075fb4439b24cbcf62454495145ac62b1dc411e0a88d6"
         }
       }
     },
@@ -35865,10 +36025,10 @@
     },
     {
       "id": "typo3-site-csp",
-      "contentDigest": "sha256:0857754b5ba17507422e0e117cc78651a1f74064fb762a7774564f538b7cfa9c",
+      "contentDigest": "sha256:4563245ebb2a2b59c666f44b1f41562ebc562ff655e7ebc0258661846bc42348",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20261108.1214",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -35876,7 +36036,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:ce14e2f0b02b3977ab11d1ce42fc73020680010add67441d991b6f7863d20cde",
+          "digest": "sha256:1c3944a906bfb738e7ee78c3e7af8626396654328bb4bbf0b1d8fe8fb9f2b886",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 887
         },
@@ -35896,7 +36056,7 @@
           ],
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/typo3-site-csp.json",
-          "sourceDigest": "sha256:b260e2cc16455f46565c70b7f99f5b1c977491b29ba5f0fef0f08d0bf47eb677"
+          "sourceDigest": "sha256:fd7a6fa9d07dde9b68ecfa881dea34f5d6692be9d20bb74f5cb25c4f4a0985fe"
         }
       }
     },
@@ -37250,6 +37410,45 @@
       }
     },
     {
+      "id": "vsbom",
+      "contentDigest": "sha256:e92b53f4b1d31f7dd3d3755dcac63bc80698d8bd9dd2570b69b563e3dd2f439e",
+      "noticeDigest": "sha256:a860e99926fe72a6ea421b1d91c2d076a4a63b880ef1bae1a63e6f92d979e219",
+      "firstRevision": "20261123.1151",
+      "lastChangedRevision": "20261123.1151",
+      "licenseDecision": {
+        "detections": [
+          {
+            "url": "https://raw.githubusercontent.com/Presencis-com/bom-schemas/main/schemas/vsbom.schema.json",
+            "source": "github:presencis-com/bom-schemas@07ca43c61f924dede2256fef8c68f8f83f52a73a",
+            "license": "Apache-2.0",
+            "licenseFile": "LICENSE",
+            "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            "verdict": "allow"
+          }
+        ]
+      },
+      "entry": {
+        "artifact": {
+          "digest": "sha256:3fb858f83b832ab1ac16412315a1eea865134e10d36f9e60f4e4ea91098118d4",
+          "mediaType": "application/vnd.oci.image.manifest.v1+json",
+          "size": 887
+        },
+        "description": "Presencis Verified Software Bill of Materials (presencis-vsbom-v1)",
+        "dialect": "https://json-schema.org/draft/2020-12/schema",
+        "fileMatch": [
+          "*.vsbom.json",
+          "vsbom.json"
+        ],
+        "id": "vsbom",
+        "name": "Presencis VSBOM",
+        "provenance": {
+          "license": "Apache-2.0",
+          "source": "https://raw.githubusercontent.com/Presencis-com/bom-schemas/main/schemas/vsbom.schema.json",
+          "sourceDigest": "sha256:ff4211095f4cdd50096a89fd6198884e33b5449c98924ad72c8c83b510432661"
+        }
+      }
+    },
+    {
       "id": "vsconfig",
       "contentDigest": "sha256:20c05987219860e4f917bb663f92a82908462a2e4c7eaa0d2c5985d528d3c00e",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
@@ -38045,15 +38244,15 @@
     },
     {
       "id": "wiremock-message-stub-mapping-or-mappings",
-      "contentDigest": "sha256:c8cee73808c040399276075a40a3de1cba9eff6e4b715912c44e467908d429b8",
+      "contentDigest": "sha256:ad40b7a2ab7b025c4c2deb7c8b4cc2a3e2e6d47f3b15a27e295f80857e44d4dc",
       "noticeDigest": "sha256:d80724d9992f743c423898674bb2608211353d3598cb2d8fc2e64b4f70bb20b2",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/wiremock/wiremock/refs/heads/master/schemas/wiremock-message-stub-mapping-or-mappings.json",
-            "source": "github:wiremock/wiremock@ffb1bd807cab17480e7de90a2205fd8f020b3262",
+            "source": "github:wiremock/wiremock@fabec92c3028762382498fd0b660be2a323b9971",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE.txt",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -38065,7 +38264,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:b35165216c65d746aec38f1e04abad734beda502e3cc5a95d2246c4fe3b64345",
+          "digest": "sha256:9bee9ff1059b8992b9d215fb220b8dedc0eab6280e141bf216362eeeb2befd14",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -38084,21 +38283,21 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/wiremock/wiremock/refs/heads/master/schemas/wiremock-message-stub-mapping-or-mappings.json",
-          "sourceDigest": "sha256:cf2cb52d882ec1e82a7fb7ccc4f939a3f3c506331c88d6f69a811dbac4641f76"
+          "sourceDigest": "sha256:b257ec6b9ef129eef7fa92c93c3462429d6684c50c2eaef8c0931737053f6e34"
         }
       }
     },
     {
       "id": "wiremock-stub-mapping-or-mappings",
-      "contentDigest": "sha256:2632cc5145cb12c91e0f71847ef51bf81ccd0516466db41d78b5666cf6cacc1b",
+      "contentDigest": "sha256:34e3755a56538d28d7620a9c7e1083f9ef203ecdf27e3c0eb5b7501e75408a1d",
       "noticeDigest": "sha256:d80724d9992f743c423898674bb2608211353d3598cb2d8fc2e64b4f70bb20b2",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261116.1043",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/wiremock/wiremock/refs/heads/master/schemas/wiremock-stub-mapping-or-mappings.json",
-            "source": "github:wiremock/wiremock@ffb1bd807cab17480e7de90a2205fd8f020b3262",
+            "source": "github:wiremock/wiremock@fabec92c3028762382498fd0b660be2a323b9971",
             "license": "Apache-2.0",
             "licenseFile": "LICENSE.txt",
             "licenseDigest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
@@ -38110,7 +38309,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:4d55445921bfcf7055864b88b9ff3f232dd6c47607b7bb89fbebc35e37b14f87",
+          "digest": "sha256:3ced0e3273f3cab9a478946f8ff0400cb85f54c09d90f28298fef73252dab28e",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -38129,21 +38328,21 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://raw.githubusercontent.com/wiremock/wiremock/refs/heads/master/schemas/wiremock-stub-mapping-or-mappings.json",
-          "sourceDigest": "sha256:e4c7a8bc2d51eb94f5c1c4f2729ee74333397f5dfcff45040e9a011c0050dabb"
+          "sourceDigest": "sha256:dafc576ec3256b88fcefc7997eb6f175e5f0e93087004a9e5fb0601f2c090ae8"
         }
       }
     },
     {
       "id": "workflow",
-      "contentDigest": "sha256:5161cefa912166fb5f1b8e637a02701968b1d6e4294306f9b019c73ae666079f",
+      "contentDigest": "sha256:d52391e0d9c05f012b819c739701deeeb1c15c2a099eef482d463d7e32254710",
       "noticeDigest": "sha256:98e11e1181e5f437506644541d8cc74112ab49ce4d1d95e2c40d914a7ac85ff7",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20261108.1214",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "detections": [
           {
             "url": "https://raw.githubusercontent.com/speakeasy-api/sdk-gen-config/main/schemas/workflow.schema.json",
-            "source": "github:speakeasy-api/sdk-gen-config@c1c9d611c3fd2dd8b657a9b220a5557ee1f5200e",
+            "source": "github:speakeasy-api/sdk-gen-config@cbaae4afd88fd6b504d0604b5db4e4ca8d3a695e",
             "license": "MIT",
             "licenseFile": "LICENSE",
             "licenseDigest": "sha256:f24fd63ad115472f6d287e50da7a767b4ca35c5c7c694eee432efe657526e93a",
@@ -38153,7 +38352,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:745883146f49f58ba4c9059077647c0e0b519bec852a14f9375e5e3fe123a819",
+          "digest": "sha256:d1fc8527f6c706fdf420a56dc9ddfc08c2b5635d21c1b4b1ec270f5814c30e2d",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 915
         },
@@ -38167,7 +38366,7 @@
         "provenance": {
           "license": "MIT",
           "source": "https://raw.githubusercontent.com/speakeasy-api/sdk-gen-config/main/schemas/workflow.schema.json",
-          "sourceDigest": "sha256:3e53e0ff288322f3e0389842c7f6ca6458fe7fafcb41e3a9cfa5e86e2a16c533"
+          "sourceDigest": "sha256:ed87e7501abd6be4d050c80744e25a93a3aa1d50b27721a7e97ddca7e4e7ef40"
         }
       }
     },
@@ -38522,10 +38721,10 @@
     },
     {
       "id": "yamllint",
-      "contentDigest": "sha256:89ff073966a6b2853287bce27345976b437d21072c484780a137c3c58517995d",
+      "contentDigest": "sha256:09da8f891bfff47409276c9d674f1b450cb9785b7ef87496cc80792bc3265610",
       "noticeDigest": "sha256:dac2abfbb12a88810e0f88022d81582ce29c463cc567fb0f00f9151aaafbe118",
       "firstRevision": "20260929.1809",
-      "lastChangedRevision": "20260929.1809",
+      "lastChangedRevision": "20261123.1151",
       "licenseDecision": {
         "rules": [
           "schemastore"
@@ -38533,7 +38732,7 @@
       },
       "entry": {
         "artifact": {
-          "digest": "sha256:6b74f4b1230a8dfc42036fa55da1a24d5581a61bee2d532e190bd8441390d385",
+          "digest": "sha256:a406b1de767db2e8ace54458db4e31d32a848d208b539ef9b25732d1b94a163d",
           "mediaType": "application/vnd.oci.image.manifest.v1+json",
           "size": 916
         },
@@ -38549,7 +38748,7 @@
         "provenance": {
           "license": "Apache-2.0",
           "source": "https://www.schemastore.org/yamllint.json",
-          "sourceDigest": "sha256:a47a5b49757f4202e8bcf218b929887236339e5e2604885ac36e5356d69b2010"
+          "sourceDigest": "sha256:7d08a35173b44e83f189140a0b96c087fa4de0ac028fcec4f949176187011132"
         }
       }
     },
